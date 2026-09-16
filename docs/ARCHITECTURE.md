@@ -212,69 +212,81 @@ Fontes locais do sistema continuam suportadas por campo livre nas configuraçõe
 
 ## 8. Roteiro
 
+Todas as ideias levantadas na revisão foram aprovadas e distribuídas pelas
+fases. O critério de ordem é: primeiro o que elimina atrito no uso diário,
+depois o que protege o trabalho, por último os modos especializados.
+
 | Fase | Entrega | Estado |
 |---|---|---|
 | 0 | Janela frameless, acrylic, always-on-top, drag, opacidade | **feito** |
 | 0.5 | Spike do `SetWindowDisplayAffinity` | **feito, a validar** |
-| 1 | CodeMirror 6, autosave, atalhos de edição | a fazer |
-| 2 | Atalhos globais, modo fantasma completo, snap | parcial |
-| 3 | Status HUD completo, contadores, estimativa de páginas | parcial |
-| 4 | Split view | a fazer |
-| 5 | Teleprompter, modo notch | a fazer |
+| 1 | Editor e captura instantânea | a fazer |
+| 2 | Presença e posicionamento | parcial |
+| 3 | HUD e métricas | parcial |
+| 4 | Segurança do trabalho | a fazer |
+| 5 | Múltiplas notas e split view | a fazer |
+| 6 | Teleprompter e modo notch | a fazer |
 
-O CodeMirror substitui apenas o `<textarea>` da Fase 0. Nada mais muda.
+### Fase 1 — Editor e captura instantânea
+
+- CodeMirror 6 substituindo o `<textarea>` (nada mais muda na casca)
+- Atalhos de edição do VS Code: mover/duplicar linhas, multi-cursor, `Tab`
+- **Invocação global** `Ctrl+Alt+Space` — mostra, foca e posiciona o cursor a
+  partir de qualquer app. Entra na Fase 1 por ser a funcionalidade que mais
+  reduz atrito: sem ela, começar a escrever ainda exige `Alt+Tab`.
+- **Copiar tudo e limpar** `Ctrl+Shift+Enter` — com desfazer disponível logo
+  após, para o caso de limpar por engano
+- **Colar sempre sem formatação**
+- **Painel de atalhos** `Ctrl+/` — única forma de descobrir recursos num app
+  sem menus
+
+### Fase 2 — Presença e posicionamento
+
+- Modo fantasma completo, com atalho global de saída
+- **Fade por inatividade** — clareia após alguns segundos sem digitar, volta
+  ao receber foco ou movimento do mouse; desligável
+- **Snap de metade de tela**, além dos cantos
+- **Redimensionar por teclado** `Ctrl+Alt+Shift+setas`
+
+### Fase 3 — HUD e métricas
+
+- Palavras, caracteres, linhas
+- **Estimativa de tokens** — rotulada como aproximação
+- Estimativa de páginas A4/ABNT — também rotulada como aproximação
+- Módulos da barra ligáveis individualmente
+
+### Fase 4 — Segurança do trabalho
+
+- **Snapshots locais** com histórico curto e restauração por atalho
+- **Aviso de gravação em andamento** — detecta OBS, Zoom, Teams e Meet ativos
+  e sugere o modo oculto; nunca liga sozinho
+
+### Fase 5 — Múltiplas notas e split view
+
+- **Notas múltiplas** por `Ctrl+1..9`
+- Split view 50/50 com separador redimensionável
+
+### Fase 6 — Teleprompter e modo notch
+
+- Rolagem por `requestAnimationFrame`, 10–150 px/s, pausa no `Espaço`
+- Linha de foco central opcional
+- Modo notch: faixa de 3 linhas centralizada no topo, com máscara gradiente
 
 ---
 
 ## 9. Atalhos
 
-| Atalho | Ação | Escopo |
-|---|---|---|
-| `Ctrl+[` / `Ctrl+]` | Opacidade | local |
-| `Ctrl+P` | Always-on-top | local |
-| `Ctrl+Shift+G` | Modo fantasma | local |
-| `Ctrl+Shift+H` | Ocultar de gravações | local |
-| `Ctrl+Alt+1..5` | Snap de canto | local |
-| `Ctrl+Q` | Fechar | local |
-| **`Ctrl+Alt+G`** | **Resgate** | **global** |
-
----
-
-## 10. Ideias para avaliar
-
-Não estão no roteiro; ficam registradas para decisão.
-
-**Alto valor para os casos de uso centrais:**
-
-- **Invocação global** (`Ctrl+Alt+Space`) — mostra, foca e posiciona o cursor
-  numa tecla, de qualquer app. É o que transforma o GhostPad em captura
-  instantânea de verdade. Estava ausente no rascunho e provavelmente é a
-  funcionalidade mais importante que falta.
-- **Copiar tudo e limpar** (`Ctrl+Shift+Enter`) — o ciclo exato de quem escreve
-  prompt: redige, copia, cola no LLM, limpa para o próximo.
-- **Estimativa de tokens** na barra de status, ao lado de palavras e caracteres.
-  Se o caso de uso principal é criação de prompts, essa é a métrica que importa
-  mais que contagem de páginas.
-- **Painel de atalhos** (`Ctrl+/`) — num app sem menus e sem barra de título,
-  não existe nenhuma forma de descobrir o que ele faz. Uma sobreposição de
-  referência deixa de ser luxo e vira requisito de usabilidade.
-
-**Refinamentos de presença:**
-
-- **Fade por inatividade** — a janela clareia sozinha após alguns segundos sem
-  digitação e volta ao normal ao receber foco. Muito alinhado ao pilar de
-  presença não-intrusiva.
-- **Snap de metade de tela**, não só cantos.
-- **Redimensionar por teclado** (`Ctrl+Alt+Shift+setas`).
-
-**Segurança do trabalho:**
-
-- **Snapshots locais** com histórico curto, para recuperar texto apagado por
-  engano.
-- **Aviso de gravação em andamento** — detectar OBS/Zoom/Teams ativos e sugerir
-  o modo oculto antes de o usuário esquecer.
-
-**Organização:**
-
-- **Notas múltiplas** por `Ctrl+1..9`.
-- **Colar sempre sem formatação.**
+| Atalho | Ação | Escopo | Fase |
+|---|---|---|---|
+| `Ctrl+[` / `Ctrl+]` | Opacidade | local | 0 |
+| `Ctrl+P` | Always-on-top | local | 0 |
+| `Ctrl+Shift+G` | Modo fantasma | local | 0 |
+| `Ctrl+Shift+H` | Ocultar de gravações | local | 0 |
+| `Ctrl+Alt+1..5` | Snap de canto | local | 0 |
+| `Ctrl+Q` | Fechar | local | 0 |
+| **`Ctrl+Alt+G`** | **Resgate** | **global** | 0 |
+| `Ctrl+Alt+Space` | Invocar / focar | global | 1 |
+| `Ctrl+Shift+Enter` | Copiar tudo e limpar | local | 1 |
+| `Ctrl+/` | Painel de atalhos | local | 1 |
+| `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
+| `Ctrl+1..9` | Trocar de nota | local | 5 |
