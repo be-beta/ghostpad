@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GhostPad</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <!-- Camada que escurece sobre o acrylic do DWM. A opacidade do usuario mexe
+         aqui, e nao no efeito nativo: animar CSS nao pisca, reaplicar acrylic sim. -->
+    <div class="gp-backdrop" id="backdrop"></div>
+
+    <div class="gp-shell">
+      <!-- Faixa de arraste. Fina e invisivel: a janela nao tem barra de titulo. -->
+      <div class="gp-draghandle" data-tauri-drag-region></div>
+
+      <!-- Controles que so aparecem quando o mouse chega perto. -->
+      <div class="gp-controls" id="controls">
+        <button class="gp-btn" id="btn-minimize" title="Minimizar" aria-label="Minimizar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+        </button>
+        <button class="gp-btn gp-btn--danger" id="btn-close" title="Fechar (Ctrl+Q)" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <main class="gp-editor-wrap">
+        <textarea
+          id="editor"
+          class="gp-editor"
+          spellcheck="false"
+          placeholder="Escreva algo…"
+          aria-label="Editor"
+        ></textarea>
+      </main>
+
+      <footer class="gp-status" id="status" data-tauri-drag-region>
+        <div class="gp-status__group">
+          <button class="gp-chip" id="chip-ontop" data-active="true" title="Sempre visivel (Ctrl+P)">
+            <span class="gp-chip__dot"></span>Topo
+          </button>
+          <button class="gp-chip" id="chip-ghost" title="Modo fantasma - o mouse atravessa (Ctrl+Shift+G)">
+            <span class="gp-chip__dot"></span>Fantasma
+          </button>
+          <button class="gp-chip" id="chip-stealth" title="Invisivel em gravacoes (Ctrl+Shift+H)">
+            <span class="gp-chip__dot"></span>Oculto
+          </button>
+        </div>
+
+        <div class="gp-status__group gp-status__group--right">
+          <span class="gp-metric" id="metric-words">0 palavras</span>
+          <span class="gp-metric gp-metric--dim" id="metric-opacity">85%</span>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Avisos efemeros. Existe porque alguns estados (invisivel em gravacao,
+         modo fantasma) sao invisiveis por natureza e precisam de confirmacao. -->
+    <div class="gp-toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

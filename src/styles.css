@@ -1,0 +1,284 @@
+/* GhostPad - camada visual
+ *
+ * Regra que organiza todo este arquivo: o desfoque NAO esta aqui. Ele vem do
+ * acrylic do DWM, aplicado no Rust. O CSS cuida apenas de escurecer, arredondar
+ * e manter o texto legivel sobre um fundo que pode ser qualquer coisa.
+ */
+
+:root {
+  --gp-radius: 16px;
+  --gp-opacity: 0.85; /* controlada pelo usuario, Ctrl+[ e Ctrl+] */
+  --gp-bg: 18, 18, 18;
+  --gp-text: #f3f4f6;
+  --gp-text-dim: rgba(243, 244, 246, 0.55);
+  --gp-accent: #6ee7b7;
+  --gp-danger: #f87171;
+  --gp-font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --gp-font-size: 15px;
+  --gp-line-height: 1.6;
+  --gp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  /* Fundo transparente e obrigatorio: e por aqui que o acrylic aparece. */
+  background: transparent;
+  color: var(--gp-text);
+  font-family: var(--gp-font);
+  /* Sem isto, arrastar o texto pra fora da janela vira drag-and-drop do SO. */
+  user-select: none;
+}
+
+/* Camada de escurecimento sobre o acrylic. */
+.gp-backdrop {
+  position: fixed;
+  inset: 0;
+  border-radius: var(--gp-radius);
+  background: rgba(var(--gp-bg), var(--gp-opacity));
+  transition: background-color 120ms var(--gp-ease);
+  pointer-events: none;
+}
+
+/* Fallback: se o acrylic nao pegou, transparencia vira texto ilegivel sobre o
+   app de baixo. Melhor entregar um fundo solido do que um efeito quebrado. */
+body[data-acrylic="false"] {
+  --gp-opacity: 0.97;
+}
+
+.gp-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: var(--gp-radius);
+  /* Borda de 1px: separa a janela do conteudo de baixo quando ambos sao escuros. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+/* --- Faixa de arraste ------------------------------------------------------ */
+
+.gp-draghandle {
+  height: 10px;
+  flex: 0 0 auto;
+}
+
+/* --- Controles flutuantes -------------------------------------------------- */
+
+.gp-controls {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 160ms var(--gp-ease), transform 160ms var(--gp-ease);
+  pointer-events: none;
+}
+
+.gp-controls[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.gp-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text-dim);
+  cursor: pointer;
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+}
+
+.gp-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--gp-text);
+}
+
+.gp-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.22);
+  color: var(--gp-danger);
+}
+
+.gp-btn svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* --- Editor ---------------------------------------------------------------- */
+
+.gp-editor-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.gp-editor {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 6px 18px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--gp-text);
+  font-family: inherit;
+  font-size: var(--gp-font-size);
+  line-height: var(--gp-line-height);
+  user-select: text;
+  /* Sombra sutil: garante contraste quando o fundo por baixo e claro e a
+     opacidade esta baixa. Custa nada e salva a legibilidade no modo mais leve. */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.gp-editor::placeholder {
+  color: rgba(243, 244, 246, 0.25);
+}
+
+.gp-editor::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gp-editor::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* --- Barra de status ------------------------------------------------------- */
+
+.gp-status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  opacity: 0.35;
+  transition: opacity 160ms var(--gp-ease);
+}
+
+.gp-status:hover {
+  opacity: 1;
+}
+
+.gp-status__group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gp-status__group--right {
+  gap: 10px;
+}
+
+.gp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+}
+
+.gp-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gp-chip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background-color 120ms var(--gp-ease), box-shadow 120ms var(--gp-ease);
+}
+
+.gp-chip[data-active="true"] {
+  color: var(--gp-text);
+}
+
+.gp-chip[data-active="true"] .gp-chip__dot {
+  background: var(--gp-accent);
+  box-shadow: 0 0 6px rgba(110, 231, 183, 0.7);
+}
+
+/* Recurso indisponivel nesta maquina: visivel, mas claramente fora de alcance. */
+.gp-chip[disabled] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.gp-metric {
+  color: var(--gp-text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gp-metric--dim {
+  opacity: 0.6;
+}
+
+/* --- Toast ----------------------------------------------------------------- */
+
+.gp-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  z-index: 20;
+  max-width: calc(100% - 32px);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  color: var(--gp-text);
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  transition: opacity 180ms var(--gp-ease), transform 180ms var(--gp-ease);
+  pointer-events: none;
+}
+
+.gp-toast[data-visible="true"] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Modo fantasma: sem isto o usuario nao tem como saber que os cliques estao
+   atravessando, ja que nada na tela muda quando ele clica. */
+body[data-ghost="true"] .gp-shell {
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 1ms !important;
+  }
+}
