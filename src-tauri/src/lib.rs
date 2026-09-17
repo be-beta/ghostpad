@@ -11,8 +11,9 @@ use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 /// da area visivel. Nesses estados o frontend pode estar inalcancavel, entao a
 /// unica saida confiavel precisa viver fora dele.
 #[cfg(desktop)]
-const PANIC_SHORTCUT: Shortcut =
-    Shortcut::new(Some(Modifiers::CONTROL.union(Modifiers::ALT)), Code::KeyG);
+fn panic_shortcut() -> Shortcut {
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyG)
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,7 +30,7 @@ pub fn run() {
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
-                    if shortcut == &PANIC_SHORTCUT {
+                    if shortcut == &panic_shortcut() {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window_fx::panic_recover(window);
                         }
@@ -64,7 +65,7 @@ pub fn run() {
             {
                 use tauri_plugin_global_shortcut::GlobalShortcutExt;
                 // Falha aqui e tolerada: outro app pode ja ter tomado o atalho.
-                if let Err(e) = app.global_shortcut().register(PANIC_SHORTCUT) {
+                if let Err(e) = app.global_shortcut().register(panic_shortcut()) {
                     eprintln!("[ghostpad] atalho de resgate indisponivel: {e}");
                 }
             }
