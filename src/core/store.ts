@@ -10,11 +10,13 @@
  */
 
 import { load, type Store } from "@tauri-apps/plugin-store";
+import type { Backdrop } from "./bridge";
 
 export interface Settings {
   opacity: number;
   alwaysOnTop: boolean;
   excludeFromCapture: boolean;
+  backdrop: Backdrop;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +24,9 @@ export const DEFAULT_SETTINGS: Settings = {
   alwaysOnTop: true,
   // Nunca liga sozinho: um usuario que nao pediu isso acharia que o app sumiu.
   excludeFromCapture: false,
+  // Transparencia real e o unico fundo que funciona em qualquer maquina e com a
+  // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
+  backdrop: "transparent",
 };
 
 // Modo fantasma fica fora de propósito: iniciar nele deixaria o app sem

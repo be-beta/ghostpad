@@ -8,7 +8,9 @@
 
 import {
   appWindow,
-  onEffectsReport,
+  setBackdrop,
+  type Backdrop,
+  getEffectsReport,
   panicRecover,
   setAlwaysOnTop,
   setClickThrough,
@@ -43,6 +45,7 @@ const el = {
   chipOnTop: document.getElementById("chip-ontop") as HTMLButtonElement,
   chipGhost: document.getElementById("chip-ghost") as HTMLButtonElement,
   chipStealth: document.getElementById("chip-stealth") as HTMLButtonElement,
+  chipBackdrop: document.getElementById("chip-backdrop") as HTMLButtonElement,
   metricWords: document.getElementById("metric-words") as HTMLSpanElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
 };
@@ -50,11 +53,11 @@ const el = {
 let settings: Settings = { ...DEFAULT_SETTINGS };
 let ghostMode = false;
 let effects: EffectsReport = {
-  // Assume o pior ate o backend dizer o contrario: se o relatorio nunca chegar,
-  // o app fica legivel (fundo solido) em vez de transparente e ilegivel.
-  acrylic: false,
+  // Assume o pior ate o backend responder: recursos ficam desabilitados em vez
+  // de prometer algo que talvez nao funcione.
   roundedCorners: false,
   captureExclusionAvailable: false,
+  panicShortcut: null,
 };
 
 // --- Feedback --------------------------------------------------------------
@@ -112,7 +115,10 @@ async function toggleGhost(force?: boolean): Promise<void> {
     ghostMode = next;
     el.chipGhost.dataset.active = String(next);
     el.body.dataset.ghost = String(next);
-    toast(next ? "Modo fantasma — Ctrl+Alt+G traz de volta" : "Modo fantasma desligado");
+    const exit = effects.panicShortcut
+      ? `${effects.panicShortcut} traz de volta`
+      : "clique no icone da barra de tarefas para voltar";
+    toast(next ? `Modo fantasma — ${exit}` : "Modo fantasma desligado");
   } catch (error) {
     toast(`Falhou: ${error}`);
   }
@@ -137,6 +143,37 @@ async function toggleStealth(force?: boolean): Promise<void> {
     settings.excludeFromCapture = false;
     toast(`Nao foi possivel ocultar — voce APARECE na gravacao (${error})`);
   }
+}
+
+// --- Fundo -----------------------------------------------------------------
+
+const BACKDROP_ORDER: Backdrop[] = ["transparent", "blur", "acrylic"];
+const BACKDROP_LABEL: Record<Backdrop, string> = {
+  transparent: "Transparente",
+  blur: "Desfoque",
+  acrylic: "Acrylic",
+};
+
+async function applyBackdrop(kind: Backdrop, announce: boolean): Promise<void> {
+  try {
+    await setBackdrop(kind);
+    settings.backdrop = kind;
+    el.chipBackdrop.textContent = BACKDROP_LABEL[kind];
+    if (announce) {
+      // O aviso do acrylic existe porque o comportamento surpreende: ele some
+      // justamente quando o usuario clica no app de baixo.
+      toast(kind === "acrylic" ? "Acrylic — fica solido quando a janela perde o foco" : `Fundo: ${BACKDROP_LABEL[kind]}`);
+      void saveSettings(settings);
+    }
+  } catch (error) {
+    if (announce) toast(`Fundo indisponivel: ${error}`);
+    if (kind !== "transparent") await applyBackdrop("transparent", false);
+  }
+}
+
+function cycleBackdrop(): void {
+  const next = BACKDROP_ORDER[(BACKDROP_ORDER.indexOf(settings.backdrop) + 1) % BACKDROP_ORDER.length];
+  void applyBackdrop(next, true);
 }
 
 // --- Metricas --------------------------------------------------------------
@@ -199,6 +236,13 @@ function handleKeydown(event: KeyboardEvent): void {
         void toggleStealth();
       }
       break;
+    case "b":
+    case "B":
+      if (event.shiftKey) {
+        event.preventDefault();
+        cycleBackdrop();
+      }
+      break;
     case "q":
     case "Q":
       event.preventDefault();
@@ -210,8 +254,13 @@ function handleKeydown(event: KeyboardEvent): void {
 // --- Ciclo de vida ---------------------------------------------------------
 
 async function closeApp(): Promise<void> {
-  await saveDraft(el.editor.value);
-  await saveSettings(settings);
+  // Salvar e tentativa; fechar e garantia. Uma falha de disco nao pode deixar o
+  // usuario preso numa janela que ignora o botao de fechar.
+  try {
+    await Promise.all([saveDraft(el.editor.value), saveSettings(settings)]);
+  } catch (error) {
+    console.error("[ghostpad] falha ao salvar antes de fechar", error);
+  }
   await appWindow.destroy();
 }
 
@@ -242,17 +291,15 @@ function wireEvents(): void {
   el.chipOnTop.addEventListener("click", () => void toggleAlwaysOnTop());
   el.chipGhost.addEventListener("click", () => void toggleGhost());
   el.chipStealth.addEventListener("click", () => void toggleStealth());
+  el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
 
   window.addEventListener("keydown", handleKeydown);
 
-  // Rede de seguranca do frontend: o backend ja desfaz os estados no resgate,
-  // mas a UI precisa refletir isso ou os chips ficam mentindo.
+  // Voltar para a janela (barra de tarefas, Alt+Tab, resgate) e sinal claro de
+  // que o usuario quer interagir com ela. Desliga o modo fantasma de verdade no
+  // backend — antes so a UI mudava e os cliques continuavam atravessando.
   window.addEventListener("focus", () => {
-    if (ghostMode) {
-      ghostMode = false;
-      el.chipGhost.dataset.active = "false";
-      el.body.dataset.ghost = "false";
-    }
+    if (ghostMode) void toggleGhost(false);
   });
 
   void appWindow.onCloseRequested(async (event) => {
@@ -262,19 +309,21 @@ function wireEvents(): void {
 }
 
 async function boot(): Promise<void> {
-  void onEffectsReport((report) => {
-    effects = report;
-    el.body.dataset.acrylic = String(report.acrylic);
-    if (!report.captureExclusionAvailable) {
-      el.chipStealth.disabled = true;
-      el.chipStealth.title = "Indisponivel nesta versao do Windows";
-    }
-  });
+  try {
+    effects = await getEffectsReport();
+  } catch {
+    // Mantem o fallback conservador definido na declaracao.
+  }
+  if (!effects.captureExclusionAvailable) {
+    el.chipStealth.disabled = true;
+    el.chipStealth.title = "Indisponivel nesta versao do Windows";
+  }
 
   await initStores();
   settings = await loadSettings();
 
   applyOpacity(settings.opacity);
+  await applyBackdrop(settings.backdrop, false);
   el.editor.value = await loadDraft();
   updateMetrics();
 

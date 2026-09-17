@@ -1,7 +1,7 @@
 /* GhostPad - camada visual
  *
- * Regra que organiza todo este arquivo: o desfoque NAO esta aqui. Ele vem do
- * acrylic do DWM, aplicado no Rust. O CSS cuida apenas de escurecer, arredondar
+ * Regra que organiza todo este arquivo: o desfoque NAO esta aqui. Quando existe,
+ * ele vem do DWM, aplicado no Rust. O CSS cuida apenas de escurecer, arredondar
  * e manter o texto legivel sobre um fundo que pode ser qualquer coisa.
  */
 
@@ -28,7 +28,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  /* Fundo transparente e obrigatorio: e por aqui que o acrylic aparece. */
+  /* Fundo transparente e obrigatorio: e por aqui que o app de baixo aparece. */
   background: transparent;
   color: var(--gp-text);
   font-family: var(--gp-font);
@@ -36,7 +36,8 @@ body {
   user-select: none;
 }
 
-/* Camada de escurecimento sobre o acrylic. */
+/* Camada de escurecimento. A opacidade do usuario mexe aqui, nunca no efeito
+   nativo: animar CSS nao pisca, reaplicar efeito do DWM sim. */
 .gp-backdrop {
   position: fixed;
   inset: 0;
@@ -44,12 +45,6 @@ body {
   background: rgba(var(--gp-bg), var(--gp-opacity));
   transition: background-color 120ms var(--gp-ease);
   pointer-events: none;
-}
-
-/* Fallback: se o acrylic nao pegou, transparencia vira texto ilegivel sobre o
-   app de baixo. Melhor entregar um fundo solido do que um efeito quebrado. */
-body[data-acrylic="false"] {
-  --gp-opacity: 0.97;
 }
 
 .gp-shell {

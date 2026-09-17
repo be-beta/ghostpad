@@ -41,51 +41,58 @@ compila. Ao atualizar o Tauri, rode `cargo tree -i windows` e espelhe a versão.
 
 ## 3. Camada visual
 
-### 3.1 O desfoque não é CSS **[D]**
+### 3.1 O fundo padrão é transparência real, não desfoque **[D]**
 
-O rascunho previa `backdrop-filter: blur()` no container. **Isso não funciona.**
-Dentro do WebView2, `backdrop-filter` só enxerga o conteúdo da própria página —
-ele não tem acesso ao que o DWM desenhou atrás da janela. O resultado seria o
-app de baixo aparecendo perfeitamente nítido.
+*Revisado após o primeiro teste em máquina real.*
 
-O desfoque real vem do sistema operacional, via `window_vibrancy::apply_acrylic`
-no backend Rust.
+O rascunho previa `backdrop-filter: blur()` em CSS. Isso não funciona: dentro do
+WebView2 ele só enxerga a própria página, nunca o app de baixo.
 
-**Acrylic, não Mica.** Mica borra o *wallpaper*, não as janelas de baixo — ou
-seja, é inútil para o caso de uso do GhostPad, que é sobrepor conteúdo a outro
-aplicativo.
+A primeira implementação usou o acrylic do DWM (`window_vibrancy::apply_acrylic`).
+No teste em Windows 11 25H2 (build 26200) a janela ficou **completamente
+sólida**. A investigação, com capturas sobre um fundo listrado de alto contraste,
+mostrou:
 
-### 3.2 Opacidade é CSS, o blur é nativo **[D]**
+| Fundo | Resultado |
+|---|---|
+| Sem efeito nativo | **transparente de verdade** |
+| Acrylic (`DWMSBT_TRANSIENTWINDOW`) | sólido, mesmo com a API retornando sucesso |
+| Blur legado (`ACCENT_ENABLE_BLURBEHIND`) | sólido, mesmo com a API retornando sucesso |
 
-O acrylic é aplicado **uma única vez**, com tint quase transparente
-`(18, 18, 18, 10)`. O controle de opacidade do usuário mexe numa camada CSS por
-cima (`.gp-backdrop`), não no efeito nativo.
+Transparência do sistema ligada, economia de energia desligada, sessão local.
+A causa exata na máquina não foi isolada — e isso já é a conclusão de produto:
 
-Motivo: reaplicar acrylic a cada passo de `Ctrl+]` causaria flicker visível.
-Uma camada CSS anima a 60fps sem piscar. O blur permanece constante; só o
-escurecimento varia.
+- **O retorno da API não prova que o efeito aparece.** Não dá para detectar a
+  falha e cair para outro modo automaticamente.
+- **O acrylic do Windows 11 vira cor sólida quando a janela perde o foco**, por
+  design. Uma sobreposição passa a maior parte do tempo sem foco — o usuário
+  está clicando no app de baixo.
 
-### 3.3 Cantos arredondados são nativos **[D]**
+Decisão: **transparência real é o padrão**, porque é o único modo que funciona
+em qualquer máquina e com a janela sem foco. Desfoque (`blur`) e `acrylic` ficam
+disponíveis como escolha explícita (`Ctrl+Shift+B`), e o acrylic avisa ao ser
+ativado que some sem foco.
 
-O backdrop do acrylic é retangular. Um `border-radius: 16px` só em CSS deixaria
-os cantos do desfoque aparecendo por fora da caixa arredondada.
+Desfoque confiável e independente do foco fica registrado como pesquisa futura
+(por exemplo, capturar a região atrás da janela e desfocar no próprio app).
 
-A janela é arredondada de verdade via `DwmSetWindowAttribute` com
-`DWMWA_WINDOW_CORNER_PREFERENCE = DWMWCP_ROUND`, e aí o acrylic acompanha a
-região. O CSS mantém o `border-radius` para o conteúdo interno.
+### 3.2 Opacidade é CSS, nunca o efeito nativo
 
-*Windows 10 não tem esse atributo.* A chamada falha e é ignorada — a janela fica
-com cantos retos, o app continua funcionando.
+O efeito nativo, quando ligado, usa tint quase transparente `(18, 18, 18, 10)`.
+O controle de opacidade mexe numa camada CSS por cima (`.gp-backdrop`), que
+anima a 60fps sem piscar. Reaplicar o efeito do DWM a cada `Ctrl+]` piscaria.
 
-### 3.4 Degradação graciosa
+### 3.3 Cantos arredondados são nativos
 
-`apply_startup_effects()` devolve um `EffectsReport` que diz o que realmente
-pegou na máquina do usuário, e emite isso ao frontend no evento
-`ghostpad://effects-report`.
+`DwmSetWindowAttribute` com `DWMWA_WINDOW_CORNER_PREFERENCE = DWMWCP_ROUND`, para
+o fundo nativo acompanhar a forma. No Windows 10 a chamada falha e é ignorada.
 
-O frontend assume o pior até receber o relatório. Se o acrylic falhou, ele muda
-para um fundo praticamente sólido (`--gp-opacity: 0.97`) — porque uma janela
-transparente **sem** desfoque deixa o texto ilegível sobre o app de baixo.
+### 3.4 Relatório de capacidades
+
+`get_effects_report` devolve o que foi possível verificar: cantos, exclusão de
+captura e o atalho de resgate efetivamente registrado. É consultado pelo
+frontend como comando, não emitido como evento — o setup do Rust roda antes de o
+frontend montar, e o evento se perdia.
 
 ### 3.5 Legibilidade
 
@@ -158,15 +165,23 @@ trabalha sobre a `work_area` (respeita a barra de tarefas onde quer que ela
 esteja) e converte a margem por `scale_factor()` — senão a janela escorrega em
 telas com escala diferente de 100%.
 
-### 5.2 Atalho de resgate — `Ctrl+Alt+G` **[D]**
+### 5.2 Atalho de resgate com alternativas **[D]**
 
-Registrado **no backend**, globalmente. Ausente no rascunho e não é opcional:
-o GhostPad pode estar simultaneamente em modo fantasma, oculto de captura e
-posicionado fora da área visível. Nesse estado o frontend está inalcançável,
-então a única saída confiável precisa viver fora dele.
+Registrado **no backend**, globalmente. O GhostPad pode estar simultaneamente em
+modo fantasma, oculto de captura e fora da área visível; nesse estado o frontend
+está inalcançável.
 
-`panic_recover` desfaz tudo: desliga fantasma, desliga o modo oculto, mostra,
-restaura, traz ao topo, centraliza no monitor atual e devolve o foco.
+No primeiro teste, `Ctrl+Alt+G` já estava tomado pelo **Google Drive** (busca de
+arquivos). Para lançamento público isso é regra, não exceção: atalhos globais
+são disputados. O backend tenta, em ordem, e usa o primeiro livre:
+
+1. `Ctrl+Alt+G`
+2. `Ctrl+Alt+Shift+G`
+3. `Ctrl+Alt+Shift+F12`
+
+O atalho registrado vai no relatório de capacidades e a UI mostra o **atalho
+real** nos avisos. Se nenhum estiver livre, o aviso orienta a voltar pela barra
+de tarefas. Tornar o atalho configurável pelo usuário entra na Fase 2.
 
 ---
 
@@ -243,6 +258,7 @@ depois o que protege o trabalho, por último os modos especializados.
 ### Fase 2 — Presença e posicionamento
 
 - Modo fantasma completo, com atalho global de saída
+- Atalhos globais configuráveis pelo usuário (resgate e invocação)
 - **Fade por inatividade** — clareia após alguns segundos sem digitar, volta
   ao receber foco ou movimento do mouse; desligável
 - **Snap de metade de tela**, além dos cantos
@@ -284,9 +300,12 @@ depois o que protege o trabalho, por último os modos especializados.
 | `Ctrl+Shift+H` | Ocultar de gravações | local | 0 |
 | `Ctrl+Alt+1..5` | Snap de canto | local | 0 |
 | `Ctrl+Q` | Fechar | local | 0 |
-| **`Ctrl+Alt+G`** | **Resgate** | **global** | 0 |
+| `Ctrl+Shift+B` | Alterna o fundo (transparente, desfoque, acrylic) | local | 0 |
+| **`Ctrl+Alt+G`** ¹ | **Resgate** | **global** | 0 |
 | `Ctrl+Alt+Space` | Invocar / focar | global | 1 |
 | `Ctrl+Shift+Enter` | Copiar tudo e limpar | local | 1 |
 | `Ctrl+/` | Painel de atalhos | local | 1 |
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+1..9` | Trocar de nota | local | 5 |
+
+¹ Se ocupado, cai para `Ctrl+Alt+Shift+G` e depois `Ctrl+Alt+Shift+F12`.

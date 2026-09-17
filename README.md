@@ -13,7 +13,7 @@ apareça no vídeo.
 ## Recursos
 
 - **Sempre no topo**, sem barra de título nem bordas
-- **Translucidez com desfoque real** do conteúdo atrás (acrylic do DWM)
+- **Transparência real** sobre o app de baixo, com desfoque opcional
 - **Opacidade ajustável** por teclado, em tempo real
 - **Modo fantasma** — o mouse atravessa a janela
 - **Invisível em gravações** — OBS, Zoom, Teams e Meet não capturam a janela
@@ -29,11 +29,13 @@ apareça no vídeo.
 | `Ctrl+Shift+G` | Modo fantasma |
 | `Ctrl+Shift+H` | Ocultar de gravações |
 | `Ctrl+Alt+1..5` | Encaixa nos cantos |
+| `Ctrl+Shift+B` | Alterna o fundo: transparente, desfoque, acrylic |
 | `Ctrl+Q` | Fecha |
 | `Ctrl+Alt+G` | **Resgate** — desfaz todos os modos e traz a janela de volta |
 
 O resgate é global: funciona mesmo com a janela em modo fantasma, oculta ou
-fora da área visível.
+fora da área visível. Se outro programa já usar `Ctrl+Alt+G`, o GhostPad passa
+para `Ctrl+Alt+Shift+G` e mostra o atalho ativo nos avisos.
 
 ## Requisitos de desenvolvimento
 

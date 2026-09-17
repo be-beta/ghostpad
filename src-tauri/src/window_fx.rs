@@ -1,19 +1,20 @@
 //! Efeitos de janela especificos do Windows.
 //!
-//! Tres coisas acontecem aqui e nenhuma delas e possivel via CSS:
+//! Tres responsabilidades, nenhuma possivel via CSS:
 //!
-//! 1. Acrylic - o desfoque real do que esta ATRAS da janela. `backdrop-filter`
-//!    do WebView2 so enxerga o conteudo da propria pagina, entao o blur precisa
-//!    vir do DWM. Mica nao serve: ele borra o wallpaper, nao as janelas de baixo.
-//! 2. Cantos arredondados nativos - o backdrop do acrylic e retangular. Sem
-//!    isso, um `border-radius` em CSS deixa os cantos do blur aparecendo.
-//! 3. Display affinity - esconde a janela de softwares de captura.
-//!
-//! Tudo aqui degrada em silencio: se um efeito nao existe na versao de Windows
-//! do usuario, o app continua funcionando com uma aparencia mais simples.
+//! 1. Fundo da janela (backdrop). O padrao e transparencia real: o WebView2 fica
+//!    transparente e uma camada CSS escurece por cima. Desfoque nativo (acrylic
+//!    ou blur do DWM) e OPCIONAL, nunca o padrao, porque nao e confiavel:
+//!    - o acrylic do Windows 11 vira cor solida quando a janela perde o foco, e
+//!      uma sobreposicao passa a maior parte do tempo sem foco;
+//!    - em algumas maquinas as APIs retornam sucesso e mesmo assim pintam um
+//!      fundo opaco, entao o retorno da chamada nao prova que o efeito aparece.
+//!    `backdrop-filter` do CSS nao resolve: so enxerga a propria pagina.
+//! 2. Cantos arredondados nativos, para o backdrop acompanhar o border-radius.
+//! 3. Display affinity, que esconde a janela de softwares de captura.
 
-use serde::Serialize;
-use tauri::WebviewWindow;
+use serde::{Deserialize, Serialize};
+use tauri::{State, WebviewWindow};
 
 #[cfg(target_os = "windows")]
 use windows::Win32::{
@@ -25,28 +26,36 @@ use windows::Win32::{
     UI::WindowsAndMessaging::{SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE, WDA_NONE},
 };
 
-/// O que realmente pegou na maquina do usuario. O frontend usa isso para
-/// escolher entre o visual translucido e o fallback solido, e para desabilitar
-/// controles de recursos indisponiveis em vez de deixa-los falhar em silencio.
+/// Capacidades que conseguimos verificar de fato na maquina do usuario. O
+/// frontend desabilita controles de recursos indisponiveis em vez de deixa-los
+/// falhar em silencio.
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct EffectsReport {
-    pub acrylic: bool,
     pub rounded_corners: bool,
     pub capture_exclusion_available: bool,
+    /// Atalho de resgate efetivamente registrado, ou `None` se todos estavam ocupados.
+    pub panic_shortcut: Option<String>,
 }
 
-/// Aplica o conjunto inicial de efeitos e relata o que funcionou.
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Backdrop {
+    /// Transparencia real, sem desfoque. Funciona em qualquer maquina.
+    Transparent,
+    /// Acrylic do Windows 11. Some quando a janela perde o foco.
+    Acrylic,
+    /// Blur legado do DWM. Mantem-se sem foco, mas pode pesar ao arrastar.
+    Blur,
+}
+
+/// Aplica os efeitos iniciais e relata o que foi possivel verificar.
 pub fn apply_startup_effects(window: &WebviewWindow) -> EffectsReport {
     #[allow(unused_mut)]
     let mut report = EffectsReport::default();
 
     #[cfg(target_os = "windows")]
     {
-        // Tint quase transparente de proposito: quem controla o quanto o fundo
-        // escurece e uma camada CSS por cima. Reaplicar acrylic a cada ajuste de
-        // opacidade causaria flicker; uma camada CSS anima a 60fps sem piscar.
-        report.acrylic = window_vibrancy::apply_acrylic(window, Some((18, 18, 18, 10))).is_ok();
         report.rounded_corners = set_rounded_corners(window, true).is_ok();
         // Probe real: liga e desliga para saber se a API responde nesta maquina,
         // em vez de assumir pela versao do Windows.
@@ -92,6 +101,35 @@ fn set_exclude_from_capture_inner(window: &WebviewWindow, enable: bool) -> Resul
 // ---------------------------------------------------------------------------
 // Comandos expostos ao frontend
 // ---------------------------------------------------------------------------
+
+/// Troca o fundo da janela. Sempre limpa os dois efeitos antes, porque aplicar
+/// um sobre o outro deixa o DWM num estado indefinido.
+#[tauri::command]
+pub fn set_backdrop(window: WebviewWindow, kind: Backdrop) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        let _ = window_vibrancy::clear_acrylic(&window);
+        let _ = window_vibrancy::clear_blur(&window);
+        // Tint quase transparente: quem escurece e a camada CSS, que anima sem
+        // flicker. O efeito nativo so fornece o desfoque.
+        let tint = Some((18, 18, 18, 10));
+        match kind {
+            Backdrop::Transparent => Ok(()),
+            Backdrop::Acrylic => window_vibrancy::apply_acrylic(&window, tint).map_err(|e| e.to_string()),
+            Backdrop::Blur => window_vibrancy::apply_blur(&window, tint).map_err(|e| e.to_string()),
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (&window, kind);
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub fn get_effects_report(report: State<'_, EffectsReport>) -> EffectsReport {
+    report.inner().clone()
+}
 
 /// Invisibilidade em gravacoes (OBS, Zoom, Teams, Meet).
 ///

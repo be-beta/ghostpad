@@ -7,7 +7,6 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { listen } from "@tauri-apps/api/event";
 
 export type Corner =
   | "top-left"
@@ -17,10 +16,13 @@ export type Corner =
   | "top-center"
   | "center";
 
+export type Backdrop = "transparent" | "acrylic" | "blur";
+
 export interface EffectsReport {
-  acrylic: boolean;
   roundedCorners: boolean;
   captureExclusionAvailable: boolean;
+  /** Atalho de resgate registrado de fato, ou null se todos estavam ocupados. */
+  panicShortcut: string | null;
 }
 
 export const appWindow = getCurrentWindow();
@@ -37,12 +39,9 @@ export const setExcludeFromCapture = (enable: boolean) =>
 export const snapToCorner = (corner: Corner, margin = 12) =>
   invoke<void>("snap_to_corner", { corner, margin });
 
+export const setBackdrop = (kind: Backdrop) => invoke<void>("set_backdrop", { kind });
+
 export const panicRecover = () => invoke<void>("panic_recover");
 
-/**
- * O backend emite o relatorio no setup, que pode acontecer antes do frontend
- * montar. O `listen` sozinho perderia esse evento, entao o chamador trata o
- * caso de nunca receber nada assumindo o fallback conservador.
- */
-export const onEffectsReport = (handler: (report: EffectsReport) => void) =>
-  listen<EffectsReport>("ghostpad://effects-report", (event) => handler(event.payload));
+/** Consulta o que realmente pegou na maquina. Pode ser chamado a qualquer momento. */
+export const getEffectsReport = () => invoke<EffectsReport>("get_effects_report");

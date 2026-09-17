@@ -1,18 +1,29 @@
 mod window_fx;
 
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 #[cfg(desktop)]
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
-/// Atalho de resgate, registrado globalmente no backend em vez de no frontend.
+/// Atalhos de resgate, em ordem de preferencia.
 ///
-/// Motivo: o GhostPad pode estar em modo fantasma, escondido de captura ou fora
-/// da area visivel. Nesses estados o frontend pode estar inalcancavel, entao a
-/// unica saida confiavel precisa viver fora dele.
+/// Registrados globalmente no backend: o GhostPad pode estar em modo fantasma,
+/// oculto de captura ou fora da area visivel, e nesses estados o frontend fica
+/// inalcancavel. Ha alternativas porque atalhos globais sao disputados — o
+/// Google Drive, por exemplo, usa Ctrl+Alt+G. Vale o primeiro que estiver livre.
 #[cfg(desktop)]
-fn panic_shortcut() -> Shortcut {
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyG)
+fn panic_candidates() -> [(Shortcut, &'static str); 3] {
+    [
+        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyG), "Ctrl+Alt+G"),
+        (
+            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::KeyG),
+            "Ctrl+Alt+Shift+G",
+        ),
+        (
+            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::F12),
+            "Ctrl+Alt+Shift+F12",
+        ),
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -30,7 +41,7 @@ pub fn run() {
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
-                    if shortcut == &panic_shortcut() {
+                    if panic_candidates().iter().any(|(c, _)| c == shortcut) {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window_fx::panic_recover(window);
                         }
@@ -42,6 +53,8 @@ pub fn run() {
 
     builder
         .invoke_handler(tauri::generate_handler![
+            window_fx::get_effects_report,
+            window_fx::set_backdrop,
             window_fx::set_exclude_from_capture,
             window_fx::set_click_through,
             window_fx::set_always_on_top,
@@ -53,22 +66,22 @@ pub fn run() {
                 .get_webview_window("main")
                 .expect("janela 'main' nao encontrada");
 
-            let report = window_fx::apply_startup_effects(&window);
-
-            // O frontend precisa saber o que pegou antes de decidir como pintar.
-            // Se o acrylic falhou, ele cai para um fundo solido legivel em vez de
-            // mostrar texto sobre uma janela transparente e ilegivel.
-            let _ = window.emit("ghostpad://effects-report", report.clone());
-            app.manage(report);
+            #[allow(unused_mut)]
+            let mut report = window_fx::apply_startup_effects(&window);
 
             #[cfg(desktop)]
             {
                 use tauri_plugin_global_shortcut::GlobalShortcutExt;
-                // Falha aqui e tolerada: outro app pode ja ter tomado o atalho.
-                if let Err(e) = app.global_shortcut().register(panic_shortcut()) {
-                    eprintln!("[ghostpad] atalho de resgate indisponivel: {e}");
-                }
+                report.panic_shortcut = panic_candidates().into_iter().find_map(|(shortcut, label)| {
+                    app.global_shortcut().register(shortcut).ok().map(|_| label.to_string())
+                });
             }
+
+            eprintln!("[ghostpad] efeitos: {report:?}");
+
+            // Guardado como estado, nao emitido como evento: o setup roda antes de
+            // o frontend montar, e um evento emitido aqui se perderia.
+            app.manage(report);
 
             Ok(())
         })
