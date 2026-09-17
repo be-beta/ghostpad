@@ -1,3 +1,4 @@
+mod notes;
 mod window_fx;
 
 use tauri::Manager;
@@ -29,7 +30,23 @@ fn panic_candidates() -> [(Shortcut, &'static str); 3] {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+
+    // Precisa ser o primeiro plugin. Uma segunda execucao nao abre outra janela:
+    // traz a existente para frente. Duas instancias gravando o mesmo arquivo de
+    // texto era uma das formas de perder o que o usuario acabou de escrever.
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }));
+    }
+
+    builder = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build());
 
@@ -52,7 +69,10 @@ pub fn run() {
     }
 
     builder
+        .manage(notes::NotesLock::default())
         .invoke_handler(tauri::generate_handler![
+            notes::load_draft,
+            notes::save_draft,
             window_fx::get_effects_report,
             window_fx::set_backdrop,
             window_fx::set_exclude_from_capture,

@@ -206,8 +206,9 @@ pub fn snap_to_corner(window: WebviewWindow, corner: String, margin: u32) -> Res
 
 /// Traz a janela de volta ao alcance do usuario.
 ///
-/// Rede de seguranca para quando o GhostPad ficar invisivel, fora da tela ou em
-/// modo fantasma e o usuario nao souber mais como recupera-lo.
+/// Rede de seguranca para quando o GhostPad ficar em modo fantasma, oculto ou
+/// fora da tela. Preserva a posicao escolhida pelo usuario: so recentraliza se a
+/// janela estiver de fato fora de qualquer monitor (ex.: monitor desconectado).
 #[tauri::command]
 pub fn panic_recover(window: WebviewWindow) -> Result<(), String> {
     let _ = window.set_ignore_cursor_events(false);
@@ -216,6 +217,37 @@ pub fn panic_recover(window: WebviewWindow) -> Result<(), String> {
     let _ = window.show();
     let _ = window.unminimize();
     let _ = window.set_always_on_top(true);
-    let _ = snap_to_corner(window.clone(), "center".into(), 0);
+    if !is_reachable(&window) {
+        let _ = snap_to_corner(window.clone(), "center".into(), 0);
+    }
     window.set_focus().map_err(|e| e.to_string())
+}
+
+/// A janela conta como alcancavel se um pedaco razoavel dela (onde da para
+/// agarrar e arrastar) estiver dentro da area util de algum monitor.
+fn is_reachable(window: &WebviewWindow) -> bool {
+    const MIN_VISIBLE: i32 = 80;
+
+    let (Ok(pos), Ok(size), Ok(monitors)) = (
+        window.outer_position(),
+        window.outer_size(),
+        window.available_monitors(),
+    ) else {
+        return false;
+    };
+
+    let (left, top) = (pos.x, pos.y);
+    let (right, bottom) = (pos.x + size.width as i32, pos.y + size.height as i32);
+
+    monitors.iter().any(|monitor| {
+        let area = monitor.work_area();
+        let a_left = area.position.x;
+        let a_top = area.position.y;
+        let a_right = a_left + area.size.width as i32;
+        let a_bottom = a_top + area.size.height as i32;
+
+        let overlap_w = right.min(a_right) - left.max(a_left);
+        let overlap_h = bottom.min(a_bottom) - top.max(a_top);
+        overlap_w >= MIN_VISIBLE && overlap_h >= MIN_VISIBLE
+    })
 }

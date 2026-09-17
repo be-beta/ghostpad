@@ -24,7 +24,7 @@ apareça no vídeo.
 
 | Atalho | Ação |
 |---|---|
-| `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade |
+| `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+P` | Alterna sempre-no-topo |
 | `Ctrl+Shift+G` | Modo fantasma |
 | `Ctrl+Shift+H` | Ocultar de gravações |

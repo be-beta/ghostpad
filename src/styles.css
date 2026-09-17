@@ -61,8 +61,32 @@ body {
 /* --- Faixa de arraste ------------------------------------------------------ */
 
 .gp-draghandle {
-  height: 10px;
+  position: relative;
+  height: 14px;
   flex: 0 0 auto;
+  cursor: grab;
+}
+
+/* Pilula centralizada que aparece ao passar o mouse pela faixa do topo: a
+   mesma convencao de "alca" usada em paineis moveis de sistemas moveis. */
+.gp-draghandle::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.28);
+  transform: translateX(-50%) scaleX(0.6);
+  opacity: 0;
+  transition: opacity 160ms var(--gp-ease), transform 160ms var(--gp-ease);
+  pointer-events: none;
+}
+
+.gp-draghandle:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scaleX(1);
 }
 
 /* --- Controles flutuantes -------------------------------------------------- */
@@ -103,6 +127,21 @@ body {
 .gp-btn:hover {
   background: rgba(255, 255, 255, 0.16);
   color: var(--gp-text);
+}
+
+.gp-btn--grip {
+  cursor: grab;
+}
+
+.gp-btn--grip:active {
+  cursor: grabbing;
+}
+
+.gp-btn--grip svg circle {
+  fill: currentColor;
+  stroke: none;
+  /* O SVG nao pode capturar o clique, senao o arraste nao comeca. */
+  pointer-events: none;
 }
 
 .gp-btn--danger:hover {

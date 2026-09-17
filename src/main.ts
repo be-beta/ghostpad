@@ -30,9 +30,10 @@ import {
   type Settings,
 } from "./core/store";
 
-const OPACITY_MIN = 0.15;
+const OPACITY_MIN = 0.2;
 const OPACITY_MAX = 1;
-const OPACITY_STEP = 0.05;
+// 10%: com 5% eram cliques demais para chegar ao nivel desejado.
+const OPACITY_STEP = 0.1;
 
 const el = {
   body: document.body,
@@ -82,7 +83,9 @@ function applyOpacity(value: number): void {
 }
 
 function nudgeOpacity(delta: number): void {
-  applyOpacity(settings.opacity + delta);
+  // Arredonda para a grade de 10%: valores salvos fora dela (ex.: 65%) entram
+  // no ritmo no primeiro ajuste em vez de ficarem sempre "quebrados".
+  applyOpacity(Math.round((settings.opacity + delta) * 10) / 10);
   void saveSettings(settings);
 }
 
@@ -246,14 +249,19 @@ function handleKeydown(event: KeyboardEvent): void {
     case "q":
     case "Q":
       event.preventDefault();
-      void closeApp();
+      if (!event.repeat) void closeApp();
       break;
   }
 }
 
 // --- Ciclo de vida ---------------------------------------------------------
 
+let closing = false;
+
 async function closeApp(): Promise<void> {
+  // Segurar Ctrl+Q repete o keydown e disparava varios fechamentos concorrentes.
+  if (closing) return;
+  closing = true;
   // Salvar e tentativa; fechar e garantia. Uma falha de disco nao pode deixar o
   // usuario preso numa janela que ignora o botao de fechar.
   try {
@@ -266,8 +274,8 @@ async function closeApp(): Promise<void> {
 
 const persistDraft = debounceWithCeiling(
   (text: string) => void saveDraft(text),
-  600,
-  4000,
+  400,
+  2000,
 );
 
 function wireEvents(): void {

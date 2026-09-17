@@ -19,6 +19,15 @@
 
       <!-- Controles que so aparecem quando o mouse chega perto. -->
       <div class="gp-controls" id="controls">
+        <!-- Alca de arraste: sem barra de titulo, nada mais indica que a janela
+             pode ser movida. Arrastar por aqui e pela faixa do topo funciona igual. -->
+        <div class="gp-btn gp-btn--grip" data-tauri-drag-region title="Arraste para mover" aria-label="Mover janela">
+          <svg viewBox="0 0 24 24" aria-hidden="true" data-tauri-drag-region>
+            <circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" />
+            <circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" />
+            <circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" />
+          </svg>
+        </div>
         <button class="gp-btn" id="btn-minimize" title="Minimizar" aria-label="Minimizar">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
         </button>

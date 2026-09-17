@@ -189,24 +189,41 @@ de tarefas. Tornar o atalho configurável pelo usuário entra na Fase 2.
 
 `%APPDATA%/com.ghostpad.app/`
 
-| Arquivo | Conteúdo |
-|---|---|
-| `settings.json` | opacidade, always-on-top, modo oculto |
-| `draft.json` | o texto do usuário |
+| Arquivo | Conteúdo | Quem grava |
+|---|---|---|
+| `settings.json` | opacidade, topo, modo oculto, fundo | `tauri-plugin-store` |
+| `draft.txt` | o texto do usuário | `notes.rs`, direto |
+| `draft.bak.txt` | versão imediatamente anterior | `notes.rs` |
+| `draft.json` | formato antigo, lido só para migrar | — |
 
-**[D] Arquivos separados de propósito.** Se as preferências corromperem, o texto
-sobrevive. Perder a opacidade preferida é aborrecimento; perder a nota é perder
-trabalho.
+**Preferências e texto separados de propósito.** Se as preferências corromperem,
+o texto sobrevive.
 
-**[D] O rascunho original não previa persistência do texto** — só `config.json`.
-Para um bloco de notas, essa é a funcionalidade número um.
+### 6.1 O texto não usa o plugin de store **[D]**
 
-### Autosave com teto
+*Revisado após teste:* ao reabrir depois de um `Ctrl+Q`, apareceu um texto
+antigo. O plugin de store mantém uma cópia em memória e regrava o arquivo quando
+o processo sai; com mais de uma instância viva, uma cópia desatualizada pode
+sobrescrever o texto novo. A sequência exata não foi reproduzida, então a
+correção elimina a classe inteira do problema:
 
-`debounceWithCeiling(600ms, 4000ms)`. O debounce evita escrever a cada tecla; o
-teto existe porque, sob digitação contínua — exatamente o caso do ditado por
-voz — um debounce puro adiaria a gravação indefinidamente e uma queda levaria a
-sessão inteira junto.
+- **Escrita atômica no Rust** — grava num `.tmp`, força ao disco (`sync_all`),
+  guarda a versão anterior em `draft.bak.txt` e só então substitui. Uma queda no
+  meio deixa o arquivo anterior intacto, nunca um arquivo pela metade.
+- **Gravações serializadas** — fila no frontend e mutex no backend; uma
+  gravação antiga nunca termina depois de uma nova.
+- **Instância única** (`tauri-plugin-single-instance`) — abrir de novo traz a
+  janela existente para frente em vez de criar uma segunda.
+- **Fechamento sem reentrada** — segurar `Ctrl+Q` repetia o evento e disparava
+  vários fechamentos concorrentes.
+
+Leitura: `draft.txt`, senão `draft.bak.txt`, senão migra `draft.json`.
+
+### 6.2 Autosave com teto
+
+Debounce de 400ms com teto de 2s. O debounce evita gravar a cada tecla; o teto
+existe porque sob digitação contínua — exatamente o ditado por voz — um debounce
+puro adiaria a gravação indefinidamente.
 
 ---
 
@@ -294,7 +311,7 @@ depois o que protege o trabalho, por último os modos especializados.
 
 | Atalho | Ação | Escopo | Fase |
 |---|---|---|---|
-| `Ctrl+[` / `Ctrl+]` | Opacidade | local | 0 |
+| `Ctrl+[` / `Ctrl+]` | Opacidade, passos de 10% (20–100%, padrão 90%) | local | 0 |
 | `Ctrl+P` | Always-on-top | local | 0 |
 | `Ctrl+Shift+G` | Modo fantasma | local | 0 |
 | `Ctrl+Shift+H` | Ocultar de gravações | local | 0 |
