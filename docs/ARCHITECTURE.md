@@ -283,9 +283,9 @@ depois o que protege o trabalho, por último os modos especializados.
 
 | Fase | Entrega | Estado |
 |---|---|---|
-| 0 | Janela frameless, acrylic, always-on-top, drag, opacidade | **feito** |
-| 0.5 | Spike do `SetWindowDisplayAffinity` | **feito, a validar** |
-| 1 | Editor e captura instantânea | a fazer |
+| 0 | Janela frameless, transparência, always-on-top, drag, opacidade | **feito** |
+| 0.5 | Spike do `SetWindowDisplayAffinity` | **feito, validado no OBS** |
+| 1 | Editor e captura instantânea | **feito, em teste** |
 | 2 | Presença e posicionamento | parcial |
 | 3 | HUD e métricas | parcial |
 | 4 | Segurança do trabalho | a fazer |
@@ -294,16 +294,28 @@ depois o que protege o trabalho, por último os modos especializados.
 
 ### Fase 1 — Editor e captura instantânea
 
-- CodeMirror 6 substituindo o `<textarea>` (nada mais muda na casca)
-- Atalhos de edição do VS Code: mover/duplicar linhas, multi-cursor, `Tab`
-- **Invocação global** `Ctrl+Alt+Space` — mostra, foca e posiciona o cursor a
-  partir de qualquer app. Entra na Fase 1 por ser a funcionalidade que mais
-  reduz atrito: sem ela, começar a escrever ainda exige `Alt+Tab`.
-- **Copiar tudo e limpar** `Ctrl+Shift+Enter` — com desfazer disponível logo
-  após, para o caso de limpar por engano
-- **Colar sempre sem formatação**
-- **Painel de atalhos** `Ctrl+/` — única forma de descobrir recursos num app
-  sem menus
+- CodeMirror 6 (`src/editor/editor.ts`) substituindo o `<textarea>`
+- Atalhos de edição do VS Code: mover/duplicar linhas, `Ctrl+D`, `Alt+Clique`
+  para multi-cursor (o padrão do CodeMirror é `Ctrl+Clique`), `Tab`
+- Markdown discreto: títulos maiores, negrito/itálico renderizados, marcadores
+  esmaecidos; `Ctrl+B` / `Ctrl+I` alternam a formatação
+- Busca com `Ctrl+F`, com o painel no visual do app
+- **Invocação global** — `Ctrl+Alt+Space` (alternativas `Ctrl+Shift+Space`,
+  `Ctrl+Alt+Shift+Space`). Chama a janela, desliga o fantasma e foca o editor;
+  se a janela já está em foco, minimiza.
+- **Copiar tudo e limpar** `Ctrl+Shift+Enter` — só limpa se a cópia deu certo,
+  e a limpeza é desfazível com `Ctrl+Z`. `Ctrl+Shift+C` copia sem limpar.
+- **Colar sem formatação** — o CodeMirror só aceita texto puro; um filtro remove
+  espaço rígido e caracteres de largura zero vindos de páginas web
+- **Painel de atalhos** `Ctrl+/` ou o botão `?` na barra. Mostra os atalhos
+  globais que foram registrados de fato.
+
+**Conflitos removidos do keymap padrão do CodeMirror:** `Mod-[` e `Mod-]`
+(indentação → opacidade), `Mod-/` (comentar → painel), `Mod-i` (selecionar nó →
+itálico), `Mod-Alt-g`. Os atalhos do app rodam com `Prec.highest` antes de
+qualquer atalho do editor.
+
+**Fonte:** Inter Variable empacotada via `@fontsource-variable/inter`.
 
 ### Fase 2 — Presença e posicionamento
 
@@ -352,10 +364,14 @@ depois o que protege o trabalho, por último os modos especializados.
 | `Ctrl+Q` | Fechar | local | 0 |
 | `Ctrl+Shift+B` | Alterna o fundo (transparente, desfoque, acrylic) | local | 0 |
 | **`Ctrl+Alt+G`** ¹ | **Resgate** | **global** | 0 |
-| `Ctrl+Alt+Space` | Invocar / focar | global | 1 |
+| `Ctrl+Alt+Space` ² | Chamar / esconder | global | 1 |
+| `Ctrl+Shift+C` | Copiar tudo | local | 1 |
+| `Ctrl+B` / `Ctrl+I` | Negrito / itálico | local | 1 |
+| `Ctrl+F` | Buscar e substituir | local | 1 |
 | `Ctrl+Shift+Enter` | Copiar tudo e limpar | local | 1 |
 | `Ctrl+/` | Painel de atalhos | local | 1 |
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+1..9` | Trocar de nota | local | 5 |
 
 ¹ Se ocupado, cai para `Ctrl+Alt+Shift+G` e depois `Ctrl+Alt+Shift+F12`.
+² Se ocupado, cai para `Ctrl+Shift+Space` e depois `Ctrl+Alt+Shift+Space`.

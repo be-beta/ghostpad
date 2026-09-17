@@ -23,6 +23,8 @@ export interface EffectsReport {
   captureExclusionAvailable: boolean;
   /** Atalho de resgate registrado de fato, ou null se todos estavam ocupados. */
   panicShortcut: string | null;
+  /** Atalho de invocacao registrado de fato, ou null. */
+  summonShortcut: string | null;
 }
 
 export const appWindow = getCurrentWindow();

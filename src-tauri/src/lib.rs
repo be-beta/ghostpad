@@ -28,6 +28,31 @@ fn panic_candidates() -> [(Shortcut, &'static str); 3] {
     ]
 }
 
+/// Atalhos de invocacao, em ordem de preferencia. Mesma estrategia do resgate.
+#[cfg(desktop)]
+fn summon_candidates() -> [(Shortcut, &'static str); 3] {
+    [
+        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space), "Ctrl+Alt+Space"),
+        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space), "Ctrl+Shift+Space"),
+        (
+            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::Space),
+            "Ctrl+Alt+Shift+Space",
+        ),
+    ]
+}
+
+/// Registra o primeiro candidato livre e devolve o rotulo dele.
+#[cfg(desktop)]
+fn register_first_free<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    candidates: impl IntoIterator<Item = (Shortcut, &'static str)>,
+) -> Option<String> {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+    candidates
+        .into_iter()
+        .find_map(|(shortcut, label)| app.global_shortcut().register(shortcut).ok().map(|_| label.to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
@@ -59,10 +84,11 @@ pub fn run() {
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
+                    let Some(window) = app.get_webview_window("main") else { return };
                     if panic_candidates().iter().any(|(c, _)| c == shortcut) {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window_fx::panic_recover(window);
-                        }
+                        let _ = window_fx::panic_recover(window);
+                    } else if summon_candidates().iter().any(|(c, _)| c == shortcut) {
+                        window_fx::toggle_summon(window);
                     }
                 })
                 .build(),
@@ -100,10 +126,8 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
-                use tauri_plugin_global_shortcut::GlobalShortcutExt;
-                report.panic_shortcut = panic_candidates().into_iter().find_map(|(shortcut, label)| {
-                    app.global_shortcut().register(shortcut).ok().map(|_| label.to_string())
-                });
+                report.panic_shortcut = register_first_free(app.handle(), panic_candidates());
+                report.summon_shortcut = register_first_free(app.handle(), summon_candidates());
             }
 
             eprintln!("[ghostpad] efeitos: {report:?}");

@@ -36,6 +36,8 @@ pub struct EffectsReport {
     pub capture_exclusion_available: bool,
     /// Atalho de resgate efetivamente registrado, ou `None` se todos estavam ocupados.
     pub panic_shortcut: Option<String>,
+    /// Atalho de invocacao efetivamente registrado.
+    pub summon_shortcut: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
@@ -233,4 +235,27 @@ fn is_reachable(window: &WebviewWindow) -> bool {
         &monitors,
         crate::window_state::Geometry { x: pos.x, y: pos.y, width: size.width, height: size.height },
     )
+}
+
+/// Invocacao global: chama o GhostPad de qualquer app, pronto para digitar.
+///
+/// Alterna: se a janela ja esta em foco, minimiza e devolve a tela. Desliga o
+/// modo fantasma, porque invocar e sinal de que o usuario quer escrever agora.
+pub fn toggle_summon(window: WebviewWindow) {
+    use tauri::Emitter;
+
+    let visible = window.is_visible().unwrap_or(false);
+    let minimized = window.is_minimized().unwrap_or(false);
+    let focused = window.is_focused().unwrap_or(false);
+
+    if visible && !minimized && focused {
+        let _ = window.minimize();
+        return;
+    }
+
+    let _ = window.set_ignore_cursor_events(false);
+    let _ = window.show();
+    let _ = window.unminimize();
+    let _ = window.set_focus();
+    let _ = window.emit("ghostpad://summoned", ());
 }

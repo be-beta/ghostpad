@@ -40,24 +40,18 @@
       </div>
 
       <main class="gp-editor-wrap">
-        <textarea
-          id="editor"
-          class="gp-editor"
-          spellcheck="false"
-          placeholder="Escreva algo…"
-          aria-label="Editor"
-        ></textarea>
+        <div id="editor" class="gp-editor"></div>
       </main>
 
       <footer class="gp-status" id="status" data-drag>
         <div class="gp-status__group">
-          <button class="gp-chip" id="chip-ontop" data-active="true" title="Sempre visivel (Ctrl+P)">
+          <button class="gp-chip" id="chip-ontop" data-active="true" title="Sempre visível (Ctrl+P)">
             <span class="gp-chip__dot"></span>Topo
           </button>
-          <button class="gp-chip" id="chip-ghost" title="Modo fantasma - o mouse atravessa (Ctrl+Shift+G)">
+          <button class="gp-chip" id="chip-ghost" title="Modo fantasma: o mouse atravessa (Ctrl+Shift+G)">
             <span class="gp-chip__dot"></span>Fantasma
           </button>
-          <button class="gp-chip" id="chip-stealth" title="Invisivel em gravacoes (Ctrl+Shift+H)">
+          <button class="gp-chip" id="chip-stealth" title="Invisível em gravações (Ctrl+Shift+H)">
             <span class="gp-chip__dot"></span>Oculto
           </button>
         </div>
@@ -65,10 +59,14 @@
         <div class="gp-status__group gp-status__group--right">
           <button class="gp-chip" id="chip-backdrop" title="Fundo da janela (Ctrl+Shift+B)">Transparente</button>
           <span class="gp-metric" id="metric-words">0 palavras</span>
-          <span class="gp-metric gp-metric--dim" id="metric-opacity">85%</span>
+          <span class="gp-metric gp-metric--dim" id="metric-opacity">90%</span>
+          <button class="gp-chip gp-chip--icon" id="chip-help" title="Atalhos (Ctrl+/)" aria-label="Atalhos">?</button>
         </div>
       </footer>
     </div>
+
+    <!-- Painel de atalhos (Ctrl+/). Conteudo gerado em src/ui/shortcuts.ts. -->
+    <div class="gp-sheet" id="shortcuts" hidden></div>
 
     <!-- Alcas de redimensionamento. A borda nativa de uma janela sem moldura tem
          poucos pixels; estas ampliam a area sem mudar a aparencia. -->

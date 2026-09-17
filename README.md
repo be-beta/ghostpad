@@ -7,7 +7,7 @@ sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analis
 uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
 apareça no vídeo.
 
-> **Estado:** Fase 0 — comportamento de janela funcionando, editor provisório.
+> **Estado:** Fase 1 — editor CodeMirror e captura instantânea, em teste.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Recursos
@@ -18,12 +18,18 @@ apareça no vídeo.
 - **Modo fantasma** — o mouse atravessa a janela
 - **Invisível em gravações** — OBS, Zoom, Teams e Meet não capturam a janela
 - **Snap de cantos** consciente de multi-monitor e escala de tela
-- **Autosave** do texto
+- **Chamada instantânea** de qualquer app com `Ctrl+Alt+Space`
+- **Editor com atalhos do VS Code**: mover e duplicar linhas, multi-cursor
+- **Copiar tudo e limpar** para o ciclo de escrever prompts
+- **Autosave** do texto, com backup
 
 ## Atalhos
 
 | Atalho | Ação |
 |---|---|
+| `Ctrl+/` | Painel com todos os atalhos |
+| `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
+| `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+P` | Alterna sempre-no-topo |
 | `Ctrl+Shift+G` | Modo fantasma |
