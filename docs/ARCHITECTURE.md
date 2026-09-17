@@ -185,6 +185,38 @@ de tarefas. Tornar o atalho configurável pelo usuário entra na Fase 2.
 
 ---
 
+## 5.3 Mover, redimensionar e reabrir no mesmo lugar **[D]**
+
+*Revisado após teste.*
+
+**Arraste e redimensionamento são feitos à mão**, com `startDragging()` e
+`startResizeDragging()`, não com `data-tauri-drag-region`. O atributo não
+funcionou no botão de alça e, com duplo clique, maximizava a janela. A janela
+também é `maximizable: false`.
+
+- **Arrastar:** zona central do topo (pílula aparece no hover), alça de pontos
+  junto aos controles, e áreas vazias da barra de status.
+- **Redimensionar:** alças invisíveis de 8 px nas bordas e **18×18 px nos
+  cantos**. A borda nativa de uma janela sem moldura tem poucos pixels. A faixa
+  de arraste antes ocupava o topo inteiro e engolia a borda superior; agora só a
+  zona central arrasta.
+- Os controles ficam afastados 22 px do canto para não disputar clique com a
+  alça de canto.
+
+**Posição e tamanho são restaurados** (`window_state.rs`), no Rust e antes de a
+janela aparecer (`visible: false` até restaurar), sem salto visual. A janela
+nunca depende do frontend para ficar visível.
+
+Proteções, porque opacidade e posição salvas podem esconder o app:
+
+- Geometria que não deixa 80×80 px visíveis em algum monitor é descartada e a
+  janela abre centralizada.
+- **Revelação ao abrir:** a janela aparece opaca e esmaece em 0,7 s até a
+  opacidade salva. Quem fechou com 20% num canto sobre um fundo parecido sempre
+  vê onde o app abriu, sem perder a preferência.
+
+---
+
 ## 6. Persistência
 
 `%APPDATA%/com.ghostpad.app/`
@@ -195,6 +227,7 @@ de tarefas. Tornar o atalho configurável pelo usuário entra na Fase 2.
 | `draft.txt` | o texto do usuário | `notes.rs`, direto |
 | `draft.bak.txt` | versão imediatamente anterior | `notes.rs` |
 | `draft.json` | formato antigo, lido só para migrar | — |
+| `window.json` | posição e tamanho da janela | `window_state.rs` |
 
 **Preferências e texto separados de propósito.** Se as preferências corromperem,
 o texto sobrevive.

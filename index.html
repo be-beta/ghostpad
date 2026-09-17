@@ -9,20 +9,23 @@
   </head>
 
   <body>
-    <!-- Camada que escurece sobre o acrylic do DWM. A opacidade do usuario mexe
-         aqui, e nao no efeito nativo: animar CSS nao pisca, reaplicar acrylic sim. -->
+    <!-- Camada que escurece o que esta atras da janela. A opacidade do usuario
+         mexe aqui: animar CSS nao pisca. -->
     <div class="gp-backdrop" id="backdrop"></div>
 
     <div class="gp-shell">
-      <!-- Faixa de arraste. Fina e invisivel: a janela nao tem barra de titulo. -->
-      <div class="gp-draghandle" data-tauri-drag-region></div>
+      <!-- Topo: so a zona central arrasta. As laterais ficam livres para as alcas
+           de redimensionamento, que antes eram engolidas pela faixa inteira. -->
+      <div class="gp-draghandle">
+        <div class="gp-draghandle__zone" data-drag title="Arraste para mover"></div>
+      </div>
 
       <!-- Controles que so aparecem quando o mouse chega perto. -->
       <div class="gp-controls" id="controls">
         <!-- Alca de arraste: sem barra de titulo, nada mais indica que a janela
              pode ser movida. Arrastar por aqui e pela faixa do topo funciona igual. -->
-        <div class="gp-btn gp-btn--grip" data-tauri-drag-region title="Arraste para mover" aria-label="Mover janela">
-          <svg viewBox="0 0 24 24" aria-hidden="true" data-tauri-drag-region>
+        <div class="gp-btn gp-btn--grip" data-drag title="Arraste para mover" aria-label="Mover janela">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" />
             <circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" />
             <circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" />
@@ -46,7 +49,7 @@
         ></textarea>
       </main>
 
-      <footer class="gp-status" id="status" data-tauri-drag-region>
+      <footer class="gp-status" id="status" data-drag>
         <div class="gp-status__group">
           <button class="gp-chip" id="chip-ontop" data-active="true" title="Sempre visivel (Ctrl+P)">
             <span class="gp-chip__dot"></span>Topo
@@ -66,6 +69,17 @@
         </div>
       </footer>
     </div>
+
+    <!-- Alcas de redimensionamento. A borda nativa de uma janela sem moldura tem
+         poucos pixels; estas ampliam a area sem mudar a aparencia. -->
+    <div class="gp-resize gp-resize--n" data-resize="North"></div>
+    <div class="gp-resize gp-resize--s" data-resize="South"></div>
+    <div class="gp-resize gp-resize--e" data-resize="East"></div>
+    <div class="gp-resize gp-resize--w" data-resize="West"></div>
+    <div class="gp-resize gp-resize--nw" data-resize="NorthWest"></div>
+    <div class="gp-resize gp-resize--ne" data-resize="NorthEast"></div>
+    <div class="gp-resize gp-resize--sw" data-resize="SouthWest"></div>
+    <div class="gp-resize gp-resize--se" data-resize="SouthEast"></div>
 
     <!-- Avisos efemeros. Existe porque alguns estados (invisivel em gravacao,
          modo fantasma) sao invisiveis por natureza e precisam de confirmacao. -->

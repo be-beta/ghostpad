@@ -12,6 +12,7 @@ import {
   type Backdrop,
   getEffectsReport,
   panicRecover,
+  persistWindowState,
   setAlwaysOnTop,
   setClickThrough,
   setExcludeFromCapture,
@@ -80,6 +81,26 @@ function applyOpacity(value: number): void {
   settings.opacity = Math.min(OPACITY_MAX, Math.max(OPACITY_MIN, Number(value.toFixed(2))));
   document.documentElement.style.setProperty("--gp-opacity", String(settings.opacity));
   el.metricOpacity.textContent = `${Math.round(settings.opacity * 100)}%`;
+}
+
+/**
+ * Ao abrir, a janela aparece opaca e esmaece ate a opacidade salva.
+ *
+ * Existe porque a posicao e a opacidade sao restauradas: quem fechou com 20%
+ * num canto, sobre um fundo parecido, poderia abrir o app e nao encontra-lo.
+ * O instante opaco mostra onde ele esta, sem desfazer a preferencia.
+ */
+function revealOnLaunch(): void {
+  if (settings.opacity >= OPACITY_MAX) return;
+  const root = document.documentElement.style;
+  root.setProperty("--gp-opacity-duration", "0ms");
+  root.setProperty("--gp-opacity", String(OPACITY_MAX));
+
+  window.setTimeout(() => {
+    root.setProperty("--gp-opacity-duration", "700ms");
+    applyOpacity(settings.opacity);
+    window.setTimeout(() => root.removeProperty("--gp-opacity-duration"), 750);
+  }, 900);
 }
 
 function nudgeOpacity(delta: number): void {
@@ -265,7 +286,7 @@ async function closeApp(): Promise<void> {
   // Salvar e tentativa; fechar e garantia. Uma falha de disco nao pode deixar o
   // usuario preso numa janela que ignora o botao de fechar.
   try {
-    await Promise.all([saveDraft(el.editor.value), saveSettings(settings)]);
+    await Promise.all([saveDraft(el.editor.value), saveSettings(settings), persistWindowState()]);
   } catch (error) {
     console.error("[ghostpad] falha ao salvar antes de fechar", error);
   }
@@ -278,7 +299,39 @@ const persistDraft = debounceWithCeiling(
   2000,
 );
 
+// --- Mover e redimensionar ------------------------------------------------
+
+/**
+ * Arraste e redimensionamento feitos a mao, sem `data-tauri-drag-region`.
+ * O atributo nao funcionava no botao de alca e, com duplo clique, maximizava a
+ * janela — o oposto do que um bloco flutuante quer.
+ */
+type ResizeDirection = Parameters<typeof appWindow.startResizeDragging>[0];
+
+function wireWindowGestures(): void {
+  document.addEventListener("mousedown", (event) => {
+    if (event.button !== 0) return;
+    const target = event.target as HTMLElement;
+
+    const resize = target.closest<HTMLElement>("[data-resize]");
+    if (resize) {
+      event.preventDefault();
+      void appWindow.startResizeDragging(resize.dataset.resize as ResizeDirection);
+      return;
+    }
+
+    const drag = target.closest<HTMLElement>("[data-drag]");
+    // Botoes dentro de uma zona arrastavel (chips da barra) continuam clicaveis.
+    if (drag && !target.closest("button")) {
+      event.preventDefault();
+      void appWindow.startDragging();
+    }
+  });
+}
+
 function wireEvents(): void {
+  wireWindowGestures();
+
   el.editor.addEventListener("input", () => {
     updateMetrics();
     persistDraft(el.editor.value);
@@ -331,6 +384,7 @@ async function boot(): Promise<void> {
   settings = await loadSettings();
 
   applyOpacity(settings.opacity);
+  revealOnLaunch();
   await applyBackdrop(settings.backdrop, false);
   el.editor.value = await loadDraft();
   updateMetrics();

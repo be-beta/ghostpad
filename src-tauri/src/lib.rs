@@ -1,5 +1,6 @@
 mod notes;
 mod window_fx;
+mod window_state;
 
 use tauri::Manager;
 
@@ -70,9 +71,12 @@ pub fn run() {
 
     builder
         .manage(notes::NotesLock::default())
+        .manage(window_state::WindowState::default())
+        .on_window_event(window_state::track)
         .invoke_handler(tauri::generate_handler![
             notes::load_draft,
             notes::save_draft,
+            window_state::persist_window_state,
             window_fx::get_effects_report,
             window_fx::set_backdrop,
             window_fx::set_exclude_from_capture,
@@ -85,6 +89,11 @@ pub fn run() {
             let window = app
                 .get_webview_window("main")
                 .expect("janela 'main' nao encontrada");
+
+            // A janela nasce invisivel (tauri.conf.json) e so aparece depois de ir
+            // para o lugar salvo — sem o salto de abrir no centro e pular.
+            window_state::restore(&window.as_ref().window());
+            let _ = window.show();
 
             #[allow(unused_mut)]
             let mut report = window_fx::apply_startup_effects(&window);

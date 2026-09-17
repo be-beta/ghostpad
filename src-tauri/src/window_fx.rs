@@ -223,31 +223,14 @@ pub fn panic_recover(window: WebviewWindow) -> Result<(), String> {
     window.set_focus().map_err(|e| e.to_string())
 }
 
-/// A janela conta como alcancavel se um pedaco razoavel dela (onde da para
-/// agarrar e arrastar) estiver dentro da area util de algum monitor.
+/// Delegado a `window_state`, que usa a mesma regra para validar a posicao salva.
 fn is_reachable(window: &WebviewWindow) -> bool {
-    const MIN_VISIBLE: i32 = 80;
-
-    let (Ok(pos), Ok(size), Ok(monitors)) = (
-        window.outer_position(),
-        window.outer_size(),
-        window.available_monitors(),
-    ) else {
+    let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) else {
         return false;
     };
-
-    let (left, top) = (pos.x, pos.y);
-    let (right, bottom) = (pos.x + size.width as i32, pos.y + size.height as i32);
-
-    monitors.iter().any(|monitor| {
-        let area = monitor.work_area();
-        let a_left = area.position.x;
-        let a_top = area.position.y;
-        let a_right = a_left + area.size.width as i32;
-        let a_bottom = a_top + area.size.height as i32;
-
-        let overlap_w = right.min(a_right) - left.max(a_left);
-        let overlap_h = bottom.min(a_bottom) - top.max(a_top);
-        overlap_w >= MIN_VISIBLE && overlap_h >= MIN_VISIBLE
-    })
+    let monitors = window.available_monitors().unwrap_or_default();
+    crate::window_state::rect_is_reachable(
+        &monitors,
+        crate::window_state::Geometry { x: pos.x, y: pos.y, width: size.width, height: size.height },
+    )
 }

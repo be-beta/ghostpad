@@ -41,6 +41,8 @@ export const snapToCorner = (corner: Corner, margin = 12) =>
 
 export const setBackdrop = (kind: Backdrop) => invoke<void>("set_backdrop", { kind });
 
+export const persistWindowState = () => invoke<void>("persist_window_state");
+
 export const panicRecover = () => invoke<void>("panic_recover");
 
 /** Consulta o que realmente pegou na maquina. Pode ser chamado a qualquer momento. */

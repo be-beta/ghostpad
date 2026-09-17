@@ -43,7 +43,7 @@ body {
   inset: 0;
   border-radius: var(--gp-radius);
   background: rgba(var(--gp-bg), var(--gp-opacity));
-  transition: background-color 120ms var(--gp-ease);
+  transition: background-color var(--gp-opacity-duration, 120ms) var(--gp-ease);
   pointer-events: none;
 }
 
@@ -62,39 +62,101 @@ body {
 
 .gp-draghandle {
   position: relative;
-  height: 14px;
+  height: 18px;
   flex: 0 0 auto;
+}
+
+.gp-draghandle__zone {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(140px, 40%);
+  height: 100%;
+  transform: translateX(-50%);
   cursor: grab;
 }
 
-/* Pilula centralizada que aparece ao passar o mouse pela faixa do topo: a
-   mesma convencao de "alca" usada em paineis moveis de sistemas moveis. */
-.gp-draghandle::after {
+/* Pilula que aparece ao passar o mouse: a mesma convencao de "alca" usada em
+   paineis moveis de sistemas moveis. */
+.gp-draghandle__zone::after {
   content: "";
   position: absolute;
-  top: 5px;
+  top: 8px;
   left: 50%;
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.3);
   transform: translateX(-50%) scaleX(0.6);
   opacity: 0;
   transition: opacity 160ms var(--gp-ease), transform 160ms var(--gp-ease);
   pointer-events: none;
 }
 
-.gp-draghandle:hover::after {
+.gp-draghandle__zone:hover::after {
   opacity: 1;
   transform: translateX(-50%) scaleX(1);
+}
+
+.gp-draghandle__zone:active {
+  cursor: grabbing;
+}
+
+/* --- Redimensionamento ----------------------------------------------------- */
+
+.gp-resize {
+  position: fixed;
+  z-index: 30;
+}
+
+.gp-resize--n,
+.gp-resize--s {
+  left: 18px;
+  right: 18px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.gp-resize--n { top: 0; }
+.gp-resize--s { bottom: 0; }
+
+.gp-resize--e,
+.gp-resize--w {
+  top: 18px;
+  bottom: 18px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.gp-resize--e { right: 0; }
+.gp-resize--w { left: 0; }
+
+/* Cantos maiores que as bordas: e onde as pessoas miram para redimensionar. */
+.gp-resize--nw,
+.gp-resize--ne,
+.gp-resize--sw,
+.gp-resize--se {
+  width: 18px;
+  height: 18px;
+}
+
+.gp-resize--nw { top: 0; left: 0; cursor: nwse-resize; }
+.gp-resize--se { bottom: 0; right: 0; cursor: nwse-resize; }
+.gp-resize--ne { top: 0; right: 0; cursor: nesw-resize; }
+.gp-resize--sw { bottom: 0; left: 0; cursor: nesw-resize; }
+
+/* Em modo fantasma nada deve capturar o mouse. */
+body[data-ghost="true"] .gp-resize {
+  display: none;
 }
 
 /* --- Controles flutuantes -------------------------------------------------- */
 
 .gp-controls {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  /* Afastado do canto para nao disputar o clique com a alca de redimensionar. */
+  top: 12px;
+  right: 22px;
   z-index: 10;
   display: flex;
   gap: 4px;
@@ -137,11 +199,13 @@ body {
   cursor: grabbing;
 }
 
+.gp-btn--grip svg {
+  pointer-events: none;
+}
+
 .gp-btn--grip svg circle {
   fill: currentColor;
   stroke: none;
-  /* O SVG nao pode capturar o clique, senao o arraste nao comeca. */
-  pointer-events: none;
 }
 
 .gp-btn--danger:hover {
@@ -169,7 +233,7 @@ body {
 .gp-editor {
   flex: 1 1 auto;
   width: 100%;
-  padding: 6px 18px 12px;
+  padding: 0 18px 12px;
   border: none;
   outline: none;
   resize: none;
