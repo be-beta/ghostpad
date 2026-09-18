@@ -24,10 +24,39 @@ pub struct Geometry {
     pub height: u32,
 }
 
-/// Ultima geometria valida vista. Atualizada a cada movimento e gravada em disco
-/// so ao fechar, para nao escrever arquivo a cada pixel de arraste.
+/// Estado de janela mantido em memoria.
+///
+/// - `geometry`: ultima posicao/tamanho validos, gravados em disco ao fechar.
+/// - `preferred_size`: o tamanho que o USUARIO escolheu, para o encaixe nos
+///   cantos poder devolver a janela ao formato de trabalho dela.
+/// - `programmatic_size`: tamanho aplicado pelo proprio app (metade da tela,
+///   tela cheia). Serve para esses encaixes nao serem confundidos com uma
+///   escolha do usuario e sobrescreverem `preferred_size`.
 #[derive(Default)]
-pub struct WindowState(Mutex<Option<Geometry>>);
+pub struct WindowState {
+    geometry: Mutex<Option<Geometry>>,
+    preferred_size: Mutex<Option<(u32, u32)>>,
+    programmatic_size: Mutex<Option<(u32, u32)>>,
+}
+
+impl WindowState {
+    /// Anuncia um redimensionamento feito pelo app, que nao deve virar preferencia.
+    pub fn note_programmatic(&self, size: (u32, u32)) {
+        if let Ok(mut slot) = self.programmatic_size.lock() {
+            *slot = Some(size);
+        }
+    }
+
+    pub fn preferred_size(&self) -> Option<(u32, u32)> {
+        self.preferred_size.lock().ok().and_then(|slot| *slot)
+    }
+
+    pub fn set_preferred_size(&self, size: (u32, u32)) {
+        if let Ok(mut slot) = self.preferred_size.lock() {
+            *slot = Some(size);
+        }
+    }
+}
 
 fn state_path<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     let dir = app.path().app_data_dir().ok()?;
@@ -75,9 +104,11 @@ pub fn restore<R: Runtime>(window: &Window<R>) {
     let _ = window.set_size(PhysicalSize::new(saved.width, saved.height));
     let _ = window.set_position(PhysicalPosition::new(saved.x, saved.y));
     if let Some(state) = window.try_state::<WindowState>() {
-        if let Ok(mut slot) = state.0.lock() {
+        if let Ok(mut slot) = state.geometry.lock() {
             *slot = Some(saved);
         }
+        // O tamanho com que a sessao anterior terminou e a preferencia atual.
+        state.set_preferred_size((saved.width, saved.height));
     }
 }
 
@@ -94,10 +125,33 @@ pub fn track<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
             if !rect_is_reachable(&monitors, geometry) {
                 return;
             }
-            if let Some(state) = window.try_state::<WindowState>() {
-                if let Ok(mut slot) = state.0.lock() {
-                    *slot = Some(geometry);
-                }
+            let Some(state) = window.try_state::<WindowState>() else { return };
+            if let Ok(mut slot) = state.geometry.lock() {
+                *slot = Some(geometry);
+            }
+
+            // Redimensionamento do app (metade da tela, tela cheia) nao vira
+            // preferencia; qualquer outro vira.
+            let size = (geometry.width, geometry.height);
+            let from_app = state
+                .programmatic_size
+                .lock()
+                .map(|mut slot| {
+                    // Tolerancia: o alvo e um tamanho externo e a janela aplica o
+                    // interno, entao arredondamentos de escala podem deslocar
+                    // alguns pixels. Sem isso, "tela cheia" seria confundido com
+                    // uma escolha do usuario e viraria o tamanho preferido.
+                    let matches = slot.is_some_and(|(w, h)| {
+                        w.abs_diff(size.0) <= 4 && h.abs_diff(size.1) <= 4
+                    });
+                    if matches {
+                        *slot = None;
+                    }
+                    matches
+                })
+                .unwrap_or(false);
+            if !from_app {
+                state.set_preferred_size(size);
             }
         }
         WindowEvent::Destroyed => persist(window.app_handle()),
@@ -107,7 +161,7 @@ pub fn track<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
 
 pub fn persist<R: Runtime>(app: &AppHandle<R>) {
     let Some(state) = app.try_state::<WindowState>() else { return };
-    let Ok(slot) = state.0.lock() else { return };
+    let Ok(slot) = state.geometry.lock() else { return };
     let (Some(geometry), Some(path)) = (*slot, state_path(app)) else { return };
     if let Ok(json) = serde_json::to_string_pretty(&geometry) {
         let _ = fs::write(path, json);

@@ -14,7 +14,7 @@
 //! 3. Display affinity, que esconde a janela de softwares de captura.
 
 use serde::{Deserialize, Serialize};
-use tauri::{State, WebviewWindow};
+use tauri::{Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow};
 
 #[cfg(target_os = "windows")]
 use windows::Win32::{
@@ -170,6 +170,44 @@ pub fn set_always_on_top(window: WebviewWindow, enable: bool) -> Result<bool, St
     Ok(enable)
 }
 
+// ---------------------------------------------------------------------------
+// Tamanho: externo x interno
+// ---------------------------------------------------------------------------
+//
+// `outer_size()` inclui a moldura invisivel da janela (borda de
+// redimensionamento e sombra); `set_size()` define a area INTERNA. Misturar os
+// dois fazia a diferenca vazar para os dois eixos a cada ajuste: mexer na
+// largura empurrava a altura. Todo alvo aqui e tratado como tamanho externo e
+// convertido antes de aplicar.
+
+fn frame_padding(window: &WebviewWindow) -> (i32, i32) {
+    let (Ok(outer), Ok(inner)) = (window.outer_size(), window.inner_size()) else {
+        return (0, 0);
+    };
+    (
+        (outer.width as i32 - inner.width as i32).max(0),
+        (outer.height as i32 - inner.height as i32).max(0),
+    )
+}
+
+fn set_outer_size(window: &WebviewWindow, width: i32, height: i32) -> Result<(), String> {
+    let (pad_w, pad_h) = frame_padding(window);
+    window
+        .set_size(PhysicalSize::new(
+            (width - pad_w).max(1) as u32,
+            (height - pad_h).max(1) as u32,
+        ))
+        .map_err(|e| e.to_string())
+}
+
+/// Formato inicial para quem ainda nao escolheu um tamanho: uma coluna estreita
+/// e alta, que e como um bloco de notas lateral costuma ser usado.
+fn default_corner_size(area: &tauri::PhysicalSize<u32>, scale: f64) -> (i32, i32) {
+    let width = (area.width as f64 * 0.26).clamp(360.0 * scale, 620.0 * scale);
+    let height = (area.height as f64 * 0.55).clamp(300.0 * scale, 900.0 * scale);
+    (width.round() as i32, height.round() as i32)
+}
+
 /// Encaixa a janela num dos cantos do monitor ATUAL (nao do primario).
 ///
 /// Usa a work area, entao respeita a barra de tarefas onde quer que ela esteja,
@@ -183,13 +221,30 @@ pub fn snap_to_corner(window: WebviewWindow, corner: String, margin: u32) -> Res
 
     let scale = monitor.scale_factor();
     let area = monitor.work_area();
-    let size = window.outer_size().map_err(|e| e.to_string())?;
     let margin = (margin as f64 * scale).round() as i32;
+    let usable_w = area.size.width as i32 - margin * 2;
+    let usable_h = area.size.height as i32 - margin * 2;
+
+    // Voltar para um canto devolve a janela ao tamanho de trabalho do usuario.
+    // Sem isto, quem tivesse usado "tela cheia" continuaria com a janela enorme.
+    let state = window.state::<crate::window_state::WindowState>();
+    let (mut width, mut height) = state
+        .preferred_size()
+        .map(|(w, h)| (w as i32, h as i32))
+        .unwrap_or_else(|| default_corner_size(&area.size, scale));
+
+    if width > usable_w || height > usable_h {
+        let (default_w, default_h) = default_corner_size(&area.size, scale);
+        width = default_w.min(usable_w);
+        height = default_h.min(usable_h);
+    }
+
+    set_outer_size(&window, width, height)?;
 
     let min_x = area.position.x + margin;
     let min_y = area.position.y + margin;
-    let max_x = area.position.x + area.size.width as i32 - size.width as i32 - margin;
-    let max_y = area.position.y + area.size.height as i32 - size.height as i32 - margin;
+    let max_x = area.position.x + area.size.width as i32 - width - margin;
+    let max_y = area.position.y + area.size.height as i32 - height - margin;
 
     let (x, y) = match corner.as_str() {
         "top-left" => (min_x, min_y),
@@ -202,19 +257,19 @@ pub fn snap_to_corner(window: WebviewWindow, corner: String, margin: u32) -> Res
     };
 
     window
-        .set_position(tauri::PhysicalPosition::new(x, y))
+        .set_position(PhysicalPosition::new(x, y))
         .map_err(|e| e.to_string())
 }
 
 /// Redimensiona em passos, ancorando o canto superior esquerdo.
 ///
-/// Respeita o tamanho minimo da janela e nunca deixa a janela maior que a area
-/// util do monitor: crescer sem limite empurraria a barra de status para fora.
+/// Respeita o tamanho minimo da janela e nunca ultrapassa a area util do
+/// monitor: crescer sem limite jogaria a barra de status para fora da tela.
 #[tauri::command]
 pub fn resize_by(window: WebviewWindow, dw: i32, dh: i32) -> Result<(), String> {
-    let size = window.outer_size().map_err(|e| e.to_string())?;
+    let outer = window.outer_size().map_err(|e| e.to_string())?;
     let scale = window.scale_factor().unwrap_or(1.0);
-    let step = |value: u32, delta: i32| -> i32 { value as i32 + (delta as f64 * scale).round() as i32 };
+    let step = |delta: i32| (delta as f64 * scale).round() as i32;
 
     let (min_w, min_h) = ((280.0 * scale) as i32, (120.0 * scale) as i32);
     let (mut max_w, mut max_h) = (i32::MAX, i32::MAX);
@@ -224,12 +279,10 @@ pub fn resize_by(window: WebviewWindow, dw: i32, dh: i32) -> Result<(), String> 
         max_h = area.size.height as i32;
     }
 
-    let width = step(size.width, dw).clamp(min_w, max_w) as u32;
-    let height = step(size.height, dh).clamp(min_h, max_h) as u32;
+    let width = (outer.width as i32 + step(dw)).clamp(min_w, max_w);
+    let height = (outer.height as i32 + step(dh)).clamp(min_h, max_h);
 
-    window
-        .set_size(tauri::PhysicalSize::new(width, height))
-        .map_err(|e| e.to_string())
+    set_outer_size(&window, width, height)
 }
 
 /// Ocupa metade (ou a area util inteira) do monitor atual.
@@ -259,11 +312,15 @@ pub fn snap_half(window: WebviewWindow, side: String, margin: u32) -> Result<(),
         other => return Err(format!("Lado desconhecido: {other}")),
     };
 
+    // Marcado como redimensionamento do app: ocupar metade da tela e um estado
+    // temporario, nao o tamanho de trabalho que o usuario escolheu.
     window
-        .set_size(tauri::PhysicalSize::new(w.max(1) as u32, h.max(1) as u32))
-        .map_err(|e| e.to_string())?;
+        .state::<crate::window_state::WindowState>()
+        .note_programmatic((w.max(1) as u32, h.max(1) as u32));
+
+    set_outer_size(&window, w.max(1), h.max(1))?;
     window
-        .set_position(tauri::PhysicalPosition::new(x, y))
+        .set_position(PhysicalPosition::new(x, y))
         .map_err(|e| e.to_string())
 }
 
