@@ -14,13 +14,17 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { load, type Store } from "@tauri-apps/plugin-store";
-import type { Backdrop } from "./bridge";
+import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
 
 export interface Settings {
   opacity: number;
   alwaysOnTop: boolean;
   excludeFromCapture: boolean;
   backdrop: Backdrop;
+  /** Esmaece sozinho quando a janela fica parada e sem foco. */
+  idleFade: boolean;
+  /** Atalhos globais escolhidos pelo usuario; ausentes = padrao do backend. */
+  shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +37,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // Transparencia real e o unico fundo que funciona em qualquer maquina e com a
   // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
   backdrop: "transparent",
+  idleFade: true,
+  shortcuts: {},
 };
 
 // Modo fantasma fica fora de propósito: iniciar nele deixaria o app sem

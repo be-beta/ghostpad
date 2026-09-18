@@ -6,11 +6,13 @@
  * real depende do que estava livre na maquina do usuario.
  */
 
-import type { EffectsReport } from "../core/bridge";
+import type { EffectsReport, GlobalAction, KeyCombo } from "../core/bridge";
 
 interface Row {
   keys: string;
   label: string;
+  /** Presente nas acoes globais, que o usuario pode reprogramar. */
+  action?: GlobalAction;
 }
 
 interface Section {
@@ -25,8 +27,16 @@ function sections(effects: EffectsReport): Section[] {
     {
       title: "De qualquer lugar",
       rows: [
-        { keys: effects.summonShortcut ?? "—", label: effects.summonShortcut ? "Chamar ou esconder o GhostPad" : `Chamar o GhostPad (${unavailable})` },
-        { keys: effects.panicShortcut ?? "—", label: effects.panicShortcut ? "Resgate: desfaz fantasma e oculto, traz a janela" : `Resgate (${unavailable})` },
+        {
+          keys: effects.summonShortcut ?? "—",
+          label: effects.summonShortcut ? "Chamar ou esconder o GhostPad" : `Chamar o GhostPad (${unavailable})`,
+          action: "summon",
+        },
+        {
+          keys: effects.panicShortcut ?? "—",
+          label: effects.panicShortcut ? "Resgate: desfaz fantasma e oculto, traz a janela" : `Resgate (${unavailable})`,
+          action: "panic",
+        },
       ],
     },
     {
@@ -59,6 +69,9 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Ctrl+Shift+H", label: "Ocultar de gravações" },
         { keys: "Ctrl+Shift+B", label: "Fundo da janela" },
         { keys: "Ctrl+Alt+1…5", label: "Encaixar nos cantos" },
+        { keys: "Ctrl+Alt+6…9", label: "Ocupar metade da tela" },
+        { keys: "Ctrl+Alt+0", label: "Ocupar a tela toda" },
+        { keys: "Ctrl+Alt+Shift+setas", label: "Redimensionar" },
         { keys: "Ctrl+Q", label: "Fechar" },
       ],
     },
@@ -78,6 +91,9 @@ function renderKeys(keys: string): string {
     .join("");
 }
 
+/** Rotulo legivel a partir do evento, no mesmo formato que o backend devolve. */
+const MODIFIER_KEYS = new Set(["Control", "Alt", "Shift", "Meta"]);
+
 export interface ShortcutsPanel {
   isOpen(): boolean;
   open(): void;
@@ -85,7 +101,13 @@ export interface ShortcutsPanel {
   toggle(): void;
 }
 
-export function createShortcutsPanel(host: HTMLElement, getEffects: () => EffectsReport): ShortcutsPanel {
+export function createShortcutsPanel(
+  host: HTMLElement,
+  getEffects: () => EffectsReport,
+  onRebind: (action: GlobalAction, combo: KeyCombo) => Promise<void>,
+): ShortcutsPanel {
+  let capturing: GlobalAction | null = null;
+
   const render = () => {
     host.innerHTML = `
       <div class="gp-sheet__card" role="dialog" aria-label="Atalhos do GhostPad">
@@ -101,7 +123,15 @@ export function createShortcutsPanel(host: HTMLElement, getEffects: () => Effect
           <section class="gp-sheet__section">
             <h2>${section.title}</h2>
             ${section.rows
-              .map((row) => `<div class="gp-sheet__row"><span class="gp-sheet__keys">${renderKeys(row.keys)}</span><span>${row.label}</span></div>`)
+              .map((row) => {
+                const keys = capturing && capturing === row.action
+                  ? `<span class="gp-sheet__capturing">Pressione a combinação…</span>`
+                  : renderKeys(row.keys);
+                const rebind = row.action
+                  ? `<button class="gp-sheet__rebind" data-rebind="${row.action}">alterar</button>`
+                  : "";
+                return `<div class="gp-sheet__row"><span class="gp-sheet__keys">${keys}</span><span>${row.label}${rebind}</span></div>`;
+              })
               .join("")}
           </section>`,
           )
@@ -117,6 +147,7 @@ export function createShortcutsPanel(host: HTMLElement, getEffects: () => Effect
       host.hidden = false;
     },
     close() {
+      if (capturing) stopCapture();
       host.hidden = true;
     },
     toggle() {
@@ -125,10 +156,57 @@ export function createShortcutsPanel(host: HTMLElement, getEffects: () => Effect
     },
   };
 
-  // Fecha ao clicar fora do cartao ou no botao de fechar.
+  const stopCapture = () => {
+    capturing = null;
+    window.removeEventListener("keydown", onCaptureKey, true);
+    render();
+  };
+
+  /**
+   * Captura na fase de captura e com stopPropagation: durante a gravacao, a
+   * tecla pertence ao dialogo e nao pode disparar a acao que ela representa.
+   */
+  async function onCaptureKey(event: KeyboardEvent): Promise<void> {
+    if (MODIFIER_KEYS.has(event.key)) return; // espera a tecla final
+    event.preventDefault();
+    event.stopPropagation();
+
+    const action = capturing;
+    if (!action) return;
+    if (event.key === "Escape") {
+      stopCapture();
+      return;
+    }
+
+    const combo: KeyCombo = {
+      ctrl: event.ctrlKey,
+      alt: event.altKey,
+      shift: event.shiftKey,
+      meta: event.metaKey,
+      code: event.code,
+    };
+    stopCapture();
+    await onRebind(action, combo);
+    if (panel.isOpen()) render();
+  }
+
   host.addEventListener("mousedown", (event) => {
     const target = event.target as HTMLElement;
-    if (target === host || target.closest("[data-close]")) panel.close();
+    const rebind = target.closest<HTMLElement>("[data-rebind]");
+
+    if (rebind) {
+      event.preventDefault();
+      capturing = rebind.dataset.rebind as GlobalAction;
+      window.addEventListener("keydown", onCaptureKey, true);
+      render();
+      return;
+    }
+
+    // Fecha ao clicar fora do cartao ou no botao de fechar.
+    if (target === host || target.closest("[data-close]")) {
+      if (capturing) stopCapture();
+      panel.close();
+    }
   });
 
   return panel;

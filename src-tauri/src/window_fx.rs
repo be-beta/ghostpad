@@ -206,6 +206,67 @@ pub fn snap_to_corner(window: WebviewWindow, corner: String, margin: u32) -> Res
         .map_err(|e| e.to_string())
 }
 
+/// Redimensiona em passos, ancorando o canto superior esquerdo.
+///
+/// Respeita o tamanho minimo da janela e nunca deixa a janela maior que a area
+/// util do monitor: crescer sem limite empurraria a barra de status para fora.
+#[tauri::command]
+pub fn resize_by(window: WebviewWindow, dw: i32, dh: i32) -> Result<(), String> {
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let step = |value: u32, delta: i32| -> i32 { value as i32 + (delta as f64 * scale).round() as i32 };
+
+    let (min_w, min_h) = ((280.0 * scale) as i32, (120.0 * scale) as i32);
+    let (mut max_w, mut max_h) = (i32::MAX, i32::MAX);
+    if let Ok(Some(monitor)) = window.current_monitor() {
+        let area = monitor.work_area();
+        max_w = area.size.width as i32;
+        max_h = area.size.height as i32;
+    }
+
+    let width = step(size.width, dw).clamp(min_w, max_w) as u32;
+    let height = step(size.height, dh).clamp(min_h, max_h) as u32;
+
+    window
+        .set_size(tauri::PhysicalSize::new(width, height))
+        .map_err(|e| e.to_string())
+}
+
+/// Ocupa metade (ou a area util inteira) do monitor atual.
+#[tauri::command]
+pub fn snap_half(window: WebviewWindow, side: String, margin: u32) -> Result<(), String> {
+    let monitor = window
+        .current_monitor()
+        .map_err(|e| e.to_string())?
+        .ok_or("Nenhum monitor detectado")?;
+
+    let scale = monitor.scale_factor();
+    let area = monitor.work_area();
+    let margin = (margin as f64 * scale).round() as i32;
+
+    let full_w = area.size.width as i32 - margin * 2;
+    let full_h = area.size.height as i32 - margin * 2;
+    let half_w = (full_w - margin) / 2;
+    let half_h = (full_h - margin) / 2;
+    let (x0, y0) = (area.position.x + margin, area.position.y + margin);
+
+    let (x, y, w, h) = match side.as_str() {
+        "left" => (x0, y0, half_w, full_h),
+        "right" => (x0 + half_w + margin, y0, half_w, full_h),
+        "top" => (x0, y0, full_w, half_h),
+        "bottom" => (x0, y0 + half_h + margin, full_w, half_h),
+        "full" => (x0, y0, full_w, full_h),
+        other => return Err(format!("Lado desconhecido: {other}")),
+    };
+
+    window
+        .set_size(tauri::PhysicalSize::new(w.max(1) as u32, h.max(1) as u32))
+        .map_err(|e| e.to_string())?;
+    window
+        .set_position(tauri::PhysicalPosition::new(x, y))
+        .map_err(|e| e.to_string())
+}
+
 /// Traz a janela de volta ao alcance do usuario.
 ///
 /// Rede de seguranca para quando o GhostPad ficar em modo fantasma, oculto ou

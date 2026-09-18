@@ -41,6 +41,29 @@ export const setExcludeFromCapture = (enable: boolean) =>
 export const snapToCorner = (corner: Corner, margin = 12) =>
   invoke<void>("snap_to_corner", { corner, margin });
 
+export type HalfSide = "left" | "right" | "top" | "bottom" | "full";
+
+export const snapHalf = (side: HalfSide, margin = 12) =>
+  invoke<void>("snap_half", { side, margin });
+
+/** Passos em pixels logicos; o backend converte pela escala da tela. */
+export const resizeBy = (dw: number, dh: number) => invoke<void>("resize_by", { dw, dh });
+
+export type GlobalAction = "panic" | "summon";
+
+export interface KeyCombo {
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+  meta: boolean;
+  /** `event.code`, nao o simbolo: independe do layout do teclado. */
+  code: string;
+}
+
+/** Devolve o rotulo do atalho registrado, ou erro se estiver em uso. */
+export const setGlobalShortcut = (action: GlobalAction, combo: KeyCombo) =>
+  invoke<string>("set_global_shortcut", { action, ...combo });
+
 export const setBackdrop = (kind: Backdrop) => invoke<void>("set_backdrop", { kind });
 
 export const persistWindowState = () => invoke<void>("persist_window_state");

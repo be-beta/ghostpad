@@ -13,8 +13,14 @@ import {
   getEffectsReport,
   persistWindowState,
   setAlwaysOnTop,
+  resizeBy,
   setBackdrop,
   setClickThrough,
+  setGlobalShortcut,
+  snapHalf,
+  type GlobalAction,
+  type HalfSide,
+  type KeyCombo,
   setExcludeFromCapture,
   snapToCorner,
   type Backdrop,
@@ -70,7 +76,27 @@ let effects: EffectsReport = {
   summonShortcut: null,
 };
 
-const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects);
+/**
+ * Troca um atalho global e guarda a escolha. Se o backend recusar (atalho em uso
+ * por outro programa), nada muda e o motivo aparece para o usuario.
+ */
+async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Promise<void> {
+  try {
+    const label = await setGlobalShortcut(action, combo);
+    effects = {
+      ...effects,
+      panicShortcut: action === "panic" ? label : effects.panicShortcut,
+      summonShortcut: action === "summon" ? label : effects.summonShortcut,
+    };
+    settings.shortcuts = { ...settings.shortcuts, [action]: combo };
+    await saveSettings(settings);
+    toast(`Atalho definido: ${label}`);
+  } catch (error) {
+    toast(String(error));
+  }
+}
+
+const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
 
 // --- Feedback --------------------------------------------------------------
 
@@ -87,9 +113,22 @@ function toast(message: string): void {
 
 // --- Opacidade -------------------------------------------------------------
 
+/**
+ * Pinta uma opacidade sem mexer na preferencia do usuario.
+ *
+ * A separacao existe por causa do esmaecimento automatico: ele muda o que esta
+ * na tela, mas o valor escolhido pela pessoa continua valendo quando ela volta.
+ */
+function renderOpacity(value: number, durationMs?: number): void {
+  const root = document.documentElement.style;
+  if (durationMs === undefined) root.removeProperty("--gp-opacity-duration");
+  else root.setProperty("--gp-opacity-duration", `${durationMs}ms`);
+  root.setProperty("--gp-opacity", String(value));
+}
+
 function applyOpacity(value: number): void {
   settings.opacity = Math.min(OPACITY_MAX, Math.max(OPACITY_MIN, Number(value.toFixed(2))));
-  document.documentElement.style.setProperty("--gp-opacity", String(settings.opacity));
+  renderOpacity(settings.opacity);
   el.metricOpacity.textContent = `${Math.round(settings.opacity * 100)}%`;
 }
 
@@ -102,15 +141,57 @@ function applyOpacity(value: number): void {
  */
 function revealOnLaunch(): void {
   if (settings.opacity >= OPACITY_MAX) return;
-  const root = document.documentElement.style;
-  root.setProperty("--gp-opacity-duration", "0ms");
-  root.setProperty("--gp-opacity", String(OPACITY_MAX));
-
+  renderOpacity(OPACITY_MAX, 0);
   window.setTimeout(() => {
-    root.setProperty("--gp-opacity-duration", "700ms");
-    applyOpacity(settings.opacity);
-    window.setTimeout(() => root.removeProperty("--gp-opacity-duration"), 750);
+    renderOpacity(settings.opacity, 700);
+    window.setTimeout(() => renderOpacity(settings.opacity), 750);
   }, 900);
+}
+
+// --- Esmaecimento por inatividade -----------------------------------------
+
+const IDLE_AFTER_MS = 45_000;
+const IDLE_FACTOR = 0.5;
+const IDLE_FLOOR = 0.12;
+
+let idleTimer: number | undefined;
+let faded = false;
+
+/**
+ * Some aos poucos quando a janela fica parada e sem foco.
+ *
+ * Nunca esmaece com a janela em foco nem com o mouse em cima: nesses casos a
+ * pessoa provavelmente esta lendo, e sumir com o texto seria o oposto do que
+ * ela quer. Qualquer sinal de presenca traz a opacidade de volta na hora.
+ */
+function scheduleIdleFade(): void {
+  if (idleTimer) window.clearTimeout(idleTimer);
+  if (!settings.idleFade) return;
+
+  idleTimer = window.setTimeout(() => {
+    if (document.hasFocus() || el.body.matches(":hover")) {
+      scheduleIdleFade();
+      return;
+    }
+    faded = true;
+    renderOpacity(Math.max(IDLE_FLOOR, settings.opacity * IDLE_FACTOR), 1200);
+  }, IDLE_AFTER_MS);
+}
+
+function wakeFromIdle(): void {
+  if (faded) {
+    faded = false;
+    renderOpacity(settings.opacity, 220);
+  }
+  scheduleIdleFade();
+}
+
+function toggleIdleFade(): void {
+  settings.idleFade = !settings.idleFade;
+  el.metricOpacity.dataset.idle = String(settings.idleFade);
+  wakeFromIdle();
+  toast(settings.idleFade ? "Esmaece sozinho quando parado" : "Esmaecimento automático desligado");
+  void saveSettings(settings);
 }
 
 function nudgeOpacity(delta: number): void {
@@ -226,6 +307,7 @@ const persistDraft = debounceWithCeiling((text: string) => void saveDraft(text),
 function onTextChange(text: string): void {
   updateMetrics(text);
   persistDraft(text);
+  wakeFromIdle();
 }
 
 async function copyAll(): Promise<boolean> {
@@ -285,6 +367,24 @@ const isSlash = (event: KeyboardEvent) =>
  * Atalhos do app. Retorna true quando tratou a tecla — o editor usa isso para
  * nao processar a mesma tecla em seguida.
  */
+const HALF_BY_DIGIT: Record<string, HalfSide> = {
+  "6": "left",
+  "7": "right",
+  "8": "top",
+  "9": "bottom",
+  "0": "full",
+};
+
+/** Passo de redimensionamento por teclado, em pixels logicos. */
+const RESIZE_STEP = 40;
+
+const RESIZE_BY_ARROW: Record<string, [number, number]> = {
+  ArrowRight: [RESIZE_STEP, 0],
+  ArrowLeft: [-RESIZE_STEP, 0],
+  ArrowDown: [0, RESIZE_STEP],
+  ArrowUp: [0, -RESIZE_STEP],
+};
+
 function handleKeydown(event: KeyboardEvent): boolean {
   if (event.key === "Escape" && shortcutsPanel.isOpen()) {
     shortcutsPanel.close();
@@ -302,8 +402,22 @@ function handleKeydown(event: KeyboardEvent): boolean {
   }
 
   // Alt+Setas fica com o editor (mover linhas), por isso o snap usa Ctrl+Alt+digito.
-  if (event.altKey && CORNER_BY_DIGIT[event.key]) {
-    void snapToCorner(CORNER_BY_DIGIT[event.key]);
+  if (event.altKey && !event.shiftKey) {
+    if (CORNER_BY_DIGIT[event.key]) {
+      void snapToCorner(CORNER_BY_DIGIT[event.key]);
+      return consume(event);
+    }
+    if (HALF_BY_DIGIT[event.key]) {
+      void snapHalf(HALF_BY_DIGIT[event.key]);
+      return consume(event);
+    }
+  }
+
+  // Ctrl+Alt+Shift+setas redimensiona. Evita Ctrl+Alt+setas, que em maquinas com
+  // grafico Intel gira a tela inteira.
+  if (event.altKey && event.shiftKey && RESIZE_BY_ARROW[event.key]) {
+    const [dw, dh] = RESIZE_BY_ARROW[event.key];
+    void resizeBy(dw, dh);
     return consume(event);
   }
 
@@ -421,6 +535,13 @@ function wireEvents(): void {
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
+  el.metricOpacity.addEventListener("click", () => toggleIdleFade());
+
+  // Sinais de presenca: qualquer um deles cancela o esmaecimento.
+  for (const type of ["mousemove", "mousedown", "keydown", "wheel"] as const) {
+    window.addEventListener(type, wakeFromIdle, { passive: true });
+  }
+  window.addEventListener("focus", wakeFromIdle);
 
   // Teclas com o foco fora do editor (painel, chips). Dentro do editor, o
   // proprio CodeMirror chama handleKeydown antes e marca a tecla como tratada.
@@ -487,6 +608,14 @@ async function boot(): Promise<void> {
       toast("Modo oculto não pôde ser restaurado — você aparece em gravações");
     }
   }
+
+  // Atalhos escolhidos pelo usuario, aplicados por cima dos padroes do backend.
+  for (const [action, combo] of Object.entries(settings.shortcuts)) {
+    if (combo) await rebindGlobalShortcut(action as GlobalAction, combo);
+  }
+
+  el.metricOpacity.dataset.idle = String(settings.idleFade);
+  scheduleIdleFade();
 
   wireEvents();
   editor.focus();

@@ -1,57 +1,12 @@
 mod notes;
+mod shortcuts;
 mod window_fx;
 mod window_state;
 
 use tauri::Manager;
 
 #[cfg(desktop)]
-use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
-
-/// Atalhos de resgate, em ordem de preferencia.
-///
-/// Registrados globalmente no backend: o GhostPad pode estar em modo fantasma,
-/// oculto de captura ou fora da area visivel, e nesses estados o frontend fica
-/// inalcancavel. Ha alternativas porque atalhos globais sao disputados — o
-/// Google Drive, por exemplo, usa Ctrl+Alt+G. Vale o primeiro que estiver livre.
-#[cfg(desktop)]
-fn panic_candidates() -> [(Shortcut, &'static str); 3] {
-    [
-        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyG), "Ctrl+Alt+G"),
-        (
-            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::KeyG),
-            "Ctrl+Alt+Shift+G",
-        ),
-        (
-            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::F12),
-            "Ctrl+Alt+Shift+F12",
-        ),
-    ]
-}
-
-/// Atalhos de invocacao, em ordem de preferencia. Mesma estrategia do resgate.
-#[cfg(desktop)]
-fn summon_candidates() -> [(Shortcut, &'static str); 3] {
-    [
-        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space), "Ctrl+Alt+Space"),
-        (Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space), "Ctrl+Shift+Space"),
-        (
-            Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT | Modifiers::SHIFT), Code::Space),
-            "Ctrl+Alt+Shift+Space",
-        ),
-    ]
-}
-
-/// Registra o primeiro candidato livre e devolve o rotulo dele.
-#[cfg(desktop)]
-fn register_first_free<R: tauri::Runtime>(
-    app: &tauri::AppHandle<R>,
-    candidates: impl IntoIterator<Item = (Shortcut, &'static str)>,
-) -> Option<String> {
-    use tauri_plugin_global_shortcut::GlobalShortcutExt;
-    candidates
-        .into_iter()
-        .find_map(|(shortcut, label)| app.global_shortcut().register(shortcut).ok().map(|_| label.to_string()))
-}
+use tauri_plugin_global_shortcut::ShortcutState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -84,11 +39,17 @@ pub fn run() {
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
-                    let Some(window) = app.get_webview_window("main") else { return };
-                    if panic_candidates().iter().any(|(c, _)| c == shortcut) {
-                        let _ = window_fx::panic_recover(window);
-                    } else if summon_candidates().iter().any(|(c, _)| c == shortcut) {
-                        window_fx::toggle_summon(window);
+                    let (Some(window), Some(registry)) =
+                        (app.get_webview_window("main"), app.try_state::<shortcuts::Registry>())
+                    else {
+                        return;
+                    };
+                    match registry.action_for(shortcut) {
+                        Some(shortcuts::Action::Panic) => {
+                            let _ = window_fx::panic_recover(window);
+                        }
+                        Some(shortcuts::Action::Summon) => window_fx::toggle_summon(window),
+                        None => {}
                     }
                 })
                 .build(),
@@ -97,18 +58,22 @@ pub fn run() {
 
     builder
         .manage(notes::NotesLock::default())
+        .manage(shortcuts::Registry::default())
         .manage(window_state::WindowState::default())
         .on_window_event(window_state::track)
         .invoke_handler(tauri::generate_handler![
             notes::load_draft,
             notes::save_draft,
             window_state::persist_window_state,
+            shortcuts::set_global_shortcut,
             window_fx::get_effects_report,
             window_fx::set_backdrop,
             window_fx::set_exclude_from_capture,
             window_fx::set_click_through,
             window_fx::set_always_on_top,
             window_fx::snap_to_corner,
+            window_fx::snap_half,
+            window_fx::resize_by,
             window_fx::panic_recover,
         ])
         .setup(|app| {
@@ -126,8 +91,10 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
-                report.panic_shortcut = register_first_free(app.handle(), panic_candidates());
-                report.summon_shortcut = register_first_free(app.handle(), summon_candidates());
+                let registry = app.state::<shortcuts::Registry>();
+                shortcuts::register_defaults(app.handle(), &registry);
+                report.panic_shortcut = registry.label(shortcuts::Action::Panic);
+                report.summon_shortcut = registry.label(shortcuts::Action::Summon);
             }
 
             eprintln!("[ghostpad] efeitos: {report:?}");

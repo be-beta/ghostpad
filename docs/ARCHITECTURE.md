@@ -291,7 +291,7 @@ depois o que protege o trabalho, por último os modos especializados.
 | 0 | Janela frameless, transparência, always-on-top, drag, opacidade | **feito** |
 | 0.5 | Spike do `SetWindowDisplayAffinity` | **feito, validado no OBS** |
 | 1 | Editor e captura instantânea | **feito, em teste** |
-| 2 | Presença e posicionamento | parcial |
+| 2 | Presença e posicionamento | **feito, em teste** |
 | 3 | HUD e métricas | parcial |
 | 4 | Segurança do trabalho | a fazer |
 | 5 | Múltiplas notas e split view | a fazer |
@@ -324,12 +324,26 @@ qualquer atalho do editor.
 
 ### Fase 2 — Presença e posicionamento
 
-- Modo fantasma completo, com atalho global de saída
-- Atalhos globais configuráveis pelo usuário (resgate e invocação)
-- **Fade por inatividade** — clareia após alguns segundos sem digitar, volta
-  ao receber foco ou movimento do mouse; desligável
-- **Snap de metade de tela**, além dos cantos
-- **Redimensionar por teclado** `Ctrl+Alt+Shift+setas`
+- **Redimensionar por teclado** `Ctrl+Alt+Shift+setas`, em passos de 40 px.
+  Não usa `Ctrl+Alt+setas` porque em máquinas com gráfico Intel essa combinação
+  gira a tela inteira — é o caso da máquina de desenvolvimento.
+- **Encaixe em metades** `Ctrl+Alt+6…9` e tela toda em `Ctrl+Alt+0`, seguindo os
+  cantos em `Ctrl+Alt+1…5`. O redimensionamento respeita o tamanho mínimo e
+  nunca ultrapassa a área útil do monitor.
+- **Esmaecimento por inatividade** — depois de 45 s a janela cai para metade da
+  opacidade escolhida. Só acontece com a janela **sem foco e sem o mouse em
+  cima**: nos dois casos a pessoa provavelmente está lendo, e sumir com o texto
+  seria o contrário do que ela quer. Qualquer sinal de presença restaura na
+  hora. Liga e desliga clicando na porcentagem da barra de status; um ponto
+  verde indica que está ativo.
+- **Atalhos globais configuráveis** (`shortcuts.rs`) — no painel `Ctrl+/`, o
+  botão "alterar" grava a próxima combinação. A troca só vale se o sistema
+  aceitar o novo atalho; se estiver em uso, nada muda e o motivo aparece. O
+  atalho antigo só é liberado depois que o novo entra, então a ação nunca fica
+  sem saída. As teclas são gravadas por `event.code`, independentes do layout.
+
+A opacidade pintada e a opacidade preferida viraram coisas separadas no código:
+o esmaecimento muda o que está na tela sem tocar na preferência do usuário.
 
 ### Fase 3 — HUD e métricas
 
@@ -376,6 +390,8 @@ qualquer atalho do editor.
 | `Ctrl+F` | Buscar e substituir | local | 1 |
 | `Ctrl+Shift+Enter` | Copiar tudo e limpar | local | 1 |
 | `Ctrl+/` | Painel de atalhos | local | 1 |
+| `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
+| `Ctrl+Alt+6…9` / `Ctrl+Alt+0` | Metade da tela / tela toda | local | 2 |
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+1..9` | Trocar de nota | local | 5 |
 

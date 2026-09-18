@@ -80,6 +80,8 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Chamada instantânea** de qualquer app com `Ctrl+Alt+Space`
 - **Editor com atalhos do VS Code**: mover e duplicar linhas, multi-cursor
 - **Copiar tudo e limpar** para o ciclo de escrever prompts
+- **Esmaece sozinho** quando fica parado e sem foco
+- **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Autosave** do texto, com backup
 
 ## Atalhos
@@ -95,6 +97,8 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+Shift+G` | Modo fantasma |
 | `Ctrl+Shift+H` | Ocultar de gravações |
 | `Ctrl+Alt+1..5` | Encaixa nos cantos |
+| `Ctrl+Alt+6..9` / `Ctrl+Alt+0` | Metade da tela / tela toda |
+| `Ctrl+Alt+Shift+setas` | Redimensiona a janela |
 | `Ctrl+Shift+B` | Alterna o fundo: transparente, desfoque, acrylic |
 | `Ctrl+Q` | Fecha |
 | `Ctrl+Alt+G` | **Resgate** — desfaz todos os modos e traz a janela de volta |
