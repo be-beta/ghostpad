@@ -10,6 +10,65 @@ apareça no vídeo.
 > **Estado:** Fase 1 — editor CodeMirror e captura instantânea, em teste.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Manifesto
+
+**Escrever não pode custar o que você está olhando.**
+
+Toda anotação feita durante um trabalho visual — analisar uma interface, redigir
+um prompt sobre um texto, seguir um roteiro numa gravação — obriga a uma escolha
+absurda: ou você vê, ou você escreve. O `Alt+Tab` não é um atalho, é um imposto
+cobrado a cada ideia. Bloco de notas cobre a tela. Janela comum rouba o foco. E
+toda ferramenta que promete ficar "fora do caminho" acaba pedindo um clique,
+um menu, uma barra de título.
+
+O GhostPad existe para que escrever seja a única coisa que você faz.
+
+### Princípios
+
+**1. O texto do usuário é sagrado.**
+Nada é mais grave do que perder o que a pessoa acabou de escrever. Por isso a
+gravação é atômica, guarda a versão anterior, acontece a cada pausa e nunca
+depende de fechar o app direito. Copiar e limpar só limpa se a cópia deu certo,
+e ainda assim dá para desfazer. Não existe "quase salvo".
+
+**2. O teclado manda.**
+Se uma ação exige tirar a mão do teclado, ela ainda não está pronta. O mouse é
+bem-vindo, nunca obrigatório. E como um app sem menus não tem onde se explicar,
+ele carrega o próprio mapa: `Ctrl+/`.
+
+**3. Estado invisível precisa gritar.**
+Um app que atravessa cliques, some de gravações e fica transparente pode falhar
+sem que ninguém perceba. Então: se o modo oculto não funcionar, o aviso diz em
+letras claras que você **aparece** na gravação. Se a janela abrir quase
+invisível, ela pisca antes de esmaecer para você saber onde está. Se um atalho
+global estiver ocupado, o app troca por outro e diz qual. Nada aqui falha calado.
+
+**4. Sempre existe volta.**
+Por mais escondido, transparente ou fora da tela que o app esteja, uma tecla o
+traz de volta ao normal. Um recurso que pode prender o usuário só pode existir
+com a saída construída antes dele.
+
+**5. Presença, não interrupção.**
+Sem barra de título, sem moldura, sem ícones disputando atenção. Os controles
+aparecem quando o mouse chega perto e somem quando ele sai. A barra de baixo
+fica a 35% até você olhar para ela. Discrição é funcionalidade.
+
+**6. Promessa cumprida vale mais que efeito bonito.**
+O desfoque do Windows falhou silenciosamente numa máquina real de teste — a API
+respondia "sucesso" e pintava um fundo sólido. Ele virou opção; a transparência
+real, que funciona em qualquer computador, virou o padrão. Entre o impressionante
+e o confiável, o app escolhe o confiável.
+
+**7. Seu texto é seu.**
+Tudo vive na sua máquina, em arquivos que você pode abrir com qualquer editor.
+Sem conta, sem nuvem, sem telemetria, sem rede.
+
+### O que o GhostPad não é
+
+Não é gerenciador de notas, não organiza sua vida, não sincroniza, não tem
+pastas nem etiquetas, não quer virar seu segundo cérebro. É uma superfície para
+escrever por cima do que você está fazendo — e sair da frente depois.
+
 ## Recursos
 
 - **Sempre no topo**, sem barra de título nem bordas
