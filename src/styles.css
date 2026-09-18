@@ -118,8 +118,8 @@ body {
 
 .gp-resize--n,
 .gp-resize--s {
-  left: 18px;
-  right: 18px;
+  left: 13px;
+  right: 13px;
   height: 8px;
   cursor: ns-resize;
 }
@@ -129,8 +129,8 @@ body {
 
 .gp-resize--e,
 .gp-resize--w {
-  top: 18px;
-  bottom: 18px;
+  top: 13px;
+  bottom: 13px;
   width: 8px;
   cursor: ew-resize;
 }
@@ -138,13 +138,15 @@ body {
 .gp-resize--e { right: 0; }
 .gp-resize--w { left: 0; }
 
-/* Cantos maiores que as bordas: e onde as pessoas miram para redimensionar. */
+/* Cantos um pouco maiores que as bordas: e onde as pessoas miram para
+   redimensionar. 13px equilibra alcance e nao roubar o clique dos controles
+   que ficam perto dos cantos (o botao de atalhos, na barra de baixo). */
 .gp-resize--nw,
 .gp-resize--ne,
 .gp-resize--sw,
 .gp-resize--se {
-  width: 18px;
-  height: 18px;
+  width: 13px;
+  height: 13px;
 }
 
 .gp-resize--nw { top: 0; left: 0; cursor: nwse-resize; }
@@ -261,7 +263,9 @@ body[data-ghost="true"] .gp-resize {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 5px 10px;
+  /* Folga extra embaixo e a direita: mantem os chips fora das alcas de
+     redimensionamento, que antes cobriam metade do botao de atalhos. */
+  padding: 5px 14px 9px;
   font-size: 11px;
   opacity: 0.35;
   transition: opacity 160ms var(--gp-ease);

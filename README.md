@@ -31,6 +31,7 @@ apareça no vídeo.
 | `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
+| `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |
 | `Ctrl+P` | Alterna sempre-no-topo |
 | `Ctrl+Shift+G` | Modo fantasma |
 | `Ctrl+Shift+H` | Ocultar de gravações |

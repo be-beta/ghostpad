@@ -196,12 +196,17 @@ também é `maximizable: false`.
 
 - **Arrastar:** zona central do topo (pílula aparece no hover), alça de pontos
   junto aos controles, e áreas vazias da barra de status.
-- **Redimensionar:** alças invisíveis de 8 px nas bordas e **18×18 px nos
-  cantos**. A borda nativa de uma janela sem moldura tem poucos pixels. A faixa
+- **Redimensionar:** alças invisíveis de 8 px nas bordas e **13×13 px nos
+  cantos** (começaram com 18 px, que cobriam metade do botão de atalhos). A borda nativa de uma janela sem moldura tem poucos pixels. A faixa
   de arraste antes ocupava o topo inteiro e engolia a borda superior; agora só a
   zona central arrasta.
 - Os controles ficam afastados 22 px do canto para não disputar clique com a
-  alça de canto.
+  alça de canto, e a barra de status tem folga extra embaixo e à direita pelo
+  mesmo motivo.
+
+As teclas de colchete são lidas por `event.code` (`BracketLeft`/`BracketRight`),
+não pelo símbolo: com Shift o navegador reporta `{` e `}`, e o símbolo muda
+conforme o layout do teclado.
 
 **Posição e tamanho são restaurados** (`window_state.rs`), no Rust e antes de a
 janela aparecer (`visible: false` até restaurar), sem salto visual. A janela
@@ -357,6 +362,7 @@ qualquer atalho do editor.
 | Atalho | Ação | Escopo | Fase |
 |---|---|---|---|
 | `Ctrl+[` / `Ctrl+]` | Opacidade, passos de 10% (20–100%, padrão 90%) | local | 0 |
+| `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% | local | 1 |
 | `Ctrl+P` | Always-on-top | local | 0 |
 | `Ctrl+Shift+G` | Modo fantasma | local | 0 |
 | `Ctrl+Shift+H` | Ocultar de gravações | local | 0 |

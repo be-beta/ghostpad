@@ -52,7 +52,8 @@ function sections(effects: EffectsReport): Section[] {
     {
       title: "Janela",
       rows: [
-        { keys: "Ctrl+[ / Ctrl+]", label: "Opacidade" },
+        { keys: "Ctrl+[ / Ctrl+]", label: "Opacidade, de 10 em 10%" },
+        { keys: "Ctrl+Shift+[ / ]", label: "Opacidade em saltos de 50%" },
         { keys: "Ctrl+P", label: "Sempre visível" },
         { keys: "Ctrl+Shift+G", label: "Modo fantasma (o mouse atravessa)" },
         { keys: "Ctrl+Shift+H", label: "Ocultar de gravações" },

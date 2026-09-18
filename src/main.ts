@@ -38,6 +38,8 @@ const OPACITY_MIN = 0.2;
 const OPACITY_MAX = 1;
 // 10%: com 5% eram cliques demais para chegar ao nivel desejado.
 const OPACITY_STEP = 0.1;
+// Salto grande (Ctrl+Shift): dois toques cobrem o intervalo inteiro.
+const OPACITY_JUMP = 0.5;
 
 const el = {
   body: document.body,
@@ -263,6 +265,18 @@ const CORNER_BY_DIGIT: Record<string, Corner> = {
   "5": "top-center",
 };
 
+/**
+ * Direcao das teclas de colchete, por posicao fisica.
+ *
+ * Com Shift, o navegador reporta "{" e "}" em vez de "[" e "]", e o simbolo
+ * muda conforme o layout do teclado. `event.code` e estavel nos dois casos.
+ */
+function bracketDirection(event: KeyboardEvent): -1 | 1 | 0 {
+  if (event.code === "BracketLeft" || "[{".includes(event.key)) return -1;
+  if (event.code === "BracketRight" || "]}".includes(event.key)) return 1;
+  return 0;
+}
+
 /** Teclados ABNT2 e numericos produzem "/" por teclas fisicas diferentes. */
 const isSlash = (event: KeyboardEvent) =>
   event.key === "/" || event.key === "?" || event.code === "Slash" || event.code === "IntlRo" || event.code === "NumpadDivide";
@@ -293,6 +307,12 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
+  const bracket = bracketDirection(event);
+  if (bracket !== 0) {
+    nudgeOpacity(bracket * (event.shiftKey ? OPACITY_JUMP : OPACITY_STEP));
+    return consume(event);
+  }
+
   const key = event.key.toLowerCase();
 
   if (event.shiftKey) {
@@ -317,12 +337,6 @@ function handleKeydown(event: KeyboardEvent): boolean {
   }
 
   switch (key) {
-    case "[":
-      nudgeOpacity(-OPACITY_STEP);
-      return consume(event);
-    case "]":
-      nudgeOpacity(OPACITY_STEP);
-      return consume(event);
     case "p":
       void toggleAlwaysOnTop();
       return consume(event);
