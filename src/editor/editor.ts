@@ -180,7 +180,10 @@ const markdownHighlight = HighlightStyle.define([
  * paginas web e documentos (espaco rigido, espaco de largura zero).
  */
 const plainPaste = EditorView.clipboardInputFilter.of((text) =>
-  text.replace(/\r\n?/g, "\n").replace(/ /g, " ").replace(/[​‌‍﻿]/g, ""),
+  text
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/[\u200b\u200c\u200d\ufeff]/g, ""),
 );
 
 // --- API -------------------------------------------------------------------
@@ -214,7 +217,10 @@ export function createEditor(options: EditorOptions): GhostEditor {
     EditorView.clickAddsSelectionRange.of((event) => event.altKey),
     EditorView.lineWrapping,
     indentUnit.of("  "),
-    markdown(),
+    // Sem titulos "setext": em Markdown, uma linha de texto seguida de outra so
+    // com "-" vira titulo. Ao comecar uma lista, o paragrafo de cima mudava de
+    // tamanho sozinho. Titulos com "#" continuam funcionando.
+    markdown({ extensions: [{ remove: ["SetextHeading"] }] }),
     syntaxHighlighting(markdownHighlight),
     placeholder("Escreva algo…"),
     plainPaste,

@@ -90,7 +90,9 @@ export function createShortcutsPanel(host: HTMLElement, getEffects: () => Effect
       <div class="gp-sheet__card" role="dialog" aria-label="Atalhos do GhostPad">
         <header class="gp-sheet__header">
           <span>Atalhos</span>
-          <span class="gp-sheet__hint"><kbd>Esc</kbd> fecha</span>
+          <span class="gp-sheet__hint"><kbd>Esc</kbd> fecha
+            <button class="gp-sheet__close" data-close aria-label="Fechar atalhos">✕</button>
+          </span>
         </header>
         ${sections(getEffects())
           .map(
@@ -122,9 +124,10 @@ export function createShortcutsPanel(host: HTMLElement, getEffects: () => Effect
     },
   };
 
-  // Clicar fora do cartao fecha.
+  // Fecha ao clicar fora do cartao ou no botao de fechar.
   host.addEventListener("mousedown", (event) => {
-    if (event.target === host) panel.close();
+    const target = event.target as HTMLElement;
+    if (target === host || target.closest("[data-close]")) panel.close();
   });
 
   return panel;

@@ -23,6 +23,13 @@
   box-sizing: border-box;
 }
 
+/* Regra de autor vence o `hidden` do navegador. Sem isto, qualquer elemento
+   escondido por `hidden` continua desenhado — foi assim que o painel de atalhos
+   virou uma camada invisivel cobrindo a janela e engolindo todos os cliques. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   height: 100%;
@@ -372,17 +379,42 @@ body[data-ghost="true"] .gp-resize {
 
 .gp-sheet__header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 600;
 }
 
 .gp-sheet__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--gp-text-dim);
   font-size: 11px;
   font-weight: 400;
+}
+
+.gp-sheet__close {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gp-sheet__close:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--gp-text);
 }
 
 .gp-sheet__section h2 {
