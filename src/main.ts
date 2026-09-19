@@ -13,6 +13,7 @@ import {
   getEffectsReport,
   persistWindowState,
   setAlwaysOnTop,
+  rememberSize,
   resizeBy,
   setBackdrop,
   setClickThrough,
@@ -494,7 +495,26 @@ type ResizeDirection = Parameters<typeof appWindow.startResizeDragging>[0];
  * O atributo nao funcionava no botao de alca e, com duplo clique, maximizava a
  * janela — o oposto do que um bloco flutuante quer.
  */
+/**
+ * Arrastar a borda e uma escolha de tamanho deliberada, entao o backend precisa
+ * saber. O arraste e nativo: o webview nao recebe o mouseup que o encerra. Por
+ * isso o fim do gesto e detectado pela pausa nos eventos de redimensionamento.
+ */
+let resizingByUser = false;
+let resizeSettleTimer: number | undefined;
+
+function noteManualResize(): void {
+  if (!resizingByUser) return;
+  if (resizeSettleTimer) window.clearTimeout(resizeSettleTimer);
+  resizeSettleTimer = window.setTimeout(() => {
+    resizingByUser = false;
+    void rememberSize();
+  }, 400);
+}
+
 function wireWindowGestures(): void {
+  void appWindow.onResized(() => noteManualResize());
+
   document.addEventListener("mousedown", (event) => {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement;
@@ -502,6 +522,7 @@ function wireWindowGestures(): void {
     const resize = target.closest<HTMLElement>("[data-resize]");
     if (resize) {
       event.preventDefault();
+      resizingByUser = true;
       void appWindow.startResizeDragging(resize.dataset.resize as ResizeDirection);
       return;
     }

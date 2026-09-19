@@ -331,11 +331,18 @@ qualquer atalho do editor.
   alvo é tratado como tamanho externo e convertido antes de aplicar.
 - **Encaixe num canto devolve o tamanho de trabalho** — o app guarda o último
   tamanho escolhido pelo usuário e o restaura ao encaixar num canto; sem isso,
-  quem usasse "tela cheia" ficava preso com a janela enorme. Redimensionamentos
-  feitos pelo próprio app (metade da tela, tela cheia) são marcados e não viram
-  preferência, com tolerância de 4 px para arredondamento de escala. Sem
-  preferência salva, o padrão é uma coluna estreita e alta (26% × 55% da área
-  útil), que é como um bloco lateral costuma ser usado.
+  quem usasse "tela cheia" ficava preso com a janela enorme. Sem preferência
+  salva, o padrão é uma coluna estreita e discreta (24% × 46% da área útil).
+- **O tamanho preferido só muda por ação deliberada [D]** — o atalho de
+  redimensionar e o fim de um arraste de borda. A primeira versão inferia a
+  preferência do evento `Resized`, marcando os encaixes do app para ignorá-los;
+  não funcionou, porque o Windows dispara o evento mais de uma vez por mudança e
+  o encaixe em metade da tela virava "preferência". O arraste de borda é nativo
+  e o webview não recebe o `mouseup` que o encerra, então o fim do gesto é
+  detectado pela pausa nos eventos de redimensionamento.
+- O tamanho preferido é gravado em `window.json` **separado da geometria**: a
+  janela pode ser fechada ocupando metade da tela, e isso não pode virar o
+  tamanho de trabalho da próxima sessão.
 - **Redimensionar por teclado** `Ctrl+Alt+Shift+setas`, em passos de 40 px.
   Não usa `Ctrl+Alt+setas` porque em máquinas com gráfico Intel essa combinação
   gira a tela inteira — é o caso da máquina de desenvolvimento.

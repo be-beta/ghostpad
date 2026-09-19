@@ -203,8 +203,8 @@ fn set_outer_size(window: &WebviewWindow, width: i32, height: i32) -> Result<(),
 /// Formato inicial para quem ainda nao escolheu um tamanho: uma coluna estreita
 /// e alta, que e como um bloco de notas lateral costuma ser usado.
 fn default_corner_size(area: &tauri::PhysicalSize<u32>, scale: f64) -> (i32, i32) {
-    let width = (area.width as f64 * 0.26).clamp(360.0 * scale, 620.0 * scale);
-    let height = (area.height as f64 * 0.55).clamp(300.0 * scale, 900.0 * scale);
+    let width = (area.width as f64 * 0.24).clamp(340.0 * scale, 560.0 * scale);
+    let height = (area.height as f64 * 0.46).clamp(280.0 * scale, 720.0 * scale);
     (width.round() as i32, height.round() as i32)
 }
 
@@ -282,7 +282,25 @@ pub fn resize_by(window: WebviewWindow, dw: i32, dh: i32) -> Result<(), String> 
     let width = (outer.width as i32 + step(dw)).clamp(min_w, max_w);
     let height = (outer.height as i32 + step(dh)).clamp(min_h, max_h);
 
-    set_outer_size(&window, width, height)
+    set_outer_size(&window, width, height)?;
+    // Redimensionar de proposito define o tamanho de trabalho.
+    window
+        .state::<crate::window_state::WindowState>()
+        .set_preferred_size((width.max(1) as u32, height.max(1) as u32));
+    Ok(())
+}
+
+/// Grava o tamanho atual como preferido.
+///
+/// Chamado pelo frontend quando termina um arraste de borda: e o outro jeito de
+/// o usuario escolher um tamanho de proposito.
+#[tauri::command]
+pub fn remember_size(window: WebviewWindow) -> Result<(), String> {
+    let outer = window.outer_size().map_err(|e| e.to_string())?;
+    window
+        .state::<crate::window_state::WindowState>()
+        .set_preferred_size((outer.width, outer.height));
+    Ok(())
 }
 
 /// Ocupa metade (ou a area util inteira) do monitor atual.
@@ -312,12 +330,8 @@ pub fn snap_half(window: WebviewWindow, side: String, margin: u32) -> Result<(),
         other => return Err(format!("Lado desconhecido: {other}")),
     };
 
-    // Marcado como redimensionamento do app: ocupar metade da tela e um estado
+    // Nao toca no tamanho preferido: ocupar metade da tela e um estado
     // temporario, nao o tamanho de trabalho que o usuario escolheu.
-    window
-        .state::<crate::window_state::WindowState>()
-        .note_programmatic((w.max(1) as u32, h.max(1) as u32));
-
     set_outer_size(&window, w.max(1), h.max(1))?;
     window
         .set_position(PhysicalPosition::new(x, y))

@@ -46,6 +46,9 @@ export type HalfSide = "left" | "right" | "top" | "bottom" | "full";
 export const snapHalf = (side: HalfSide, margin = 12) =>
   invoke<void>("snap_half", { side, margin });
 
+/** Marca o tamanho atual como o tamanho de trabalho do usuario. */
+export const rememberSize = () => invoke<void>("remember_size");
+
 /** Passos em pixels logicos; o backend converte pela escala da tela. */
 export const resizeBy = (dw: number, dh: number) => invoke<void>("resize_by", { dw, dh });
 
