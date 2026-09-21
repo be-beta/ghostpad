@@ -282,6 +282,25 @@ body[data-ghost="true"] .gp-resize {
   min-width: 0;
 }
 
+/* Janela estreita: os chips de estado viram so o ponto colorido e as metricas
+   extras somem. Sem isto, os dois lados da barra se sobrepunham. */
+body[data-narrow="true"] .gp-chip__label,
+body[data-narrow="true"] #chip-backdrop {
+  display: none;
+}
+
+body[data-narrow="true"] .gp-chip {
+  padding: 3px 5px;
+}
+
+body[data-narrow="true"] .gp-metrics .gp-metric:nth-child(n + 3) {
+  display: none;
+}
+
+body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
+  display: none;
+}
+
 .gp-status__group--right {
   gap: 10px;
 }
@@ -329,6 +348,21 @@ body[data-ghost="true"] .gp-resize {
   cursor: not-allowed;
 }
 
+.gp-metrics {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Somem uma a uma quando a janela estreita, da menos importante para a
+   mais: a contagem de palavras e a ultima a sair. */
+.gp-metrics .gp-metric[data-metric="pages"],
+.gp-metrics .gp-metric[data-metric="lines"] {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
 .gp-metric {
   padding: 0;
   border: none;
@@ -363,6 +397,69 @@ body[data-ghost="true"] .gp-resize {
   justify-content: center;
   padding: 0;
   font-weight: 600;
+}
+
+/* --- Menu flutuante (modulos da barra) ------------------------------------ */
+
+.gp-menu {
+  position: fixed;
+  right: 12px;
+  bottom: 34px;
+  z-index: 26;
+  min-width: 180px;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(14, 14, 14, 0.97);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 10px 26px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+}
+
+.gp-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gp-text);
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gp-menu__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Caixa de marcacao desenhada em CSS: um caractere de marca mudaria de
+   largura entre fontes e desalinharia a lista. */
+.gp-menu__box {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.gp-menu__item[data-on="true"] .gp-menu__box {
+  background: var(--gp-accent);
+  box-shadow: none;
+}
+
+.gp-menu__item[data-on="true"] .gp-menu__box::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 4.5px;
+  width: 3px;
+  height: 6px;
+  border: solid rgba(0, 0, 0, 0.75);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 /* --- Painel de atalhos ----------------------------------------------------- */

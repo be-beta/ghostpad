@@ -39,6 +39,11 @@ import {
   type Settings,
 } from "./core/store";
 import { createEditor, type GhostEditor } from "./editor/editor";
+import {
+  MODULE_LABELS,
+  renderMetrics,
+  type MetricKey,
+} from "./ui/metrics";
 import { createShortcutsPanel } from "./ui/shortcuts";
 
 const OPACITY_MIN = 0.2;
@@ -60,7 +65,9 @@ const el = {
   chipStealth: document.getElementById("chip-stealth") as HTMLButtonElement,
   chipBackdrop: document.getElementById("chip-backdrop") as HTMLButtonElement,
   chipHelp: document.getElementById("chip-help") as HTMLButtonElement,
-  metricWords: document.getElementById("metric-words") as HTMLSpanElement,
+  metrics: document.getElementById("metrics") as HTMLSpanElement,
+  chipModules: document.getElementById("chip-modules") as HTMLButtonElement,
+  modules: document.getElementById("modules") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
 };
@@ -299,8 +306,35 @@ function cycleBackdrop(): void {
 // --- Texto -----------------------------------------------------------------
 
 function updateMetrics(text: string): void {
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-  el.metricWords.textContent = words === 1 ? "1 palavra" : `${words} palavras`;
+  renderMetrics(el.metrics, text, settings.statusBar);
+}
+
+// --- Menu de modulos da barra ---------------------------------------------
+
+/**
+ * Escolhe o que a barra mostra.
+ *
+ * Existe porque as metricas uteis mudam com a tarefa: quem escreve prompt olha
+ * tokens, quem escreve texto longo olha paginas, e ninguem quer as cinco ao
+ * mesmo tempo numa janela estreita.
+ */
+function renderModulesMenu(): void {
+  el.modules.textContent = "";
+
+  for (const [key, label] of Object.entries(MODULE_LABELS) as [MetricKey, string][]) {
+    const item = document.createElement("button");
+    item.className = "gp-menu__item";
+    item.dataset.on = String(settings.statusBar[key]);
+    item.dataset.module = key;
+    item.innerHTML = `<span class="gp-menu__box"></span>${label}`;
+    el.modules.append(item);
+  }
+}
+
+function toggleModulesMenu(open?: boolean): void {
+  const next = open ?? el.modules.hidden;
+  if (next) renderModulesMenu();
+  el.modules.hidden = !next;
 }
 
 const persistDraft = debounceWithCeiling((text: string) => void saveDraft(text), 400, 2000);
@@ -387,6 +421,12 @@ const RESIZE_BY_ARROW: Record<string, [number, number]> = {
 };
 
 function handleKeydown(event: KeyboardEvent): boolean {
+  if (event.key === "Escape" && !el.modules.hidden) {
+    toggleModulesMenu(false);
+    editor.focus();
+    return consume(event);
+  }
+
   if (event.key === "Escape" && shortcutsPanel.isOpen()) {
     shortcutsPanel.close();
     editor.focus();
@@ -536,8 +576,24 @@ function wireWindowGestures(): void {
   });
 }
 
+/**
+ * A barra de status tem dois lados que crescem em direcoes opostas; numa janela
+ * estreita eles se sobrepunham. Aqui a largura vira um atributo no body e o CSS
+ * decide o que esconder, da informacao menos importante para a mais.
+ */
+function watchWidth(): void {
+  const apply = (width: number) => {
+    el.body.dataset.narrow = String(width < 520);
+    el.body.dataset.tiny = String(width < 400);
+  };
+
+  apply(window.innerWidth);
+  new ResizeObserver((entries) => apply(entries[0].contentRect.width)).observe(document.body);
+}
+
 function wireEvents(): void {
   wireWindowGestures();
+  watchWidth();
 
   // Controles aparecem so quando o mouse chega perto do canto superior direito.
   document.addEventListener("mousemove", (event) => {
@@ -556,6 +612,24 @@ function wireEvents(): void {
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
+  el.chipModules.addEventListener("click", () => toggleModulesMenu());
+
+  el.modules.addEventListener("click", (event) => {
+    const item = (event.target as HTMLElement).closest<HTMLElement>("[data-module]");
+    if (!item) return;
+    const key = item.dataset.module as MetricKey;
+    settings.statusBar = { ...settings.statusBar, [key]: !settings.statusBar[key] };
+    item.dataset.on = String(settings.statusBar[key]);
+    updateMetrics(editor.getText());
+    void saveSettings(settings);
+  });
+
+  // Clique fora fecha o menu, sem engolir o clique que o fechou.
+  document.addEventListener("mousedown", (event) => {
+    const target = event.target as HTMLElement;
+    if (el.modules.hidden) return;
+    if (!el.modules.contains(target) && target !== el.chipModules) toggleModulesMenu(false);
+  });
   el.metricOpacity.addEventListener("click", () => toggleIdleFade());
 
   // Sinais de presenca: qualquer um deles cancela o esmaecimento.

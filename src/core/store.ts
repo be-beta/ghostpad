@@ -15,6 +15,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { load, type Store } from "@tauri-apps/plugin-store";
 import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
+import { DEFAULT_MODULES, type MetricModules } from "../ui/metrics";
 
 export interface Settings {
   opacity: number;
@@ -25,6 +26,8 @@ export interface Settings {
   idleFade: boolean;
   /** Atalhos globais escolhidos pelo usuario; ausentes = padrao do backend. */
   shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
+  /** Metricas visiveis na barra de status. */
+  statusBar: MetricModules;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -39,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   backdrop: "transparent",
   idleFade: true,
   shortcuts: {},
+  statusBar: { ...DEFAULT_MODULES },
 };
 
 // Modo fantasma fica fora de propósito: iniciar nele deixaria o app sem
@@ -53,7 +57,14 @@ export async function initStores(): Promise<void> {
 export async function loadSettings(): Promise<Settings> {
   if (!settingsStore) return { ...DEFAULT_SETTINGS };
   const saved = await settingsStore.get<Partial<Settings>>("settings");
-  return { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
+  // Mescla profunda no que e objeto: modulo novo numa versao futura precisa
+  // aparecer para quem ja tem configuracao salva.
+  return {
+    ...DEFAULT_SETTINGS,
+    ...(saved ?? {}),
+    statusBar: { ...DEFAULT_SETTINGS.statusBar, ...(saved?.statusBar ?? {}) },
+    shortcuts: { ...(saved?.shortcuts ?? {}) },
+  };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {

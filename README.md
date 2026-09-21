@@ -7,7 +7,8 @@ sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analis
 uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
 apareça no vídeo.
 
-> **Estado:** Fase 1 — editor CodeMirror e captura instantânea, em teste.
+> **Estado:** Fase 3 — janela, editor e barra de status prontos; teleprompter e
+> múltiplas notas em seguida.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Manifesto
@@ -80,6 +81,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Chamada instantânea** de qualquer app com `Ctrl+Alt+Space`
 - **Editor com atalhos do VS Code**: mover e duplicar linhas, multi-cursor
 - **Copiar tudo e limpar** para o ciclo de escrever prompts
+- **Barra de status modular**: palavras, caracteres, linhas, tokens e páginas
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Autosave** do texto, com backup

@@ -292,7 +292,7 @@ depois o que protege o trabalho, por último os modos especializados.
 | 0.5 | Spike do `SetWindowDisplayAffinity` | **feito, validado no OBS** |
 | 1 | Editor e captura instantânea | **feito, em teste** |
 | 2 | Presença e posicionamento | **feito, em teste** |
-| 3 | HUD e métricas | parcial |
+| 3 | HUD e métricas | **feito, em teste** |
 | 4 | Segurança do trabalho | a fazer |
 | 5 | Múltiplas notas e split view | a fazer |
 | 6 | Teleprompter e modo notch | a fazer |
@@ -366,10 +366,32 @@ o esmaecimento muda o que está na tela sem tocar na preferência do usuário.
 
 ### Fase 3 — HUD e métricas
 
-- Palavras, caracteres, linhas
-- **Estimativa de tokens** — rotulada como aproximação
-- Estimativa de páginas A4/ABNT — também rotulada como aproximação
-- Módulos da barra ligáveis individualmente
+Cinco módulos (`src/ui/metrics.ts`), ligados e desligados no menu `⋯` da barra:
+palavras, caracteres, linhas, **tokens** e **páginas A4/ABNT**. Padrão: palavras
+e tokens, porque o uso central do app é escrever prompt.
+
+**Duas métricas são aproximações e a interface admite isso com o sinal `~`:**
+
+- **Tokens** — `caracteres ÷ 3,8`. A regra difundida (÷ 4) vem do inglês;
+  português gasta mais tokens pela acentuação e por palavras mais longas. Cada
+  modelo tem seu tokenizador, então o número é estimativa por natureza.
+- **Páginas** — `caracteres ÷ 2100`, que é o que cabe numa página A4 em ABNT
+  (fonte 12, entrelinha 1,5, margens 3/2 cm). Mostrada com uma casa decimal:
+  "0,4 pág." diz mais sobre o progresso que "0 pág.".
+
+Prometer precisão onde ela não existe seria pior do que aproximar com honestidade.
+
+### Barra adaptável à largura **[D]**
+
+Os dois lados da barra crescem em direções opostas e, numa janela de 360 px
+lógicos, se sobrepunham — encontrado por captura de tela, não em teste manual.
+Um `ResizeObserver` escreve a faixa de largura no `body` e o CSS decide o que
+esconder, do menos para o mais importante:
+
+| Largura | O que sai |
+|---|---|
+| < 520 px | rótulos dos chips (fica só o ponto de estado) e o chip de fundo |
+| < 400 px | todas as métricas além da primeira |
 
 ### Fase 4 — Segurança do trabalho
 
