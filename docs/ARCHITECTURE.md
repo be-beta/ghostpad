@@ -586,6 +586,13 @@ Ligar o teleprompter é se preparar para ler, não começar a ler. Antes a rolag
 partia imediatamente e a primeira linha já descia antes de o olho encontrá-la.
 `Espaço` (ou o botão do canto) dá a partida quando a pessoa está pronta.
 
+### O fim do texto pausa, não encerra **[D]**
+
+Encerrar no fim tirava a folga de leitura, e a última linha saltava do centro
+justamente no momento de lê-la. Agora a rolagem pausa com a última linha no
+ponto de leitura e o modo continua de pé, até a pessoa decidir o que fazer.
+Retomar ali não faz nada: não há o que rolar, e insistir só repetiria o aviso.
+
 ### Sair do teleprompter devolve a janela **[D]**
 
 A faixa existe *para* o teleprompter, então sair de um é sair do outro: parar a

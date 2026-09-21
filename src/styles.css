@@ -92,9 +92,11 @@ body {
 }
 
 /* Pilula que aparece ao passar o mouse: a convencao de "alca" de paineis. */
+/* Posicao fixa, e nao relativa a area de arraste: com as abas a esquerda, essa
+   area deixou de comecar na borda e a pilula saia do centro da janela. */
 .gp-topbar__drag::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 11px;
   left: 50%;
   width: 36px;

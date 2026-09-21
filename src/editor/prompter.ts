@@ -43,6 +43,8 @@ export function createPrompter(options: PrompterOptions): Prompter {
 
   let frame = 0;
   let lastTime = 0;
+  /** Ja chegou ao fim: evita repetir o aviso e tentar rolar o que acabou. */
+  let atEnd = false;
   /** Sobra de pixel do quadro anterior, para o movimento nao travar. */
   let carry = 0;
 
@@ -60,8 +62,7 @@ export function createPrompter(options: PrompterOptions): Prompter {
 
       if (limit <= 0) {
         // Texto menor que a janela: nao ha o que rolar.
-        stop();
-        options.onEnd();
+        reachEnd();
         return;
       }
 
@@ -73,8 +74,7 @@ export function createPrompter(options: PrompterOptions): Prompter {
       }
 
       if (scroller.scrollTop >= limit) {
-        stop();
-        options.onEnd();
+        reachEnd();
         return;
       }
     }
@@ -82,9 +82,28 @@ export function createPrompter(options: PrompterOptions): Prompter {
     frame = requestAnimationFrame(step);
   };
 
+  /**
+   * Chegou ao fim: pausa, nao encerra.
+   *
+   * Encerrar tirava a folga de leitura e a ultima linha saltava do centro
+   * justamente no momento de le-la. Pausado, o modo continua de pe: a ultima
+   * linha fica no ponto de leitura ate a pessoa decidir o que fazer.
+   */
+  function reachEnd(): void {
+    paused = true;
+    lastTime = 0;
+    notify();
+    if (!atEnd) {
+      atEnd = true;
+      options.onEnd();
+    }
+    frame = requestAnimationFrame(step);
+  }
+
   function start(pausedInicial = true): void {
     if (active) return;
     active = true;
+    atEnd = false;
     // Comeca parado por padrao: ligar o teleprompter e se preparar para ler,
     // nao comecar a ler. Sem isso a primeira linha ja saia descendo.
     paused = pausedInicial;
@@ -108,6 +127,8 @@ export function createPrompter(options: PrompterOptions): Prompter {
     stop,
     togglePause() {
       if (!active) return;
+      // No fim do texto nao ha o que retomar: insistir so repetiria o aviso.
+      if (atEnd && paused) return;
       paused = !paused;
       // Zera o relogio: sem isto, o tempo parado viraria um salto ao voltar.
       lastTime = 0;
