@@ -28,6 +28,8 @@ export interface Settings {
   shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
   /** Metricas visiveis na barra de status. */
   statusBar: MetricModules;
+  /** Largura da faixa do teleprompter, em pixels logicos. */
+  notchWidth: number;
   openNotes: number[];
   activeNote: number;
 }
@@ -43,6 +45,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
   backdrop: "transparent",
   idleFade: true,
+  // Linha curta e mais facil de ler descendo: o olho pega a frase inteira.
+  notchWidth: 620,
   /** Anotacoes abertas, na ordem das abas. Comeca com uma so. */
   openNotes: [1],
   /** Anotacao aberta por ultimo. */

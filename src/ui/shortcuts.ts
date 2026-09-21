@@ -71,6 +71,7 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Espaço", label: "Pausar e continuar (durante a rolagem)" },
         { keys: "↑ / ↓", label: "Velocidade (durante a rolagem)" },
         { keys: "Ctrl+Alt+N", label: "Modo faixa: três linhas no topo da tela" },
+        { keys: "Ctrl+Alt+Shift+← →", label: "Largura da faixa" },
         { keys: "Esc", label: "Sair do teleprompter" },
       ],
     },

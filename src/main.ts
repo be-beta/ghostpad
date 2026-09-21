@@ -80,6 +80,9 @@ const el = {
   modules: document.getElementById("modules") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
+  prompter: document.getElementById("prompter") as HTMLDivElement,
+  prompterPlay: document.getElementById("prompter-play") as HTMLSpanElement,
+  prompterSpeed: document.getElementById("prompter-speed") as HTMLSpanElement,
   history: document.getElementById("history") as HTMLDivElement,
   tabs: document.getElementById("tabs") as HTMLSpanElement,
 };
@@ -593,6 +596,29 @@ let prompter: Prompter;
 /** Geometria de antes do modo faixa, para a janela voltar ao que era. */
 let beforeNotch: { x: number; y: number; width: number; height: number } | null = null;
 
+const isNotch = () => beforeNotch !== null;
+
+/**
+ * Folga de meia tela acima e abaixo do texto, enquanto o teleprompter roda.
+ *
+ * Sem ela a primeira linha comeca colada no topo e a ultima nunca chega ao
+ * centro — ou seja, o inicio e o fim do roteiro ficavam fora do ponto de
+ * leitura, que e justamente onde os olhos estao.
+ */
+function applyReadingPadding(active: boolean): void {
+  const content = editor.content();
+
+  if (!active) {
+    content.style.paddingTop = "";
+    content.style.paddingBottom = "";
+    return;
+  }
+
+  const folga = Math.max(0, (editor.scroller().clientHeight - editor.lineHeight()) / 2);
+  content.style.paddingTop = `${folga}px`;
+  content.style.paddingBottom = `${folga}px`;
+}
+
 /**
  * Liga e desliga o teleprompter.
  *
@@ -606,6 +632,10 @@ function togglePrompter(): void {
     return;
   }
 
+  applyReadingPadding(true);
+  // Comeca do zero: com a folga aplicada, a primeira linha nasce no centro.
+  editor.scroller().scrollTop = 0;
+
   prompter.start();
   const { speed } = prompter.state();
   toast(`Teleprompter a ${speed} px/s — espaço pausa, ↑↓ velocidade, Esc sai`);
@@ -615,7 +645,15 @@ function togglePrompter(): void {
 function onPrompterChange(state: { active: boolean; paused: boolean; speed: number }): void {
   el.body.dataset.prompter = String(state.active);
   editor.setEditable(!state.active);
-  if (!state.active) editor.focus();
+
+  el.prompter.hidden = !state.active;
+  el.prompterPlay.textContent = state.paused ? "▶" : "❚❚";
+  el.prompterSpeed.textContent = `${state.speed} px/s`;
+
+  if (!state.active) {
+    applyReadingPadding(false);
+    editor.focus();
+  }
 }
 
 /**
@@ -624,13 +662,35 @@ function onPrompterChange(state: { active: boolean; paused: boolean; speed: numb
  * A altura sai da altura real de uma linha do editor, e nao de um numero fixo:
  * quem muda o tamanho da fonte espera que a faixa acompanhe.
  */
+/** Altura da faixa: tres linhas do editor mais uma folga pequena. */
+function notchHeight(): number {
+  const lineHeight =
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-font-size")) *
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-line-height"));
+  return Math.round(lineHeight * 3 + 20);
+}
+
+/**
+ * Reaplica a faixa: recentraliza e devolve a altura de tres linhas.
+ *
+ * Chamado tambem depois de o usuario arrastar a borda, porque nesse caso a
+ * janela saia do centro e crescia em altura — perdendo justamente as duas
+ * caracteristicas do modo.
+ */
+async function applyNotch(): Promise<void> {
+  await placeTopCenter(settings.notchWidth, notchHeight());
+  applyReadingPadding(prompter?.state().active ?? false);
+}
+
 async function toggleNotch(): Promise<void> {
   if (beforeNotch) {
+    applyReadingPadding(false);
     const { x, y, width, height } = beforeNotch;
     beforeNotch = null;
     el.body.dataset.notch = "false";
     await appWindow.setSize(new PhysicalSize(width, height));
     await appWindow.setPosition(new PhysicalPosition(x, y));
+    applyReadingPadding(prompter?.state().active ?? false);
     toast("Modo faixa desligado");
     return;
   }
@@ -640,14 +700,8 @@ async function toggleNotch(): Promise<void> {
   beforeNotch = { x: position.x, y: position.y, width: size.width, height: size.height };
 
   el.body.dataset.notch = "true";
-
-  const lineHeight =
-    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-font-size")) *
-    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-line-height"));
-  const altura = Math.round(lineHeight * 3 + 20);
-
-  await placeTopCenter(Math.round(window.screen.width * 0.42), altura);
-  toast("Modo faixa — Ctrl+Alt+N volta ao normal");
+  await applyNotch();
+  toast("Modo faixa — Ctrl+Alt+Shift+←→ muda a largura, Ctrl+Alt+N volta");
 }
 
 // --- Arquivos do usuario ---------------------------------------------------
@@ -883,6 +937,18 @@ function handleKeydown(event: KeyboardEvent): boolean {
   // grafico Intel gira a tela inteira.
   if (event.altKey && event.shiftKey && RESIZE_BY_ARROW[event.key]) {
     const [dw, dh] = RESIZE_BY_ARROW[event.key];
+
+    // Na faixa, so a largura muda: a altura e sempre tres linhas, e a janela
+    // precisa continuar centralizada na tela.
+    if (isNotch()) {
+      if (dw !== 0) {
+        settings.notchWidth = Math.min(1400, Math.max(260, settings.notchWidth + dw));
+        void saveSettings(settings);
+        void applyNotch();
+      }
+      return consume(event);
+    }
+
     void resizeBy(dw, dh);
     return consume(event);
   }
@@ -1001,8 +1067,20 @@ let resizeSettleTimer: number | undefined;
 function noteManualResize(): void {
   if (!resizingByUser) return;
   if (resizeSettleTimer) window.clearTimeout(resizeSettleTimer);
-  resizeSettleTimer = window.setTimeout(() => {
+  resizeSettleTimer = window.setTimeout(async () => {
     resizingByUser = false;
+
+    // Arrastar a borda dentro da faixa vira ajuste de largura: a janela volta
+    // ao centro e a altura volta a ser de tres linhas.
+    if (isNotch()) {
+      const size = await appWindow.outerSize();
+      const scale = await appWindow.scaleFactor();
+      settings.notchWidth = Math.round(size.width / scale);
+      void saveSettings(settings);
+      void applyNotch();
+      return;
+    }
+
     void rememberSize();
   }, 400);
 }
@@ -1043,6 +1121,9 @@ function watchWidth(): void {
     el.body.dataset.tiny = String(width < 400);
     // O rotulo curto depende da faixa de largura, entao redesenha ao mudar.
     if (before !== el.body.dataset.narrow && editor) updateMetrics(editor.getText());
+
+    // A folga de leitura e metade da altura visivel: muda com a janela.
+    if (editor && prompter?.state().active) applyReadingPadding(true);
   };
 
   apply(window.innerWidth);
@@ -1058,9 +1139,24 @@ function wireEvents(): void {
     const nearTop = event.clientY < 56;
     const nearRight = event.clientX > window.innerWidth - 150;
     el.controls.dataset.visible = String(nearTop && nearRight);
+
+    // Os do teleprompter surgem perto do rodape, onde nao cobrem a leitura.
+    const nearBottom = event.clientY > window.innerHeight - 70;
+    el.prompter.dataset.visible = String(prompter?.state().active === true && nearBottom);
+  });
+
+  el.prompter.addEventListener("click", (event) => {
+    const action = (event.target as HTMLElement).closest<HTMLElement>("[data-prompter]")?.dataset
+      .prompter;
+
+    if (action === "pause") prompter.togglePause();
+    else if (action === "faster") prompter.nudgeSpeed(SPEED_STEP);
+    else if (action === "slower") prompter.nudgeSpeed(-SPEED_STEP);
+    else if (action === "exit") prompter.stop();
   });
   document.addEventListener("mouseleave", () => {
     el.controls.dataset.visible = "false";
+    el.prompter.dataset.visible = "false";
   });
 
   el.btnMinimize.addEventListener("click", () => void appWindow.minimize());

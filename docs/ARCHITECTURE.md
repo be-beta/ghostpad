@@ -553,6 +553,28 @@ A altura vem da **altura real de uma linha** (tamanho da fonte × entrelinha),
 não de um número fixo: quem aumenta a fonte espera que a faixa acompanhe. A
 geometria anterior é guardada e devolvida ao sair.
 
+**Largura ajustável** (`Ctrl+Alt+Shift+←→`, ou arrastando a borda). Linha curta
+é mais fácil de ler descendo: o olho pega a frase inteira de uma vez. Arrastar a
+borda dentro da faixa tirava a janela do centro e aumentava a altura — as duas
+características do modo. Agora, ao terminar o arraste, a janela volta ao centro
+e a altura volta a ser de três linhas; só a largura permanece, e ela é salva.
+
+### Folga de leitura **[D]**
+
+*Corrigido depois do primeiro teste em gravação.* A primeira linha aparecia
+colada no topo e a última nunca alcançava o centro — ou seja, o começo e o fim
+do roteiro ficavam fora do ponto de leitura, que é onde os olhos estão.
+
+Enquanto o teleprompter roda, o texto ganha metade da altura visível de folga
+acima e abaixo. A primeira linha nasce no centro e a última chega lá. A folga é
+recalculada quando a janela muda de tamanho, inclusive ao entrar e sair da faixa.
+
+### Controles no hover
+
+Botões de pausar, velocidade e sair aparecem perto do rodapé durante a rolagem.
+Ninguém deve ficar preso num modo por não ter decorado um atalho — e um modo que
+deixa o texto somente leitura precisa de uma saída visível.
+
 ---
 
 ## 9. Atalhos

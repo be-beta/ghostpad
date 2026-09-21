@@ -219,6 +219,10 @@ export interface GhostEditor {
   setEditable(value: boolean): void;
   /** Elemento que rola, usado pelo teleprompter. */
   scroller(): HTMLElement;
+  /** Elemento do texto, onde entra a folga de leitura do teleprompter. */
+  content(): HTMLElement;
+  /** Altura de uma linha, em pixels. */
+  lineHeight(): number;
   view: EditorView;
 }
 
@@ -279,6 +283,8 @@ export function createEditor(options: EditorOptions): GhostEditor {
       view.dispatch({ effects: editable.reconfigure(EditorView.editable.of(value)) });
     },
     scroller: () => view.scrollDOM,
+    content: () => view.contentDOM,
+    lineHeight: () => view.defaultLineHeight,
     captureSession: () => view.state,
     restoreSession: (session) => {
       view.setState(session);
