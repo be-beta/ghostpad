@@ -60,6 +60,9 @@ export interface SnapshotInfo {
   preview: string;
 }
 
+/** Fecha a anotacao: o texto vai para o historico dela antes de sair. */
+export const closeNote = (slot: number) => invoke<void>("close_note", { slot });
+
 export const listSnapshots = (slot: number) =>
   invoke<SnapshotInfo[]>("list_snapshots", { slot });
 

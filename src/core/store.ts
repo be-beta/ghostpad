@@ -28,6 +28,7 @@ export interface Settings {
   shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
   /** Metricas visiveis na barra de status. */
   statusBar: MetricModules;
+  openNotes: number[];
   activeNote: number;
 }
 
@@ -42,7 +43,9 @@ export const DEFAULT_SETTINGS: Settings = {
   // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
   backdrop: "transparent",
   idleFade: true,
-  /** Espaco de anotacao aberto por ultimo. */
+  /** Anotacoes abertas, na ordem das abas. Comeca com uma so. */
+  openNotes: [1],
+  /** Anotacao aberta por ultimo. */
   activeNote: 1,
   shortcuts: {},
   statusBar: { ...DEFAULT_MODULES },
@@ -66,6 +69,8 @@ export async function loadSettings(): Promise<Settings> {
     ...DEFAULT_SETTINGS,
     ...(saved ?? {}),
     statusBar: { ...DEFAULT_SETTINGS.statusBar, ...(saved?.statusBar ?? {}) },
+    // Uma aba precisa existir sempre: lista vazia deixaria o app sem texto.
+    openNotes: saved?.openNotes?.length ? [...saved.openNotes] : [...DEFAULT_SETTINGS.openNotes],
     shortcuts: { ...(saved?.shortcuts ?? {}) },
   };
 }
@@ -75,14 +80,6 @@ export async function saveSettings(settings: Settings): Promise<void> {
   await settingsStore.set("settings", settings);
   await settingsStore.save();
 }
-
-/** Quantos caracteres ha em cada espaco, para a barra indicar os que estao em uso. */
-export interface SlotInfo {
-  slot: number;
-  chars: number;
-}
-
-export const listSlots = () => invoke<SlotInfo[]>("list_slots");
 
 export function loadNote(slot: number): Promise<string> {
   return invoke<string>("load_note", { slot });

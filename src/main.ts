@@ -11,6 +11,7 @@ import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialo
 
 import {
   appWindow,
+  closeNote,
   detectRecorders,
   getEffectsReport,
   persistWindowState,
@@ -36,14 +37,13 @@ import {
   DEFAULT_SETTINGS,
   debounceWithCeiling,
   initStores,
-  listSlots,
   loadNote,
   loadSettings,
   saveNote,
   saveSettings,
   type Settings,
 } from "./core/store";
-import { createEditor, type GhostEditor } from "./editor/editor";
+import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
 import {
   MODULE_LABELS,
   enabledCount,
@@ -78,16 +78,25 @@ const el = {
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
   history: document.getElementById("history") as HTMLDivElement,
-  notes: document.getElementById("notes") as HTMLSpanElement,
+  tabs: document.getElementById("tabs") as HTMLSpanElement,
 };
 
-const NOTE_SLOTS = [1, 2, 3, 4, 5];
+/** Teto de anotacoes abertas. Poucas de proposito: anotar agora, nao arquivar. */
+const MAX_NOTES = 5;
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
-/** Espaco de anotacao aberto. */
+/** Anotacoes abertas, na ordem das abas. */
+let openNotes: number[] = [1];
+/** Anotacao aberta. */
 let activeNote = 1;
-/** Espacos com texto, para os indicadores da barra. */
-let usedNotes = new Set<number>();
+/**
+ * Sessao de cada anotacao: texto, cursor e historico de desfazer.
+ *
+ * Guardar a sessao inteira e o que permite `Ctrl+Z` continuar funcionando
+ * depois de ir e voltar de aba. Vale enquanto o app estiver aberto; o texto em
+ * si vive no disco.
+ */
+const sessions = new Map<number, EditorSession>();
 /**
  * Arquivo associado a cada espaco.
  *
@@ -387,67 +396,7 @@ function onTextChange(text: string): void {
   updateMetrics(text);
   persistNote(activeNote, text);
 
-  // O indicador do espaco atual acompanha o texto na hora; os outros so mudam
-  // quando a pessoa troca de espaco.
-  const had = usedNotes.has(activeNote);
-  if (text.trim()) usedNotes.add(activeNote);
-  else usedNotes.delete(activeNote);
-  if (had !== usedNotes.has(activeNote)) renderNotes();
-
   wakeFromIdle();
-}
-
-// --- Espacos de anotacao ---------------------------------------------------
-
-function renderNotes(): void {
-  el.notes.textContent = "";
-
-  for (const slot of NOTE_SLOTS) {
-    const button = document.createElement("button");
-    button.className = "gp-note";
-    button.dataset.note = String(slot);
-    button.dataset.active = String(slot === activeNote);
-    button.dataset.used = String(usedNotes.has(slot));
-    button.textContent = String(slot);
-    button.title = `Anotação ${slot} (Ctrl+${slot})`;
-    el.notes.append(button);
-  }
-}
-
-async function refreshNotes(): Promise<void> {
-  try {
-    const slots = await listSlots();
-    usedNotes = new Set(slots.filter((s) => s.chars > 0).map((s) => s.slot));
-  } catch {
-    // Indicador e conveniencia: sem ele o app continua inteiro.
-  }
-  renderNotes();
-}
-
-/**
- * Troca de espaco de anotacao.
- *
- * Grava o texto atual antes de sair — sem esperar o autosave, que tem folga de
- * ate 2 segundos — e troca o documento zerando o desfazer, para `Ctrl+Z` nunca
- * trazer de volta o texto de outra anotação.
- */
-async function switchNote(slot: number): Promise<void> {
-  if (slot === activeNote || !NOTE_SLOTS.includes(slot)) return;
-
-  await saveNote(activeNote, editor.getText());
-
-  activeNote = slot;
-  settings.activeNote = slot;
-  void saveSettings(settings);
-
-  const text = await loadNote(slot);
-  editor.setDocument(text);
-  updateMetrics(text);
-  await refreshNotes();
-  editor.focus();
-
-  const file = fileBySlot.get(slot);
-  toast(file ? `Anotação ${slot} — ${file.split(/[\\/]/).pop()}` : `Anotação ${slot}`);
 }
 
 async function copyAll(): Promise<boolean> {
@@ -478,6 +427,128 @@ async function copyAllAndClear(): Promise<void> {
   // arquivo da anotacao anterior sem avisar.
   fileBySlot.delete(activeNote);
   toast("Copiado e limpo — Ctrl+Z desfaz");
+}
+
+// --- Anotacoes e abas ------------------------------------------------------
+
+function renderTabs(): void {
+  el.tabs.textContent = "";
+
+  for (const [index, slot] of openNotes.entries()) {
+    const tab = document.createElement("button");
+    tab.className = "gp-tab";
+    tab.dataset.note = String(slot);
+    tab.dataset.active = String(slot === activeNote);
+    tab.title = `Anotação ${index + 1} (Ctrl+${index + 1})`;
+    tab.append(document.createTextNode(String(index + 1)));
+
+    const close = document.createElement("span");
+    close.className = "gp-tab__close";
+    close.dataset.close = String(slot);
+    close.textContent = "×";
+    close.title = "Fechar (Ctrl+W)";
+    tab.append(close);
+
+    el.tabs.append(tab);
+  }
+
+  if (openNotes.length < MAX_NOTES) {
+    const add = document.createElement("button");
+    add.className = "gp-tabs__add";
+    add.dataset.add = "true";
+    add.textContent = "+";
+    add.title = "Nova anotação (Ctrl+T)";
+    el.tabs.append(add);
+  }
+}
+
+/**
+ * Troca de anotacao.
+ *
+ * Grava o texto atual antes de sair — sem esperar o autosave, que tem folga de
+ * ate 2 segundos — e guarda a sessao, para o desfazer daquela anotacao
+ * continuar de onde parou quando ela voltar.
+ */
+async function switchNote(slot: number): Promise<void> {
+  if (slot === activeNote || !openNotes.includes(slot)) return;
+
+  await saveNote(activeNote, editor.getText());
+  sessions.set(activeNote, editor.captureSession());
+
+  activeNote = slot;
+  settings.activeNote = slot;
+  void saveSettings(settings);
+
+  const saved = sessions.get(slot);
+  if (saved) {
+    editor.restoreSession(saved);
+  } else {
+    // Sessao nova: historico comeca limpo, sem herdar o de outra anotacao.
+    editor.newSession(await loadNote(slot));
+  }
+
+  updateMetrics(editor.getText());
+  renderTabs();
+  editor.focus();
+}
+
+async function newNote(): Promise<void> {
+  if (openNotes.length >= MAX_NOTES) {
+    toast(`Limite de ${MAX_NOTES} anotações`);
+    return;
+  }
+
+  const free = [1, 2, 3, 4, 5].find((slot) => !openNotes.includes(slot));
+  if (!free) return;
+
+  openNotes = [...openNotes, free];
+  settings.openNotes = openNotes;
+  await saveSettings(settings);
+  renderTabs();
+  await switchNote(free);
+}
+
+/**
+ * Fecha uma anotacao.
+ *
+ * O texto vai para o historico daquela anotacao antes de sair, entao fechar por
+ * engano tem volta. A ultima aba nao some: ela e esvaziada, porque uma janela
+ * sem nenhuma anotacao nao teria onde escrever.
+ */
+async function closeActiveNote(slot = activeNote): Promise<void> {
+  const recovery = "Ctrl+Shift+V recupera";
+
+  if (openNotes.length === 1) {
+    await closeNote(slot);
+    sessions.delete(slot);
+    editor.newSession("");
+    updateMetrics("");
+    fileBySlot.delete(slot);
+    toast(`Anotação limpa — ${recovery}`);
+    return;
+  }
+
+  const index = openNotes.indexOf(slot);
+  if (index === -1) return;
+
+  await closeNote(slot);
+  sessions.delete(slot);
+  fileBySlot.delete(slot);
+
+  openNotes = openNotes.filter((item) => item !== slot);
+  settings.openNotes = openNotes;
+  await saveSettings(settings);
+
+  if (slot === activeNote) {
+    // Vizinha da esquerda, ou a primeira: o foco precisa cair em algum lugar.
+    const proxima = openNotes[Math.max(0, index - 1)];
+    activeNote = -1; // forca a troca mesmo sendo o mesmo numero de antes
+    await switchNote(proxima);
+  } else {
+    renderTabs();
+  }
+
+  toast(`Anotação fechada — ${recovery}`);
 }
 
 // --- Arquivos do usuario ---------------------------------------------------
@@ -683,9 +754,11 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
-  // Ctrl+digito troca de anotacao; com Alt, o mesmo digito move a janela.
+  // Ctrl+digito troca de aba pela posicao dela; com Alt, o mesmo digito move
+  // a janela.
   if (!event.altKey && !event.shiftKey && /^[1-5]$/.test(event.key)) {
-    void switchNote(Number(event.key));
+    const slot = openNotes[Number(event.key) - 1];
+    if (slot) void switchNote(slot);
     return consume(event);
   }
 
@@ -733,6 +806,12 @@ function handleKeydown(event: KeyboardEvent): boolean {
       return consume(event);
     case "o":
       if (!event.repeat) void openFromFile();
+      return consume(event);
+    case "t":
+      if (!event.repeat) void newNote();
+      return consume(event);
+    case "w":
+      if (!event.repeat) void closeActiveNote();
       return consume(event);
     case "q":
       if (!event.repeat) void closeApp();
@@ -878,9 +957,23 @@ function wireEvents(): void {
   });
   el.metricOpacity.addEventListener("click", () => toggleIdleFade());
 
-  el.notes.addEventListener("click", (event) => {
-    const button = (event.target as HTMLElement).closest<HTMLElement>("[data-note]");
-    if (button) void switchNote(Number(button.dataset.note));
+  el.tabs.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+
+    const close = target.closest<HTMLElement>("[data-close]");
+    if (close) {
+      event.stopPropagation();
+      void closeActiveNote(Number(close.dataset.close));
+      return;
+    }
+
+    if (target.closest("[data-add]")) {
+      void newNote();
+      return;
+    }
+
+    const tab = target.closest<HTMLElement>("[data-note]");
+    if (tab) void switchNote(Number(tab.dataset.note));
   });
 
   // Sinais de presenca: qualquer um deles cancela o esmaecimento.
@@ -936,7 +1029,10 @@ async function boot(): Promise<void> {
   revealOnLaunch();
   await applyBackdrop(settings.backdrop, false);
 
-  activeNote = NOTE_SLOTS.includes(settings.activeNote) ? settings.activeNote : 1;
+  openNotes = settings.openNotes.filter((slot) => slot >= 1 && slot <= MAX_NOTES);
+  if (!openNotes.length) openNotes = [1];
+  activeNote = openNotes.includes(settings.activeNote) ? settings.activeNote : openNotes[0];
+
   const initialText = await loadNote(activeNote);
   editor = createEditor({
     parent: el.editorHost,
@@ -945,7 +1041,7 @@ async function boot(): Promise<void> {
     onAppKeydown: handleKeydown,
   });
   updateMetrics(initialText);
-  void refreshNotes();
+  renderTabs();
 
   // Restaura o estado salvo sem passar pelos toggles: no boot os toasts seriam
   // ruido anunciando algo que o usuario ja configurou antes.

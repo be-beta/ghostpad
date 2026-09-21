@@ -68,30 +68,34 @@ body {
   overflow: hidden;
 }
 
-/* --- Faixa de arraste ------------------------------------------------------ */
+/* --- Topo: abas e area de arraste ----------------------------------------- */
 
-.gp-draghandle {
-  position: relative;
-  height: 18px;
+.gp-topbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
   flex: 0 0 auto;
+  padding: 0 13px;
 }
 
-.gp-draghandle__zone {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: min(140px, 40%);
-  height: 100%;
-  transform: translateX(-50%);
+/* Todo o espaco que sobra ao lado das abas serve para arrastar. */
+.gp-topbar__drag {
+  position: relative;
+  flex: 1 1 auto;
+  align-self: stretch;
   cursor: grab;
 }
 
-/* Pilula que aparece ao passar o mouse: a mesma convencao de "alca" usada em
-   paineis moveis de sistemas moveis. */
-.gp-draghandle__zone::after {
+.gp-topbar__drag:active {
+  cursor: grabbing;
+}
+
+/* Pilula que aparece ao passar o mouse: a convencao de "alca" de paineis. */
+.gp-topbar__drag::after {
   content: "";
   position: absolute;
-  top: 8px;
+  top: 11px;
   left: 50%;
   width: 36px;
   height: 4px;
@@ -103,13 +107,99 @@ body {
   pointer-events: none;
 }
 
-.gp-draghandle__zone:hover::after {
+.gp-topbar__drag:hover::after {
   opacity: 1;
   transform: translateX(-50%) scaleX(1);
 }
 
-.gp-draghandle__zone:active {
-  cursor: grabbing;
+/* --- Abas ------------------------------------------------------------------ */
+
+.gp-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+}
+
+.gp-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text);
+}
+
+.gp-tab[data-active="true"] {
+  background: rgba(110, 231, 183, 0.16);
+  color: var(--gp-accent);
+  font-weight: 600;
+}
+
+/* O X so aparece na aba ativa ou sob o mouse: fechar e destrutivo e nao deve
+   ficar convidando o clique em todas as abas ao mesmo tempo. */
+.gp-tab__close {
+  display: none;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gp-tab[data-active="true"] .gp-tab__close,
+.gp-tab:hover .gp-tab__close {
+  display: inline-grid;
+  place-items: center;
+}
+
+.gp-tab__close:hover {
+  background: rgba(248, 113, 113, 0.3);
+  color: var(--gp-danger);
+}
+
+.gp-tabs__add {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(243, 244, 246, 0.35);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gp-tabs__add:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text);
+}
+
+/* Janela estreita: as abas viram so o numero, sem o X. */
+body[data-tiny="true"] .gp-tab__close {
+  display: none !important;
 }
 
 /* --- Redimensionamento ----------------------------------------------------- */
@@ -240,6 +330,8 @@ body[data-ghost="true"] .gp-resize {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
+  /* Respiro entre as abas e a primeira linha do texto. */
+  padding-top: 4px;
 }
 
 .gp-editor {
@@ -411,48 +503,6 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
   height: 20px;
   justify-content: center;
   padding: 0;
-  font-weight: 600;
-}
-
-/* --- Espacos de anotacao --------------------------------------------------- */
-
-.gp-notes {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  margin-left: 6px;
-  padding-left: 8px;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.gp-note {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  /* Espaco vazio quase nao aparece: so o numero do espaco em uso se destaca. */
-  color: rgba(243, 244, 246, 0.25);
-  font-family: inherit;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
-}
-
-.gp-note:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--gp-text);
-}
-
-.gp-note[data-used="true"] {
-  color: var(--gp-text-dim);
-}
-
-.gp-note[data-active="true"] {
-  background: rgba(110, 231, 183, 0.18);
-  color: var(--gp-accent);
   font-weight: 600;
 }
 

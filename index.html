@@ -14,10 +14,12 @@
     <div class="gp-backdrop" id="backdrop"></div>
 
     <div class="gp-shell">
-      <!-- Topo: so a zona central arrasta. As laterais ficam livres para as alcas
-           de redimensionamento, que antes eram engolidas pela faixa inteira. -->
-      <div class="gp-draghandle">
-        <div class="gp-draghandle__zone" data-drag title="Arraste para mover"></div>
+      <!-- Topo: abas a esquerda e o resto da faixa serve para arrastar, o que
+           aproveita um espaco que ja existia. As pontas ficam livres para as
+           alcas de redimensionamento. -->
+      <div class="gp-topbar">
+        <span class="gp-tabs" id="tabs"></span>
+        <div class="gp-topbar__drag" data-drag title="Arraste para mover"></div>
       </div>
 
       <!-- Controles que so aparecem quando o mouse chega perto. -->
@@ -55,9 +57,6 @@
             <span class="gp-chip__dot"></span><span class="gp-chip__label">Oculto</span>
           </button>
 
-          <!-- Espacos de anotacao. Nao e barra de abas: sao cinco numeros que nao
-               ocupam altura nenhuma da area de escrita. -->
-          <span class="gp-notes" id="notes"></span>
         </div>
 
         <div class="gp-status__group gp-status__group--right">

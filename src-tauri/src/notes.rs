@@ -143,7 +143,7 @@ fn snapshot_stamps(dir: &PathBuf) -> Vec<u64> {
 ///
 /// Guarda o texto ANTERIOR de proposito: o atual ja esta no arquivo do espaco.
 /// O que nao existe em lugar nenhum e o que acabou de ser sobrescrito.
-fn snapshot_previous(app: &AppHandle, slot: u8, previous: &str) {
+fn snapshot_previous(app: &AppHandle, slot: u8, previous: &str, force: bool) {
     if previous.trim().is_empty() {
         return;
     }
@@ -151,7 +151,11 @@ fn snapshot_previous(app: &AppHandle, slot: u8, previous: &str) {
     let Ok(dir) = snapshots_dir(app, slot) else { return };
     let now = now_ms();
     let stamps = snapshot_stamps(&dir);
-    if now.saturating_sub(stamps.first().copied().unwrap_or(0)) < SNAPSHOT_INTERVAL_SECS * 1000 {
+    let recente = now.saturating_sub(stamps.first().copied().unwrap_or(0))
+        < SNAPSHOT_INTERVAL_SECS * 1000;
+    // `force` existe para o fechamento de anotacao: ali o texto sai de cena por
+    // inteiro, e esperar o intervalo significaria perde-lo de vez.
+    if recente && !force {
         return;
     }
 
@@ -236,28 +240,6 @@ pub async fn write_text_file(path: String, text: String) -> Result<(), String> {
 // Espacos de anotacao
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SlotInfo {
-    pub slot: u8,
-    pub chars: usize,
-}
-
-/// Quanto texto ha em cada espaco, para a barra mostrar quais estao em uso.
-#[tauri::command]
-pub async fn list_slots(app: AppHandle) -> Result<Vec<SlotInfo>, String> {
-    let mut slots = Vec::new();
-    for slot in 1..=SLOTS {
-        let chars = note_path(&app, slot)
-            .ok()
-            .and_then(|path| fs::read_to_string(path).ok())
-            .map(|text| text.chars().count())
-            .unwrap_or(0);
-        slots.push(SlotInfo { slot, chars });
-    }
-    Ok(slots)
-}
-
 #[tauri::command]
 pub async fn load_note(app: AppHandle, slot: u8) -> Result<String, String> {
     let slot = check_slot(slot)?;
@@ -311,7 +293,7 @@ pub async fn save_note(
         return Ok(());
     }
 
-    snapshot_previous(&app, slot, &previous);
+    snapshot_previous(&app, slot, &previous, false);
 
     {
         let mut file = fs::File::create(&tmp).map_err(|e| e.to_string())?;
@@ -324,5 +306,23 @@ pub async fn save_note(
     }
     fs::rename(&tmp, &main).map_err(|e| e.to_string())?;
 
+    Ok(())
+}
+
+/// Fecha uma anotacao: guarda o texto no historico e apaga os arquivos dela.
+///
+/// O texto nao evapora — vai para as versoes anteriores daquele espaco, entao
+/// fechar por engano tem volta por `Ctrl+Shift+V`.
+#[tauri::command]
+pub async fn close_note(app: AppHandle, lock: State<'_, NotesLock>, slot: u8) -> Result<(), String> {
+    let slot = check_slot(slot)?;
+    let _guard = lock.0.lock().map_err(|_| "lock envenenado".to_string())?;
+
+    let main = note_path(&app, slot)?;
+    let previous = fs::read_to_string(&main).unwrap_or_default();
+    snapshot_previous(&app, slot, &previous, true);
+
+    let _ = fs::remove_file(&main);
+    let _ = fs::remove_file(backup_path(&app, slot)?);
     Ok(())
 }

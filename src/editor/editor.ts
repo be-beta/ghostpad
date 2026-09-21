@@ -183,18 +183,25 @@ const plainPaste = EditorView.clipboardInputFilter.of((text) =>
 
 // --- API -------------------------------------------------------------------
 
+/**
+ * Estado completo de uma anotacao: texto, cursor e historico de desfazer.
+ *
+ * Opaco de proposito — `main.ts` guarda uma sessao por anotacao sem precisar
+ * conhecer o CodeMirror.
+ */
+export type EditorSession = EditorState;
+
 export interface GhostEditor {
   getText(): string;
   focus(): void;
   /** Substitui todo o texto numa unica transacao desfazivel. */
   replaceAll(text: string): void;
-  /**
-   * Troca o documento inteiro e zera o historico de desfazer.
-   *
-   * Usado ao mudar de espaco de anotacao: `Ctrl+Z` numa nota nao pode trazer de
-   * volta o texto de outra.
-   */
-  setDocument(text: string): void;
+  /** Estado atual, para ser devolvido depois por `restoreSession`. */
+  captureSession(): EditorSession;
+  /** Volta a uma sessao guardada, com cursor e desfazer no ponto em que ficou. */
+  restoreSession(session: EditorSession): void;
+  /** Comeca uma sessao nova, sem historico herdado de outra anotacao. */
+  newSession(text: string): void;
   view: EditorView;
 }
 
@@ -250,7 +257,12 @@ export function createEditor(options: EditorOptions): GhostEditor {
 
   return {
     view,
-    setDocument: (text) => {
+    captureSession: () => view.state,
+    restoreSession: (session) => {
+      view.setState(session);
+      view.focus();
+    },
+    newSession: (text) => {
       view.setState(EditorState.create({ doc: text, extensions }));
       view.dispatch({ selection: { anchor: view.state.doc.length }, scrollIntoView: true });
     },

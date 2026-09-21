@@ -85,7 +85,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Abrir e salvar arquivos** `.txt` e `.md`, sem depender de outro editor
-- **Cinco anotações** trocadas por `Ctrl+1` a `Ctrl+5`, sem barra de abas
+- **Até cinco anotações** em abas discretas no topo, cada uma com seu desfazer
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Autosave** do texto, com backup
@@ -99,7 +99,8 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+S` / `Ctrl+Shift+S` | Salvar / salvar como |
 | `Ctrl+O` | Abrir arquivo de texto |
-| `Ctrl+1` … `Ctrl+5` | Troca de anotação |
+| `Ctrl+1` … `Ctrl+5` | Troca de aba |
+| `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |

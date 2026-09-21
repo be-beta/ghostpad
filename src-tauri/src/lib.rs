@@ -66,7 +66,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             notes::load_note,
             notes::save_note,
-            notes::list_slots,
+            notes::close_note,
             notes::list_snapshots,
             notes::read_text_file,
             notes::write_text_file,

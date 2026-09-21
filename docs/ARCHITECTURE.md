@@ -483,29 +483,30 @@ desligado, um aviso lembra o `Ctrl+Shift+H`.
 
 ### Fase 5 — Múltiplas notas
 
-**Cinco espaços fixos**, numerados de 1 a 5, trocados por `Ctrl+1…5` ou pelos
-números na barra de status. Não há criar, fechar, nomear nem reordenar: um
-espaço vazio já é uma anotação nova. É o modelo mais simples que atende "várias
-anotações ao mesmo tempo" sem virar gerenciador de arquivos — e não existe barra
-de abas roubando altura da área de escrita.
+**Abas no topo, à esquerda**, na faixa que já existia para arrastar a janela —
+o espaço estava ali sem uso. Começa com **uma aba** e um `+`; fechar uma aba a
+remove, e as abas abertas voltam na sessão seguinte. Teto de 5.
 
-Indicadores: o número do espaço ativo fica aceso, os espaços com texto ficam
-visíveis, os vazios quase somem.
+`Ctrl+T` cria, `Ctrl+W` fecha, `Ctrl+1…5` troca pela **posição** da aba.
 
-Decisões que o teste de mesa obrigou:
-
-- **Trocar de espaço zera o desfazer** (`editor.setDocument`, que recria o estado
-  do CodeMirror). `Ctrl+Z` numa anotação não pode trazer de volta o texto de
-  outra.
-- **A gravação adiada carrega o espaço junto com o texto [D].** O autosave tem
-  folga de até 2 s; se ele lesse "o espaço ativo" na hora de disparar, trocar de
-  anotação com uma gravação pendente escreveria o texto antigo dentro da
-  anotação nova. Trocar de espaço também força a gravação antes de sair.
-- **Arquivo associado é por espaço.** A anotação 2 não pode salvar por cima do
-  arquivo aberto na anotação 1.
-- **Migração:** a anotação única antiga (`draft.txt`) vira o espaço 1, e as
-  versões que ficavam soltas em `snapshots/` são movidas para `snapshots/1/`.
-  Sem isso o histórico sumiria da interface sem nunca ter sido apagado.
+- **Cada anotação tem seu próprio desfazer [D].** A primeira versão recriava o
+  editor a cada troca, o que apagava o histórico dos dois lados: `Ctrl+Z` parava
+  de funcionar depois de ir e voltar. Agora o app guarda a *sessão* de cada
+  anotação (texto, cursor e histórico) e a devolve inteira ao voltar. Vale
+  enquanto o app está aberto; o texto em si vive no disco.
+- **Fechar não apaga [D].** `close_note` guarda o texto no histórico daquela
+  anotação antes de remover os arquivos, ignorando o intervalo de 3 minutos —
+  ali o texto sai de cena por inteiro, e esperar significaria perdê-lo. Fechar
+  por engano tem volta por `Ctrl+Shift+V`.
+- **A última aba não some:** ela é esvaziada. Uma janela sem nenhuma anotação
+  não teria onde escrever.
+- **A gravação adiada carrega o espaço junto com o texto.** O autosave tem folga
+  de até 2 s; se lesse "a anotação ativa" na hora de disparar, trocar de aba com
+  uma gravação pendente escreveria o texto antigo dentro da anotação nova.
+- **Arquivo associado é por anotação.** A 2 não salva por cima do arquivo aberto
+  na 1.
+- **Migração:** a anotação única antiga (`draft.txt`) vira a primeira, e as
+  versões soltas em `snapshots/` vão para `snapshots/1/`.
 
 ### Fase 6 — Teleprompter e modo notch
 
@@ -538,7 +539,8 @@ Decisões que o teste de mesa obrigou:
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+Alt+6…9` / `Ctrl+Alt+0` | Metade da tela / tela toda | local | 2 |
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
-| `Ctrl+1…5` | Trocar de anotação | local | 5 |
+| `Ctrl+1…5` | Trocar de aba | local | 5 |
+| `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba | local | 5 |
 
 ¹ Se ocupado, cai para `Ctrl+Alt+Shift+G` e depois `Ctrl+Alt+Shift+F12`.
 ² Se ocupado, cai para `Ctrl+Shift+Space` e depois `Ctrl+Alt+Shift+Space`.
