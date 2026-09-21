@@ -96,8 +96,9 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+/` | Painel com todos os atalhos |
 | `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
-| `Ctrl+S` / `Ctrl+O` | Salvar em arquivo / abrir arquivo |
-| `Ctrl+Shift+S` | Versões anteriores do texto |
+| `Ctrl+S` / `Ctrl+Shift+S` | Salvar / salvar como |
+| `Ctrl+O` | Abrir arquivo de texto |
+| `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |
 | `Ctrl+P` | Alterna sempre-no-topo |

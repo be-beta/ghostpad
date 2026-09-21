@@ -91,6 +91,33 @@ const formattingKeymap: KeyBinding[] = [
   { key: "Mod-i", run: toggleWrap("_") },
 ];
 
+/**
+ * Painel de busca em portugues.
+ *
+ * O CodeMirror traduz por este mapa; sem ele o painel ficava em ingles no meio
+ * de uma interface em portugues. Quando houver escolha de idioma, este mapa e
+ * que muda.
+ */
+const searchPhrases = EditorState.phrases.of({
+  Find: "Buscar",
+  Replace: "Substituir",
+  next: "Próxima",
+  previous: "Anterior",
+  all: "Todas",
+  "match case": "Maiúsculas",
+  "by word": "Palavra inteira",
+  regexp: "Expressão regular",
+  replace: "Substituir",
+  "replace all": "Todas",
+  close: "Fechar",
+  "current match": "ocorrência atual",
+  "Go to line": "Ir para a linha",
+  go: "Ir",
+  "on line": "na linha",
+  "replaced $ matches": "$ ocorrências substituídas",
+  "replaced match on line $": "ocorrência substituída na linha $",
+});
+
 // --- Aparencia -------------------------------------------------------------
 
 const theme = EditorView.theme(
@@ -132,23 +159,39 @@ const theme = EditorView.theme(
       fontSize: "12px",
     },
     ".cm-panels.cm-panels-top": { borderBottom: "1px solid rgba(255, 255, 255, 0.08)" },
-    ".cm-search": { padding: "6px 10px" },
+    ".cm-search": { display: "flex", flexWrap: "wrap", gap: "6px", padding: "9px 12px" },
     ".cm-textfield": {
       backgroundColor: "rgba(255, 255, 255, 0.06)",
       border: "1px solid rgba(255, 255, 255, 0.12)",
-      borderRadius: "6px",
+      borderRadius: "7px",
       color: "var(--gp-text)",
-      padding: "3px 6px",
+      fontSize: "12px",
+      minWidth: "150px",
+      padding: "6px 9px",
     },
     ".cm-button": {
       backgroundImage: "none",
       backgroundColor: "rgba(255, 255, 255, 0.08)",
       border: "none",
-      borderRadius: "6px",
+      borderRadius: "7px",
       color: "var(--gp-text)",
-      padding: "3px 8px",
+      cursor: "pointer",
+      fontSize: "12px",
+      padding: "6px 11px",
     },
-    ".cm-search label": { color: "var(--gp-text-dim)" },
+    ".cm-button:hover": { backgroundColor: "rgba(255, 255, 255, 0.16)" },
+    ".cm-search label": {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "5px",
+      color: "var(--gp-text-dim)",
+      fontSize: "12px",
+    },
+    // Expressao regular e "palavra inteira" saem: um bloco de notas nao precisa
+    // dos dois, e cada opcao a mais e ruido no meio da escrita.
+    ".cm-search label:has(input[name=re])": { display: "none" },
+    ".cm-search label:has(input[name=word])": { display: "none" },
+    ".cm-search br": { display: "none" },
     ".cm-search button[name=close]": { color: "var(--gp-text-dim)" },
     ".cm-searchMatch": { backgroundColor: "rgba(250, 204, 21, 0.25)" },
     ".cm-searchMatch-selected": { backgroundColor: "rgba(250, 204, 21, 0.5)" },
@@ -212,6 +255,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
     crosshairCursor(),
     highlightSelectionMatches(),
     search({ top: true }),
+    searchPhrases,
     EditorState.allowMultipleSelections.of(true),
     // Alt+Click adiciona cursor, como no VS Code (o padrao do CodeMirror e Ctrl).
     EditorView.clickAddsSelectionRange.of((event) => event.altKey),

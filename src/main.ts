@@ -393,6 +393,9 @@ async function copyAllAndClear(): Promise<void> {
   if (!(await copyAll())) return;
   editor.replaceAll("");
   void saveDraft("");
+  // Texto limpo e uma anotacao nova: salvar depois nao pode sobrescrever o
+  // arquivo da anotacao anterior sem avisar.
+  currentFile = null;
   toast("Copiado e limpo — Ctrl+Z desfaz");
 }
 
@@ -433,8 +436,11 @@ async function saveToFile(forceDialog = false): Promise<void> {
     target = await saveDialog({
       title: "Salvar nota",
       defaultPath: suggestedFileName(text),
+      // Filtros separados: assim o tipo do arquivo e escolhido na propria
+      // janela do Windows, sem mais um passo dentro do app.
       filters: [
-        { name: "Texto", extensions: ["txt", "md"] },
+        { name: "Texto (*.txt)", extensions: ["txt"] },
+        { name: "Markdown (*.md)", extensions: ["md"] },
         { name: "Todos os arquivos", extensions: ["*"] },
       ],
     });
@@ -455,7 +461,7 @@ async function openFromFile(): Promise<void> {
     title: "Abrir nota",
     multiple: false,
     filters: [
-      { name: "Texto", extensions: ["txt", "md"] },
+      { name: "Texto e Markdown", extensions: ["txt", "md"] },
       { name: "Todos os arquivos", extensions: ["*"] },
     ],
   });
@@ -614,6 +620,9 @@ function handleKeydown(event: KeyboardEvent): boolean {
         void copyAll().then((ok) => ok && toast("Todo o texto foi copiado"));
         return consume(event);
       case "s":
+        if (!event.repeat) void saveToFile(true);
+        return consume(event);
+      case "v":
         void historyPanel.toggle();
         return consume(event);
       case "g":

@@ -250,6 +250,32 @@ arquivo entra como edição normal, então `Ctrl+Z` traz de volta o texto anteri
 
 ---
 
+## 5.5 Arquivos, busca e o cursor que sumia
+
+**Tipo de arquivo escolhido na janela do Windows.** Os filtros do diálogo são
+separados (`*.txt`, `*.md`), então o formato é decidido no próprio diálogo
+nativo, sem mais um passo dentro do app.
+
+**"Copiar tudo e limpar" começa uma anotação nova**, então o arquivo associado
+é esquecido. Antes, salvar depois disso sobrescrevia o arquivo da anotação
+anterior. `Ctrl+S` salva no arquivo atual, `Ctrl+Shift+S` é "salvar como".
+
+**Painel de busca em português e mais simples.** Traduzido pelo mapa
+`EditorState.phrases`; "expressão regular" e "palavra inteira" foram escondidas,
+porque um bloco de notas não precisa das duas e cada opção a mais é ruído no
+meio da escrita. Campos e botões ganharam área de clique maior.
+
+**O cursor do mouse sumindo ao digitar não é do app [D].** É a opção do Windows
+"Ocultar ponteiro ao digitar" (`SPI_GETMOUSEVANISH`), confirmada ligada na
+máquina de teste. Some ao digitar, volta ao mover o mouse, e vale para qualquer
+aplicativo com foco de teclado. Não há como um app desativá-la só para si — é
+preferência do sistema, em Configurações do mouse → Opções do ponteiro.
+
+O travamento que *era* nosso (gravação em disco na thread principal) está na
+seção anterior e foi corrigido.
+
+---
+
 ## 6. Persistência
 
 `%APPDATA%/com.ghostpad.app/`
