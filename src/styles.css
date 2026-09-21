@@ -601,7 +601,7 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
 
 .gp-history__item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: baseline;
   gap: 10px;
   width: 100%;
@@ -629,6 +629,16 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
   overflow: hidden;
   color: var(--gp-text-dim);
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Etiqueta de origem: de qual aba a versao veio. */
+.gp-history__tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--gp-text-dim);
+  font-size: 10px;
   white-space: nowrap;
 }
 

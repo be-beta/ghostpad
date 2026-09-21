@@ -515,8 +515,20 @@ remove, e as abas abertas voltam na sessão seguinte. Teto de 5.
   uma gravação pendente escreveria o texto antigo dentro da anotação nova.
 - **Arquivo associado é por anotação.** A 2 não salva por cima do arquivo aberto
   na 1.
-- **Migração:** a anotação única antiga (`draft.txt`) vira a primeira, e as
-  versões soltas em `snapshots/` vão para `snapshots/1/`.
+- **Aba nova sempre nasce limpa [D].** Antes ela reaproveitava um espaço livre
+  como estava; se esse espaço guardasse texto de uma anotação anterior, o
+  usuário pedia uma aba nova e recebia um texto que não esperava. Agora o
+  conteúdo anterior vai para o histórico e a aba abre vazia.
+- **Migração é mudança de arquivo, não regra de leitura [D].** A primeira versão
+  fazia o espaço 1 cair no `draft.txt` sempre que estivesse vazio — então abrir
+  uma aba que caísse no espaço 1 ressuscitava o texto legado do nada. Agora o
+  arquivo antigo é movido uma única vez e os restos são apagados, **fora** do
+  `if` de migração: deixá-los para trás faria o fantasma voltar no dia em que a
+  anotação 1 fosse fechada.
+- **Histórico único, com etiqueta de origem [D].** Listar só as versões da aba
+  aberta escondia justamente o que a pessoa procura depois de fechar uma aba.
+  A etiqueta mostra a **posição atual** da aba ("aba 2") ou "aba fechada" — o
+  número interno do espaço não diria nada ao usuário, já que as posições mudam.
 
 ### Fase 6 — Teleprompter e modo notch
 

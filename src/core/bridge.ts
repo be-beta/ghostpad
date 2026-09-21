@@ -55,6 +55,8 @@ export const writeTextFile = (path: string, text: string) =>
 
 export interface SnapshotInfo {
   id: string;
+  /** Anotacao em que a versao foi gravada. */
+  slot: number;
   savedAtMs: number;
   chars: number;
   preview: string;
@@ -63,8 +65,8 @@ export interface SnapshotInfo {
 /** Fecha a anotacao: o texto vai para o historico dela antes de sair. */
 export const closeNote = (slot: number) => invoke<void>("close_note", { slot });
 
-export const listSnapshots = (slot: number) =>
-  invoke<SnapshotInfo[]>("list_snapshots", { slot });
+/** Todas as versoes, de todas as anotacoes. */
+export const listSnapshots = () => invoke<SnapshotInfo[]>("list_snapshots");
 
 export const readSnapshot = (slot: number, id: string) =>
   invoke<string>("read_snapshot", { slot, id });

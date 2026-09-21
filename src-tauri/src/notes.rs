@@ -85,6 +85,8 @@ fn backup_path(app: &AppHandle, slot: u8) -> Result<PathBuf, String> {
 pub struct SnapshotInfo {
     /// Nome do arquivo sem extensao: o instante em milissegundos.
     pub id: String,
+    /// Anotacao de origem.
+    pub slot: u8,
     pub saved_at_ms: u64,
     pub chars: usize,
     /// Comeco do texto, para a pessoa reconhecer a versao sem abri-la.
@@ -168,17 +170,26 @@ fn snapshot_previous(app: &AppHandle, slot: u8, previous: &str, force: bool) {
     }
 }
 
+/// Todas as versoes guardadas, de todas as anotacoes, da mais nova para a mais
+/// antiga.
+///
+/// Listar so as da anotacao aberta escondia justamente o que a pessoa procura
+/// depois de fechar uma aba. Cada versao carrega o espaco de origem, e a
+/// interface mostra isso como etiqueta.
 #[tauri::command]
-pub async fn list_snapshots(app: AppHandle, slot: u8) -> Result<Vec<SnapshotInfo>, String> {
-    let dir = snapshots_dir(&app, check_slot(slot)?)?;
-    let mut items: Vec<SnapshotInfo> = fs::read_dir(&dir)
-        .map_err(|e| e.to_string())?
-        .flatten()
-        .filter_map(|entry| {
+pub async fn list_snapshots(app: AppHandle) -> Result<Vec<SnapshotInfo>, String> {
+    let mut items: Vec<SnapshotInfo> = Vec::new();
+
+    for slot in 1..=SLOTS {
+        let dir = snapshots_dir(&app, slot)?;
+        for entry in fs::read_dir(&dir).into_iter().flatten().flatten() {
             let path = entry.path();
-            let id = path.file_stem()?.to_str()?.to_string();
-            let saved_at_ms = id.parse::<u64>().ok()?;
-            let content = fs::read_to_string(&path).ok()?;
+            let Some(id) = path.file_stem().and_then(|s| s.to_str()).map(str::to_string) else {
+                continue;
+            };
+            let Ok(saved_at_ms) = id.parse::<u64>() else { continue };
+            let Ok(content) = fs::read_to_string(&path) else { continue };
+
             let preview: String = content
                 .split_whitespace()
                 .collect::<Vec<_>>()
@@ -186,9 +197,16 @@ pub async fn list_snapshots(app: AppHandle, slot: u8) -> Result<Vec<SnapshotInfo
                 .chars()
                 .take(80)
                 .collect();
-            Some(SnapshotInfo { id, saved_at_ms, chars: content.chars().count(), preview })
-        })
-        .collect();
+
+            items.push(SnapshotInfo {
+                id,
+                slot,
+                saved_at_ms,
+                chars: content.chars().count(),
+                preview,
+            });
+        }
+    }
 
     items.sort_unstable_by(|a, b| b.saved_at_ms.cmp(&a.saved_at_ms));
     Ok(items)
@@ -240,31 +258,45 @@ pub async fn write_text_file(path: String, text: String) -> Result<(), String> {
 // Espacos de anotacao
 // ---------------------------------------------------------------------------
 
+/// Move o formato antigo para o espaco 1, uma unica vez.
+///
+/// Antes isto era uma regra de LEITURA: o espaco 1 caia no `draft.txt` sempre
+/// que estivesse vazio. O efeito colateral era grave — abrir uma aba nova que
+/// caisse no espaco 1 ressuscitava um texto antigo, do nada. Como mudanca de
+/// arquivo, acontece uma vez e nunca mais.
+fn migrate_legacy(app: &AppHandle) {
+    let Ok(dir) = data_dir(app) else { return };
+    let Ok(destino) = note_path(app, 1) else { return };
+
+    if !destino.exists() {
+        let legado = dir.join("draft.txt");
+        if legado.exists() {
+            let _ = fs::rename(&legado, &destino);
+        } else if let Ok(raw) = fs::read_to_string(dir.join("draft.json")) {
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&raw) {
+                if let Some(text) = value.get("text").and_then(|t| t.as_str()) {
+                    let _ = fs::write(&destino, text);
+                }
+            }
+        }
+    }
+
+    // Fora do `if` de proposito: mesmo quando nao ha o que migrar, os arquivos
+    // antigos precisam sair de cena. Deixa-los para tras faria o texto legado
+    // reaparecer no dia em que a anotacao 1 fosse fechada.
+    for nome in ["draft.txt", "draft.bak.txt", "draft.json"] {
+        let _ = fs::remove_file(dir.join(nome));
+    }
+}
+
 #[tauri::command]
 pub async fn load_note(app: AppHandle, slot: u8) -> Result<String, String> {
     let slot = check_slot(slot)?;
+    migrate_legacy(&app);
 
     for path in [note_path(&app, slot)?, backup_path(&app, slot)?] {
         if let Ok(text) = fs::read_to_string(path) {
             return Ok(text);
-        }
-    }
-
-    // Migracao: antes de existirem espacos havia uma anotacao so. Ela vira a
-    // primeira, e os formatos antigos sao lidos uma unica vez.
-    if slot == 1 {
-        let dir = data_dir(&app)?;
-        for name in ["draft.txt", "draft.bak.txt"] {
-            if let Ok(text) = fs::read_to_string(dir.join(name)) {
-                return Ok(text);
-            }
-        }
-        if let Ok(raw) = fs::read_to_string(dir.join("draft.json")) {
-            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&raw) {
-                if let Some(text) = value.get("text").and_then(|t| t.as_str()) {
-                    return Ok(text.to_string());
-                }
-            }
         }
     }
 

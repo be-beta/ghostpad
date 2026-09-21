@@ -3,7 +3,11 @@
  *
  * O app guarda o texto que foi substituido, no maximo a cada 3 minutos. Este
  * painel existe para o caso em que o "desfazer" nao basta: apagar tudo, colar
- * por cima, ou perceber a perda uma hora depois.
+ * por cima, fechar uma aba, ou perceber a perda uma hora depois.
+ *
+ * Lista as versoes de TODAS as anotacoes, com etiqueta de origem. Mostrar so as
+ * da aba aberta escondia justamente o que a pessoa procura depois de fechar uma
+ * aba. Restaurar sempre traz o texto para a anotacao aberta agora.
  *
  * Restaurar nunca destroi o texto atual sem saida: a troca entra como uma
  * edicao normal do editor, entao `Ctrl+Z` volta atras.
@@ -39,23 +43,25 @@ const escapeHtml = (value: string) =>
 
 export function createHistoryPanel(
   host: HTMLElement,
-  activeSlot: () => number,
+  describeSlot: (slot: number) => string,
   onRestore: (text: string) => void,
   onError: (message: string) => void,
 ): HistoryPanel {
   const renderEmpty = () => `
     <div class="gp-sheet__empty">
       Nenhuma versão guardada ainda.<br />
-      O GhostPad guarda o texto substituído a cada 3 minutos de edição.
+      O GhostPad guarda o texto substituído a cada 3 minutos de edição, e o de
+      abas fechadas.
     </div>`;
 
   const renderList = (items: SnapshotInfo[]) =>
     items
       .map(
         (item) => `
-      <button class="gp-history__item" data-snapshot="${item.id}">
+      <button class="gp-history__item" data-snapshot="${item.id}" data-slot="${item.slot}">
         <span class="gp-history__when">${formatMoment(item.savedAtMs)}</span>
         <span class="gp-history__preview">${escapeHtml(item.preview) || "(vazio)"}</span>
+        <span class="gp-history__tag">${escapeHtml(describeSlot(item.slot))}</span>
         <span class="gp-history__size">${item.chars.toLocaleString("pt-BR")} car.</span>
       </button>`,
       )
@@ -78,7 +84,7 @@ export function createHistoryPanel(
     isOpen: () => !host.hidden,
     async open() {
       try {
-        render(await listSnapshots(activeSlot()));
+        render(await listSnapshots());
       } catch (error) {
         render([]);
         onError(`Não foi possível ler o histórico: ${error}`);
@@ -101,7 +107,8 @@ export function createHistoryPanel(
     if (item) {
       event.preventDefault();
       const id = item.dataset.snapshot as string;
-      void readSnapshot(activeSlot(), id)
+      const slot = Number(item.dataset.slot);
+      void readSnapshot(slot, id)
         .then((text) => {
           onRestore(text);
           panel.close();

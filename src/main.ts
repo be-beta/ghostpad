@@ -137,9 +137,20 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
 
 const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
 
+/**
+ * Como a versao guardada aparece no historico.
+ *
+ * Mostra a POSICAO atual da aba, nao o numero interno do espaco: as posicoes
+ * mudam quando uma aba e fechada, e o numero interno nao diria nada ao usuario.
+ */
+function describeSlot(slot: number): string {
+  const index = openNotes.indexOf(slot);
+  return index === -1 ? "aba fechada" : `aba ${index + 1}`;
+}
+
 const historyPanel = createHistoryPanel(
   el.history,
-  () => activeNote,
+  describeSlot,
   (restored) => {
     // Entra como edicao normal: Ctrl+Z desfaz a restauracao.
     editor.replaceAll(restored);
@@ -511,6 +522,14 @@ async function newNote(): Promise<void> {
 
   const free = [1, 2, 3, 4, 5].find((slot) => !openNotes.includes(slot));
   if (!free) return;
+
+  // Aba nova comeca sempre limpa. Um espaco reaproveitado podia trazer texto de
+  // uma anotacao antiga, o que confundia: o usuario pedia uma aba nova e
+  // recebia um texto que nao esperava. O conteudo anterior, se houver, vai para
+  // o historico antes de sair.
+  await closeNote(free);
+  sessions.delete(free);
+  fileBySlot.delete(free);
 
   openNotes = [...openNotes, free];
   settings.openNotes = openNotes;
