@@ -472,13 +472,25 @@ function renderTabs(): void {
 async function switchNote(slot: number): Promise<void> {
   if (slot === activeNote || !openNotes.includes(slot)) return;
 
-  await saveNote(activeNote, editor.getText());
+  try {
+    await saveNote(activeNote, editor.getText());
+  } catch (error) {
+    // Avisa, mas nao prende: ficar preso numa aba por causa de um erro de
+    // gravacao seria pior que o erro. A sessao guardada preserva o texto.
+    toast(`Falha ao salvar a anotação: ${error}`);
+  }
   sessions.set(activeNote, editor.captureSession());
 
   activeNote = slot;
   settings.activeNote = slot;
   void saveSettings(settings);
 
+  await openSession(slot);
+  renderTabs();
+}
+
+/** Poe uma anotacao na tela, com a sessao guardada se houver. */
+async function openSession(slot: number): Promise<void> {
   const saved = sessions.get(slot);
   if (saved) {
     editor.restoreSession(saved);
@@ -488,7 +500,6 @@ async function switchNote(slot: number): Promise<void> {
   }
 
   updateMetrics(editor.getText());
-  renderTabs();
   editor.focus();
 }
 
@@ -541,12 +552,15 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
 
   if (slot === activeNote) {
     // Vizinha da esquerda, ou a primeira: o foco precisa cair em algum lugar.
-    const proxima = openNotes[Math.max(0, index - 1)];
-    activeNote = -1; // forca a troca mesmo sendo o mesmo numero de antes
-    await switchNote(proxima);
-  } else {
-    renderTabs();
+    // Feito aqui, e nao por `switchNote`, porque a anotacao que sairia de cena
+    // ja nao existe mais — nao ha o que gravar nem sessao para guardar.
+    activeNote = openNotes[Math.max(0, index - 1)];
+    settings.activeNote = activeNote;
+    await saveSettings(settings);
+    await openSession(activeNote);
   }
+
+  renderTabs();
 
   toast(`Anotação fechada — ${recovery}`);
 }

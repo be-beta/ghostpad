@@ -51,6 +51,25 @@ pub enum Backdrop {
     Blur,
 }
 
+/// Desliga os atalhos de navegador do WebView2.
+///
+/// O WebView2 nasce com eles ligados e intercepta teclas antes do app: `Ctrl+W`
+/// (fechar aba) sumia sem fechar nada, e `Ctrl+R`, `F5` e `Ctrl+P` pertencem a
+/// um navegador, nao a um bloco de notas.
+#[cfg(target_os = "windows")]
+fn disable_browser_shortcuts(window: &WebviewWindow) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings3;
+    use windows::core::Interface;
+
+    let _ = window.with_webview(|webview| unsafe {
+        let Ok(core) = webview.controller().CoreWebView2() else { return };
+        let Ok(settings) = core.Settings() else { return };
+        if let Ok(settings) = settings.cast::<ICoreWebView2Settings3>() {
+            let _ = settings.SetAreBrowserAcceleratorKeysEnabled(false);
+        }
+    });
+}
+
 /// Aplica os efeitos iniciais e relata o que foi possivel verificar.
 pub fn apply_startup_effects(window: &WebviewWindow) -> EffectsReport {
     #[allow(unused_mut)]
@@ -58,6 +77,7 @@ pub fn apply_startup_effects(window: &WebviewWindow) -> EffectsReport {
 
     #[cfg(target_os = "windows")]
     {
+        disable_browser_shortcuts(window);
         report.rounded_corners = set_rounded_corners(window, true).is_ok();
         // Probe real: liga e desliga para saber se a API responde nesta maquina,
         // em vez de assumir pela versao do Windows.

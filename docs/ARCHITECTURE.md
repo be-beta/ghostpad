@@ -500,6 +500,16 @@ remove, e as abas abertas voltam na sessão seguinte. Teto de 5.
   por engano tem volta por `Ctrl+Shift+V`.
 - **A última aba não some:** ela é esvaziada. Uma janela sem nenhuma anotação
   não teria onde escrever.
+- **Atalhos de navegador do WebView2 desligados [D].** O WebView2 nasce com
+  `AreBrowserAcceleratorKeysEnabled` ligado e intercepta teclas antes do app:
+  `Ctrl+W` sumia sem fechar aba nenhuma. `Ctrl+R`, `F5` e `Ctrl+P` também
+  pertencem a um navegador, não a um bloco de notas.
+- **Nenhum valor-sentinela no estado da janela [D].** A primeira versão do
+  fechamento usava `activeNote = -1` para forçar a troca de aba. O backend
+  recusa (`expected u8`), a troca falhava na primeira linha e **toda a
+  navegação travava** — abas paravam de responder a clique e a atalho. O
+  fechamento agora abre a anotação vizinha diretamente, sem fingir um estado
+  intermediário, e falha de gravação avisa em vez de prender o usuário na aba.
 - **A gravação adiada carrega o espaço junto com o texto.** O autosave tem folga
   de até 2 s; se lesse "a anotação ativa" na hora de disparar, trocar de aba com
   uma gravação pendente escreveria o texto antigo dentro da anotação nova.
