@@ -260,10 +260,18 @@ nativo, sem mais um passo dentro do app.
 é esquecido. Antes, salvar depois disso sobrescrevia o arquivo da anotação
 anterior. `Ctrl+S` salva no arquivo atual, `Ctrl+Shift+S` é "salvar como".
 
-**Painel de busca em português e mais simples.** Traduzido pelo mapa
-`EditorState.phrases`; "expressão regular" e "palavra inteira" foram escondidas,
-porque um bloco de notas não precisa das duas e cada opção a mais é ruído no
-meio da escrita. Campos e botões ganharam área de clique maior.
+**Painel de busca próprio** (`src/editor/search-panel.ts`), via
+`search({ createPanel })`. O painel embutido do CodeMirror vinha em inglês, com
+controles pequenos e opções que um bloco de notas não usa; escrever o nosso saiu
+mais barato que seguir corrigindo o de fora por cima.
+
+Regra dos rótulos: **seta só para navegar, palavra para o que altera o texto**.
+Um ícone para "substituir todas" seria adivinhação, e errar ali custa caro. Todo
+botão de ícone tem `title` e `aria-label`, senão a simplificação viraria
+adivinhação também. Alvos de 28 px.
+
+"Maiúsculas" virou o alternador **`Aa`**, com a explicação completa na dica:
+"Diferenciar maiúsculas de minúsculas".
 
 **O cursor do mouse sumindo ao digitar não é do app [D].** É a opção do Windows
 "Ocultar ponteiro ao digitar" (`SPI_GETMOUSEVANISH`), confirmada ligada na

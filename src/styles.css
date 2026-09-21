@@ -414,6 +414,97 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
   font-weight: 600;
 }
 
+/* --- Busca (painel proprio, src/editor/search-panel.ts) -------------------- */
+
+.gp-find {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px;
+}
+
+.gp-find__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gp-find__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gp-text);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.gp-find__field:focus {
+  outline: none;
+  border-color: rgba(110, 231, 183, 0.5);
+}
+
+.gp-find__field::placeholder {
+  color: rgba(243, 244, 246, 0.35);
+}
+
+/* Alvo de 28px: o painel anterior tinha botoes pequenos demais para acertar. */
+.gp-find__icon,
+.gp-find__toggle,
+.gp-find__action {
+  display: inline-grid;
+  place-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+}
+
+.gp-find__icon {
+  width: 28px;
+  padding: 0;
+}
+
+.gp-find__icon svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gp-find__icon:hover,
+.gp-find__toggle:hover,
+.gp-find__action:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--gp-text);
+}
+
+.gp-find__icon--close:hover {
+  background: rgba(248, 113, 113, 0.22);
+  color: var(--gp-danger);
+}
+
+.gp-find__toggle {
+  font-weight: 600;
+}
+
+.gp-find__toggle[data-on="true"] {
+  background: rgba(110, 231, 183, 0.22);
+  color: var(--gp-accent);
+}
+
 /* --- Historico de versoes -------------------------------------------------- */
 
 .gp-history__item {

@@ -21,6 +21,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirro
 import { highlightSelectionMatches, search, searchKeymap } from "@codemirror/search";
 import { HighlightStyle, indentUnit, syntaxHighlighting } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
+import { ghostSearchPanel } from "./search-panel";
 import { tags } from "@lezer/highlight";
 
 export interface EditorOptions {
@@ -92,24 +93,10 @@ const formattingKeymap: KeyBinding[] = [
 ];
 
 /**
- * Painel de busca em portugues.
- *
- * O CodeMirror traduz por este mapa; sem ele o painel ficava em ingles no meio
- * de uma interface em portugues. Quando houver escolha de idioma, este mapa e
- * que muda.
+ * Mensagens que o CodeMirror ainda gera por conta propria (ir para a linha,
+ * aviso de substituicao). O painel de busca em si e nosso, em `search-panel.ts`.
  */
 const searchPhrases = EditorState.phrases.of({
-  Find: "Buscar",
-  Replace: "Substituir",
-  next: "Próxima",
-  previous: "Anterior",
-  all: "Todas",
-  "match case": "Maiúsculas",
-  "by word": "Palavra inteira",
-  regexp: "Expressão regular",
-  replace: "Substituir",
-  "replace all": "Todas",
-  close: "Fechar",
   "current match": "ocorrência atual",
   "Go to line": "Ir para a linha",
   go: "Ir",
@@ -150,49 +137,14 @@ const theme = EditorView.theme(
     ".cm-selectionMatch": { backgroundColor: "rgba(255, 255, 255, 0.08)" },
     ".cm-placeholder": { color: "rgba(243, 244, 246, 0.25)" },
 
-    // Painel de busca (Ctrl+F) no mesmo idioma visual do app.
+    // A moldura do painel continua vindo do tema; o conteudo e nosso.
     ".cm-panels": {
-      backgroundColor: "rgba(10, 10, 10, 0.92)",
+      backgroundColor: "rgba(10, 10, 10, 0.94)",
       color: "var(--gp-text)",
       borderTop: "1px solid rgba(255, 255, 255, 0.08)",
       fontFamily: "var(--gp-font)",
-      fontSize: "12px",
     },
     ".cm-panels.cm-panels-top": { borderBottom: "1px solid rgba(255, 255, 255, 0.08)" },
-    ".cm-search": { display: "flex", flexWrap: "wrap", gap: "6px", padding: "9px 12px" },
-    ".cm-textfield": {
-      backgroundColor: "rgba(255, 255, 255, 0.06)",
-      border: "1px solid rgba(255, 255, 255, 0.12)",
-      borderRadius: "7px",
-      color: "var(--gp-text)",
-      fontSize: "12px",
-      minWidth: "150px",
-      padding: "6px 9px",
-    },
-    ".cm-button": {
-      backgroundImage: "none",
-      backgroundColor: "rgba(255, 255, 255, 0.08)",
-      border: "none",
-      borderRadius: "7px",
-      color: "var(--gp-text)",
-      cursor: "pointer",
-      fontSize: "12px",
-      padding: "6px 11px",
-    },
-    ".cm-button:hover": { backgroundColor: "rgba(255, 255, 255, 0.16)" },
-    ".cm-search label": {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "5px",
-      color: "var(--gp-text-dim)",
-      fontSize: "12px",
-    },
-    // Expressao regular e "palavra inteira" saem: um bloco de notas nao precisa
-    // dos dois, e cada opcao a mais e ruido no meio da escrita.
-    ".cm-search label:has(input[name=re])": { display: "none" },
-    ".cm-search label:has(input[name=word])": { display: "none" },
-    ".cm-search br": { display: "none" },
-    ".cm-search button[name=close]": { color: "var(--gp-text-dim)" },
     ".cm-searchMatch": { backgroundColor: "rgba(250, 204, 21, 0.25)" },
     ".cm-searchMatch-selected": { backgroundColor: "rgba(250, 204, 21, 0.5)" },
   },
@@ -254,7 +206,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
     rectangularSelection(),
     crosshairCursor(),
     highlightSelectionMatches(),
-    search({ top: true }),
+    search({ top: true, createPanel: ghostSearchPanel }),
     searchPhrases,
     EditorState.allowMultipleSelections.of(true),
     // Alt+Click adiciona cursor, como no VS Code (o padrao do CodeMirror e Ctrl).
