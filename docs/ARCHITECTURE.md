@@ -569,11 +569,28 @@ Enquanto o teleprompter roda, o texto ganha metade da altura visível de folga
 acima e abaixo. A primeira linha nasce no centro e a última chega lá. A folga é
 recalculada quando a janela muda de tamanho, inclusive ao entrar e sair da faixa.
 
-### Controles no hover
+### Indicador no canto **[D]**
 
-Botões de pausar, velocidade e sair aparecem perto do rodapé durante a rolagem.
-Ninguém deve ficar preso num modo por não ter decorado um atalho — e um modo que
-deixa o texto somente leitura precisa de uma saída visível.
+*Corrigido depois do segundo teste.* Avisos no centro da tela cobriam a primeira
+linha justamente no instante de começar a ler. Durante a leitura, o meio da tela
+pertence ao texto.
+
+Um indicador discreto fica no canto inferior direito mostrando o estado (`▶` ou
+`❚❚`) e a velocidade. Com o mouse por perto ele se destaca e revela `−`, `+` e
+`✕`. Ninguém deve ficar preso num modo por não ter decorado um atalho — ainda
+mais um modo que deixa o texto somente leitura.
+
+### Começa parado **[D]**
+
+Ligar o teleprompter é se preparar para ler, não começar a ler. Antes a rolagem
+partia imediatamente e a primeira linha já descia antes de o olho encontrá-la.
+`Espaço` (ou o botão do canto) dá a partida quando a pessoa está pronta.
+
+### Sair do teleprompter devolve a janela **[D]**
+
+A faixa existe *para* o teleprompter, então sair de um é sair do outro: parar a
+rolagem e continuar preso numa tira de três linhas no topo da tela não ajuda
+ninguém. `Esc`, `✕` e `Ctrl+Alt+P` restauram a posição e o tamanho anteriores.
 
 ---
 

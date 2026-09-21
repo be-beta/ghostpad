@@ -20,7 +20,8 @@ export const SPEED_STEP = 5;
 
 export interface Prompter {
   state(): PrompterState;
-  start(): void;
+  /** `paused` decide se ja sai rolando ou espera o usuario mandar. */
+  start(paused?: boolean): void;
   stop(): void;
   togglePause(): void;
   nudgeSpeed(delta: number): void;
@@ -81,10 +82,12 @@ export function createPrompter(options: PrompterOptions): Prompter {
     frame = requestAnimationFrame(step);
   };
 
-  function start(): void {
+  function start(pausedInicial = true): void {
     if (active) return;
     active = true;
-    paused = false;
+    // Comeca parado por padrao: ligar o teleprompter e se preparar para ler,
+    // nao comecar a ler. Sem isso a primeira linha ja saia descendo.
+    paused = pausedInicial;
     carry = 0;
     lastTime = 0;
     frame = requestAnimationFrame(step);

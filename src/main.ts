@@ -628,7 +628,7 @@ function applyReadingPadding(active: boolean): void {
  */
 function togglePrompter(): void {
   if (prompter.state().active) {
-    prompter.stop();
+    void exitPrompter();
     return;
   }
 
@@ -636,9 +636,22 @@ function togglePrompter(): void {
   // Comeca do zero: com a folga aplicada, a primeira linha nasce no centro.
   editor.scroller().scrollTop = 0;
 
+  // Parado: ligar o teleprompter e se preparar para ler. O espaco (ou o botao
+  // no canto) da a partida quando a pessoa estiver pronta.
   prompter.start();
-  const { speed } = prompter.state();
-  toast(`Teleprompter a ${speed} px/s — espaço pausa, ↑↓ velocidade, Esc sai`);
+  if (!isNotch()) toast("Teleprompter pronto — espaço começa, Esc sai");
+}
+
+/**
+ * Sai do teleprompter e devolve a janela ao lugar de onde ela veio.
+ *
+ * A faixa existe PARA o teleprompter, entao sair de um e sair do outro: parar a
+ * rolagem e continuar preso numa tira de tres linhas no topo da tela nao ajuda
+ * ninguem.
+ */
+async function exitPrompter(): Promise<void> {
+  prompter.stop();
+  if (isNotch()) await toggleNotch();
 }
 
 /** Reage ao motor: somente leitura, linha de foco e aviso de pausa. */
@@ -648,7 +661,7 @@ function onPrompterChange(state: { active: boolean; paused: boolean; speed: numb
 
   el.prompter.hidden = !state.active;
   el.prompterPlay.textContent = state.paused ? "▶" : "❚❚";
-  el.prompterSpeed.textContent = `${state.speed} px/s`;
+  el.prompterSpeed.textContent = String(state.speed);
 
   if (!state.active) {
     applyReadingPadding(false);
@@ -882,21 +895,19 @@ function handleKeydown(event: KeyboardEvent): boolean {
   // leitura, entao elas nao competem com a digitacao.
   if (prompter?.state().active && !event.ctrlKey && !event.altKey) {
     switch (event.key) {
+      // Sem avisos no centro: o indicador do canto ja mostra o estado, e
+      // durante a leitura o meio da tela pertence ao texto.
       case " ":
         prompter.togglePause();
-        toast(prompter.state().paused ? "Pausado" : "Rolando");
         return consume(event);
       case "ArrowUp":
         prompter.nudgeSpeed(SPEED_STEP);
-        toast(`${prompter.state().speed} px/s`);
         return consume(event);
       case "ArrowDown":
         prompter.nudgeSpeed(-SPEED_STEP);
-        toast(`${prompter.state().speed} px/s`);
         return consume(event);
       case "Escape":
-        prompter.stop();
-        toast("Teleprompter desligado");
+        void exitPrompter();
         return consume(event);
     }
   }
@@ -1140,9 +1151,11 @@ function wireEvents(): void {
     const nearRight = event.clientX > window.innerWidth - 150;
     el.controls.dataset.visible = String(nearTop && nearRight);
 
-    // Os do teleprompter surgem perto do rodape, onde nao cobrem a leitura.
-    const nearBottom = event.clientY > window.innerHeight - 70;
-    el.prompter.dataset.visible = String(prompter?.state().active === true && nearBottom);
+    // O indicador do teleprompter ja esta no canto; perto dele, ele se destaca
+    // e mostra os controles extras.
+    const nearCorner =
+      event.clientY > window.innerHeight - 70 && event.clientX > window.innerWidth - 220;
+    el.prompter.dataset.visible = String(prompter?.state().active === true && nearCorner);
   });
 
   el.prompter.addEventListener("click", (event) => {
@@ -1152,7 +1165,7 @@ function wireEvents(): void {
     if (action === "pause") prompter.togglePause();
     else if (action === "faster") prompter.nudgeSpeed(SPEED_STEP);
     else if (action === "slower") prompter.nudgeSpeed(-SPEED_STEP);
-    else if (action === "exit") prompter.stop();
+    else if (action === "exit") void exitPrompter();
   });
   document.addEventListener("mouseleave", () => {
     el.controls.dataset.visible = "false";
@@ -1275,7 +1288,10 @@ async function boot(): Promise<void> {
   prompter = createPrompter({
     scroller: () => editor.scroller(),
     onChange: onPrompterChange,
-    onEnd: () => toast("Fim do texto"),
+    onEnd: () => {
+      // O fim do roteiro e a unica hora em que vale interromper a leitura.
+      toast("Fim do texto");
+    },
   });
 
   // Restaura o estado salvo sem passar pelos toggles: no boot os toasts seriam
