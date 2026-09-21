@@ -10,6 +10,7 @@ import { listen } from "@tauri-apps/api/event";
 
 import {
   appWindow,
+  detectRecorders,
   getEffectsReport,
   persistWindowState,
   setAlwaysOnTop,
@@ -45,6 +46,7 @@ import {
   renderMetrics,
   type MetricKey,
 } from "./ui/metrics";
+import { createHistoryPanel } from "./ui/history";
 import { createShortcutsPanel } from "./ui/shortcuts";
 
 const OPACITY_MIN = 0.2;
@@ -71,6 +73,7 @@ const el = {
   modules: document.getElementById("modules") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
+  history: document.getElementById("history") as HTMLDivElement,
 };
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
@@ -106,6 +109,17 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
 }
 
 const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
+
+const historyPanel = createHistoryPanel(
+  el.history,
+  (restored) => {
+    // Entra como edicao normal: Ctrl+Z desfaz a restauracao.
+    editor.replaceAll(restored);
+    void saveDraft(restored);
+    toast("Versão restaurada — Ctrl+Z desfaz");
+  },
+  (message) => toast(message),
+);
 
 // --- Feedback --------------------------------------------------------------
 
@@ -379,6 +393,34 @@ async function copyAllAndClear(): Promise<void> {
   toast("Copiado e limpo — Ctrl+Z desfaz");
 }
 
+// --- Aviso de gravacao -----------------------------------------------------
+
+const RECORDER_POLL_MS = 25_000;
+/** Ja avisado nesta sessao; o alerta nao pode virar insistencia. */
+const warnedRecorders = new Set<string>();
+
+/**
+ * Avisa quando um gravador esta aberto e o GhostPad ainda apareceria no video.
+ *
+ * Nunca liga o modo oculto sozinho: sumir da tela sem o usuario pedir seria
+ * pior que o problema. Um aviso por programa por sessao.
+ */
+async function checkRecorders(): Promise<void> {
+  if (settings.excludeFromCapture) return;
+
+  try {
+    const running = await detectRecorders();
+    const novos = running.map((r) => r.label).filter((label) => !warnedRecorders.has(label));
+    if (!novos.length) return;
+
+    for (const label of novos) warnedRecorders.add(label);
+    const atalho = "Ctrl+Shift+H";
+    toast(`${novos.join(" e ")} em execução — ${atalho} oculta o GhostPad da gravação`);
+  } catch {
+    // Deteccao e conveniencia: falhar aqui nao pode atrapalhar a escrita.
+  }
+}
+
 // --- Atalhos ---------------------------------------------------------------
 
 const CORNER_BY_DIGIT: Record<string, Corner> = {
@@ -428,6 +470,12 @@ const RESIZE_BY_ARROW: Record<string, [number, number]> = {
 };
 
 function handleKeydown(event: KeyboardEvent): boolean {
+  if (event.key === "Escape" && historyPanel.isOpen()) {
+    historyPanel.close();
+    editor.focus();
+    return consume(event);
+  }
+
   if (event.key === "Escape" && !el.modules.hidden) {
     toggleModulesMenu(false);
     editor.focus();
@@ -484,6 +532,9 @@ function handleKeydown(event: KeyboardEvent): boolean {
         return consume(event);
       case "c":
         void copyAll().then((ok) => ok && toast("Todo o texto foi copiado"));
+        return consume(event);
+      case "s":
+        void historyPanel.toggle();
         return consume(event);
       case "g":
         void toggleGhost();
@@ -660,6 +711,11 @@ function wireEvents(): void {
     if (ghostMode) void toggleGhost(false);
   });
 
+  // Gravadores sao verificados periodicamente e ao voltar o foco, que e quando
+  // o usuario provavelmente acabou de abrir o OBS ou entrar numa chamada.
+  window.setInterval(() => void checkRecorders(), RECORDER_POLL_MS);
+  window.addEventListener("focus", () => void checkRecorders());
+
   // Invocacao global: a janela ja veio para frente no Rust; aqui so o cursor.
   void listen("ghostpad://summoned", () => {
     shortcutsPanel.close();
@@ -723,6 +779,7 @@ async function boot(): Promise<void> {
   scheduleIdleFade();
 
   wireEvents();
+  void checkRecorders();
   editor.focus();
 }
 

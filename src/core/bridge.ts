@@ -46,6 +46,20 @@ export type HalfSide = "left" | "right" | "top" | "bottom" | "full";
 export const snapHalf = (side: HalfSide, margin = 12) =>
   invoke<void>("snap_half", { side, margin });
 
+export interface SnapshotInfo {
+  id: string;
+  savedAtMs: number;
+  chars: number;
+  preview: string;
+}
+
+export const listSnapshots = () => invoke<SnapshotInfo[]>("list_snapshots");
+
+export const readSnapshot = (id: string) => invoke<string>("read_snapshot", { id });
+
+/** Programas de gravacao e chamada em execucao, pelo nome do processo. */
+export const detectRecorders = () => invoke<{ label: string }[]>("detect_recorders");
+
 /** Marca o tamanho atual como o tamanho de trabalho do usuario. */
 export const rememberSize = () => invoke<void>("remember_size");
 

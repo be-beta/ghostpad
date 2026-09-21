@@ -7,8 +7,8 @@ sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analis
 uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
 apareça no vídeo.
 
-> **Estado:** Fase 3 — janela, editor e barra de status prontos; teleprompter e
-> múltiplas notas em seguida.
+> **Estado:** Fase 4 — janela, editor, métricas e histórico prontos; múltiplas
+> notas e teleprompter em seguida.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Manifesto
@@ -84,6 +84,8 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Barra de status modular**: palavras, caracteres, linhas, tokens e páginas
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
+- **Histórico local de versões**, para recuperar texto perdido
+- **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Autosave** do texto, com backup
 
 ## Atalhos
@@ -93,6 +95,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+/` | Painel com todos os atalhos |
 | `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
+| `Ctrl+Shift+S` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |
 | `Ctrl+P` | Alterna sempre-no-topo |

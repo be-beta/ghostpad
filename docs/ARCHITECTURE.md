@@ -293,7 +293,7 @@ depois o que protege o trabalho, por último os modos especializados.
 | 1 | Editor e captura instantânea | **feito, em teste** |
 | 2 | Presença e posicionamento | **feito, em teste** |
 | 3 | HUD e métricas | **feito, em teste** |
-| 4 | Segurança do trabalho | a fazer |
+| 4 | Segurança do trabalho | **feito, em teste** |
 | 5 | Múltiplas notas e split view | a fazer |
 | 6 | Teleprompter e modo notch | a fazer |
 
@@ -395,9 +395,29 @@ esconder, do menos para o mais importante:
 
 ### Fase 4 — Segurança do trabalho
 
-- **Snapshots locais** com histórico curto e restauração por atalho
-- **Aviso de gravação em andamento** — detecta OBS, Zoom, Teams e Meet ativos
-  e sugere o modo oculto; nunca liga sozinho
+**Histórico local de versões** (`Ctrl+Shift+S`). O `notes.rs` guarda o texto que
+está sendo **substituído**, não o atual — o atual já está em `draft.txt`; o que
+não existe em lugar nenhum é o que acabou de ser sobrescrito. No máximo uma
+versão a cada 3 minutos de edição, 20 versões mantidas, em
+`%APPDATA%/com.ghostpad.app/snapshots/*.txt`.
+
+Restaurar entra como edição normal do editor, então `Ctrl+Z` desfaz a
+restauração. Um recurso de recuperação não pode ser ele próprio uma perda.
+
+**Aviso de gravação em andamento.** O `watch.rs` varre os nomes dos processos em
+execução e reconhece OBS, Streamlabs, Zoom, Teams, Loom, Camtasia, Bandicam,
+ShadowPlay, ScreenRec e ShareX. Se algum estiver aberto e o modo oculto estiver
+desligado, um aviso lembra o `Ctrl+Shift+H`.
+
+- **Nunca liga o modo oculto sozinho.** Sumir da tela sem o usuário pedir seria
+  pior que o problema que resolve.
+- **Um aviso por programa por sessão**, senão o alerta vira ruído e a pessoa
+  aprende a ignorá-lo.
+- Só nomes de processos: nada de inspecionar janelas ou conteúdo.
+- A varredura tem **teste automatizado** (`cargo test`) verificando que enxerga
+  processos reais do sistema. Uma falha silenciosa aqui devolveria lista vazia e
+  pareceria "nenhum gravador aberto" — exatamente o tipo de mentira tranquila
+  que o resto do projeto evita.
 
 ### Fase 5 — Múltiplas notas e split view
 
@@ -427,6 +447,7 @@ esconder, do menos para o mais importante:
 | **`Ctrl+Alt+G`** ¹ | **Resgate** | **global** | 0 |
 | `Ctrl+Alt+Space` ² | Chamar / esconder | global | 1 |
 | `Ctrl+Shift+C` | Copiar tudo | local | 1 |
+| `Ctrl+Shift+S` | Versões anteriores do texto | local | 4 |
 | `Ctrl+B` / `Ctrl+I` | Negrito / itálico | local | 1 |
 | `Ctrl+F` | Buscar e substituir | local | 1 |
 | `Ctrl+Shift+Enter` | Copiar tudo e limpar | local | 1 |

@@ -1,5 +1,6 @@
 mod notes;
 mod shortcuts;
+mod watch;
 mod window_fx;
 mod window_state;
 
@@ -64,6 +65,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             notes::load_draft,
             notes::save_draft,
+            notes::list_snapshots,
+            notes::read_snapshot,
+            watch::detect_recorders,
             window_state::persist_window_state,
             shortcuts::set_global_shortcut,
             window_fx::get_effects_report,
