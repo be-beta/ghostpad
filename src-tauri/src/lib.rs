@@ -64,8 +64,9 @@ pub fn run() {
         .manage(window_state::WindowState::default())
         .on_window_event(window_state::track)
         .invoke_handler(tauri::generate_handler![
-            notes::load_draft,
-            notes::save_draft,
+            notes::load_note,
+            notes::save_note,
+            notes::list_slots,
             notes::list_snapshots,
             notes::read_text_file,
             notes::write_text_file,

@@ -356,7 +356,7 @@ depois o que protege o trabalho, por último os modos especializados.
 | 2 | Presença e posicionamento | **feito, em teste** |
 | 3 | HUD e métricas | **feito, em teste** |
 | 4 | Segurança do trabalho | **feito, em teste** |
-| 5 | Múltiplas notas e split view | a fazer |
+| 5 | Múltiplas notas | **feito, em teste** |
 | 6 | Teleprompter e modo notch | a fazer |
 
 ### Fase 1 — Editor e captura instantânea
@@ -481,10 +481,31 @@ desligado, um aviso lembra o `Ctrl+Shift+H`.
   pareceria "nenhum gravador aberto" — exatamente o tipo de mentira tranquila
   que o resto do projeto evita.
 
-### Fase 5 — Múltiplas notas e split view
+### Fase 5 — Múltiplas notas
 
-- **Notas múltiplas** por `Ctrl+1..9`
-- Split view 50/50 com separador redimensionável
+**Cinco espaços fixos**, numerados de 1 a 5, trocados por `Ctrl+1…5` ou pelos
+números na barra de status. Não há criar, fechar, nomear nem reordenar: um
+espaço vazio já é uma anotação nova. É o modelo mais simples que atende "várias
+anotações ao mesmo tempo" sem virar gerenciador de arquivos — e não existe barra
+de abas roubando altura da área de escrita.
+
+Indicadores: o número do espaço ativo fica aceso, os espaços com texto ficam
+visíveis, os vazios quase somem.
+
+Decisões que o teste de mesa obrigou:
+
+- **Trocar de espaço zera o desfazer** (`editor.setDocument`, que recria o estado
+  do CodeMirror). `Ctrl+Z` numa anotação não pode trazer de volta o texto de
+  outra.
+- **A gravação adiada carrega o espaço junto com o texto [D].** O autosave tem
+  folga de até 2 s; se ele lesse "o espaço ativo" na hora de disparar, trocar de
+  anotação com uma gravação pendente escreveria o texto antigo dentro da
+  anotação nova. Trocar de espaço também força a gravação antes de sair.
+- **Arquivo associado é por espaço.** A anotação 2 não pode salvar por cima do
+  arquivo aberto na anotação 1.
+- **Migração:** a anotação única antiga (`draft.txt`) vira o espaço 1, e as
+  versões que ficavam soltas em `snapshots/` são movidas para `snapshots/1/`.
+  Sem isso o histórico sumiria da interface sem nunca ter sido apagado.
 
 ### Fase 6 — Teleprompter e modo notch
 
@@ -517,7 +538,7 @@ desligado, um aviso lembra o `Ctrl+Shift+H`.
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+Alt+6…9` / `Ctrl+Alt+0` | Metade da tela / tela toda | local | 2 |
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
-| `Ctrl+1..9` | Trocar de nota | local | 5 |
+| `Ctrl+1…5` | Trocar de anotação | local | 5 |
 
 ¹ Se ocupado, cai para `Ctrl+Alt+Shift+G` e depois `Ctrl+Alt+Shift+F12`.
 ² Se ocupado, cai para `Ctrl+Shift+Space` e depois `Ctrl+Alt+Shift+Space`.

@@ -414,6 +414,48 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
   font-weight: 600;
 }
 
+/* --- Espacos de anotacao --------------------------------------------------- */
+
+.gp-notes {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gp-note {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  /* Espaco vazio quase nao aparece: so o numero do espaco em uso se destaca. */
+  color: rgba(243, 244, 246, 0.25);
+  font-family: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+}
+
+.gp-note:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gp-text);
+}
+
+.gp-note[data-used="true"] {
+  color: var(--gp-text-dim);
+}
+
+.gp-note[data-active="true"] {
+  background: rgba(110, 231, 183, 0.18);
+  color: var(--gp-accent);
+  font-weight: 600;
+}
+
 /* --- Busca (painel proprio, src/editor/search-panel.ts) -------------------- */
 
 .gp-find {

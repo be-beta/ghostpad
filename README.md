@@ -7,8 +7,8 @@ sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analis
 uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
 apareça no vídeo.
 
-> **Estado:** Fase 4 — janela, editor, métricas e histórico prontos; múltiplas
-> notas e teleprompter em seguida.
+> **Estado:** Fase 5 — janela, editor, métricas, histórico e múltiplas notas
+> prontos; teleprompter em seguida.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Manifesto
@@ -85,6 +85,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Abrir e salvar arquivos** `.txt` e `.md`, sem depender de outro editor
+- **Cinco anotações** trocadas por `Ctrl+1` a `Ctrl+5`, sem barra de abas
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Autosave** do texto, com backup
@@ -98,6 +99,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+S` / `Ctrl+Shift+S` | Salvar / salvar como |
 | `Ctrl+O` | Abrir arquivo de texto |
+| `Ctrl+1` … `Ctrl+5` | Troca de anotação |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |

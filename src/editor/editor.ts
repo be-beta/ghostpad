@@ -188,6 +188,13 @@ export interface GhostEditor {
   focus(): void;
   /** Substitui todo o texto numa unica transacao desfazivel. */
   replaceAll(text: string): void;
+  /**
+   * Troca o documento inteiro e zera o historico de desfazer.
+   *
+   * Usado ao mudar de espaco de anotacao: `Ctrl+Z` numa nota nao pode trazer de
+   * volta o texto de outra.
+   */
+  setDocument(text: string): void;
   view: EditorView;
 }
 
@@ -243,6 +250,10 @@ export function createEditor(options: EditorOptions): GhostEditor {
 
   return {
     view,
+    setDocument: (text) => {
+      view.setState(EditorState.create({ doc: text, extensions }));
+      view.dispatch({ selection: { anchor: view.state.doc.length }, scrollIntoView: true });
+    },
     getText: () => view.state.doc.toString(),
     focus: () => view.focus(),
     replaceAll: (text) =>

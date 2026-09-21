@@ -39,6 +39,7 @@ const escapeHtml = (value: string) =>
 
 export function createHistoryPanel(
   host: HTMLElement,
+  activeSlot: () => number,
   onRestore: (text: string) => void,
   onError: (message: string) => void,
 ): HistoryPanel {
@@ -77,7 +78,7 @@ export function createHistoryPanel(
     isOpen: () => !host.hidden,
     async open() {
       try {
-        render(await listSnapshots());
+        render(await listSnapshots(activeSlot()));
       } catch (error) {
         render([]);
         onError(`Não foi possível ler o histórico: ${error}`);
@@ -100,7 +101,7 @@ export function createHistoryPanel(
     if (item) {
       event.preventDefault();
       const id = item.dataset.snapshot as string;
-      void readSnapshot(id)
+      void readSnapshot(activeSlot(), id)
         .then((text) => {
           onRestore(text);
           panel.close();

@@ -28,6 +28,7 @@ export interface Settings {
   shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
   /** Metricas visiveis na barra de status. */
   statusBar: MetricModules;
+  activeNote: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -41,6 +42,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
   backdrop: "transparent",
   idleFade: true,
+  /** Espaco de anotacao aberto por ultimo. */
+  activeNote: 1,
   shortcuts: {},
   statusBar: { ...DEFAULT_MODULES },
 };
@@ -73,8 +76,16 @@ export async function saveSettings(settings: Settings): Promise<void> {
   await settingsStore.save();
 }
 
-export function loadDraft(): Promise<string> {
-  return invoke<string>("load_draft");
+/** Quantos caracteres ha em cada espaco, para a barra indicar os que estao em uso. */
+export interface SlotInfo {
+  slot: number;
+  chars: number;
+}
+
+export const listSlots = () => invoke<SlotInfo[]>("list_slots");
+
+export function loadNote(slot: number): Promise<string> {
+  return invoke<string>("load_note", { slot });
 }
 
 let saveChain: Promise<void> = Promise.resolve();
@@ -84,8 +95,8 @@ let saveChain: Promise<void> = Promise.resolve();
  * uma gravacao antiga nunca termina depois de uma nova. Falhas nao quebram a
  * fila — a proxima gravacao ainda acontece.
  */
-export function saveDraft(text: string): Promise<void> {
-  const next = saveChain.then(() => invoke<void>("save_draft", { text }));
+export function saveNote(slot: number, text: string): Promise<void> {
+  const next = saveChain.then(() => invoke<void>("save_note", { slot, text }));
   saveChain = next.catch((error) => console.error("[ghostpad] falha ao salvar texto", error));
   return next;
 }

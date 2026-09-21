@@ -42,6 +42,7 @@ function sections(effects: EffectsReport): Section[] {
     {
       title: "Texto",
       rows: [
+        { keys: "Ctrl+1…5", label: "Trocar de anotação" },
         { keys: "Ctrl+Shift+Enter", label: "Copiar tudo e limpar" },
         { keys: "Ctrl+Shift+C", label: "Copiar tudo" },
         { keys: "Ctrl+S", label: "Salvar no arquivo atual" },

@@ -36,9 +36,10 @@ import {
   DEFAULT_SETTINGS,
   debounceWithCeiling,
   initStores,
-  loadDraft,
+  listSlots,
+  loadNote,
   loadSettings,
-  saveDraft,
+  saveNote,
   saveSettings,
   type Settings,
 } from "./core/store";
@@ -77,9 +78,23 @@ const el = {
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
   history: document.getElementById("history") as HTMLDivElement,
+  notes: document.getElementById("notes") as HTMLSpanElement,
 };
 
+const NOTE_SLOTS = [1, 2, 3, 4, 5];
+
 let settings: Settings = { ...DEFAULT_SETTINGS };
+/** Espaco de anotacao aberto. */
+let activeNote = 1;
+/** Espacos com texto, para os indicadores da barra. */
+let usedNotes = new Set<number>();
+/**
+ * Arquivo associado a cada espaco.
+ *
+ * Por espaco, e nao global: a anotacao 2 nao pode salvar por cima do arquivo
+ * aberto na anotacao 1.
+ */
+const fileBySlot = new Map<number, string>();
 let ghostMode = false;
 let editor: GhostEditor;
 let effects: EffectsReport = {
@@ -115,10 +130,11 @@ const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindG
 
 const historyPanel = createHistoryPanel(
   el.history,
+  () => activeNote,
   (restored) => {
     // Entra como edicao normal: Ctrl+Z desfaz a restauracao.
     editor.replaceAll(restored);
-    void saveDraft(restored);
+    void saveNote(activeNote, restored);
     toast("Versão restaurada — Ctrl+Z desfaz");
   },
   (message) => toast(message),
@@ -361,12 +377,77 @@ function toggleModulesMenu(open?: boolean): void {
   el.modules.hidden = !next;
 }
 
-const persistDraft = debounceWithCeiling((text: string) => void saveDraft(text), 400, 2000);
+const persistNote = debounceWithCeiling(
+  (slot: number, text: string) => void saveNote(slot, text),
+  400,
+  2000,
+);
 
 function onTextChange(text: string): void {
   updateMetrics(text);
-  persistDraft(text);
+  persistNote(activeNote, text);
+
+  // O indicador do espaco atual acompanha o texto na hora; os outros so mudam
+  // quando a pessoa troca de espaco.
+  const had = usedNotes.has(activeNote);
+  if (text.trim()) usedNotes.add(activeNote);
+  else usedNotes.delete(activeNote);
+  if (had !== usedNotes.has(activeNote)) renderNotes();
+
   wakeFromIdle();
+}
+
+// --- Espacos de anotacao ---------------------------------------------------
+
+function renderNotes(): void {
+  el.notes.textContent = "";
+
+  for (const slot of NOTE_SLOTS) {
+    const button = document.createElement("button");
+    button.className = "gp-note";
+    button.dataset.note = String(slot);
+    button.dataset.active = String(slot === activeNote);
+    button.dataset.used = String(usedNotes.has(slot));
+    button.textContent = String(slot);
+    button.title = `Anotação ${slot} (Ctrl+${slot})`;
+    el.notes.append(button);
+  }
+}
+
+async function refreshNotes(): Promise<void> {
+  try {
+    const slots = await listSlots();
+    usedNotes = new Set(slots.filter((s) => s.chars > 0).map((s) => s.slot));
+  } catch {
+    // Indicador e conveniencia: sem ele o app continua inteiro.
+  }
+  renderNotes();
+}
+
+/**
+ * Troca de espaco de anotacao.
+ *
+ * Grava o texto atual antes de sair — sem esperar o autosave, que tem folga de
+ * ate 2 segundos — e troca o documento zerando o desfazer, para `Ctrl+Z` nunca
+ * trazer de volta o texto de outra anotação.
+ */
+async function switchNote(slot: number): Promise<void> {
+  if (slot === activeNote || !NOTE_SLOTS.includes(slot)) return;
+
+  await saveNote(activeNote, editor.getText());
+
+  activeNote = slot;
+  settings.activeNote = slot;
+  void saveSettings(settings);
+
+  const text = await loadNote(slot);
+  editor.setDocument(text);
+  updateMetrics(text);
+  await refreshNotes();
+  editor.focus();
+
+  const file = fileBySlot.get(slot);
+  toast(file ? `Anotação ${slot} — ${file.split(/[\\/]/).pop()}` : `Anotação ${slot}`);
 }
 
 async function copyAll(): Promise<boolean> {
@@ -392,10 +473,10 @@ async function copyAll(): Promise<boolean> {
 async function copyAllAndClear(): Promise<void> {
   if (!(await copyAll())) return;
   editor.replaceAll("");
-  void saveDraft("");
+  void saveNote(activeNote, "");
   // Texto limpo e uma anotacao nova: salvar depois nao pode sobrescrever o
   // arquivo da anotacao anterior sem avisar.
-  currentFile = null;
+  fileBySlot.delete(activeNote);
   toast("Copiado e limpo — Ctrl+Z desfaz");
 }
 
@@ -408,7 +489,6 @@ async function copyAllAndClear(): Promise<void> {
  * usuario so muda quando ele manda salvar. Gravar sozinho por cima de um
  * arquivo dele seria assumir uma responsabilidade que ele nao delegou.
  */
-let currentFile: string | null = null;
 
 /** Sugere um nome a partir da primeira linha com conteudo. */
 function suggestedFileName(text: string): string {
@@ -430,7 +510,7 @@ function suggestedFileName(text: string): string {
 
 async function saveToFile(forceDialog = false): Promise<void> {
   const text = editor.getText();
-  let target = currentFile;
+  let target = fileBySlot.get(activeNote) ?? null;
 
   if (!target || forceDialog) {
     target = await saveDialog({
@@ -449,7 +529,7 @@ async function saveToFile(forceDialog = false): Promise<void> {
 
   try {
     await writeTextFile(target, text);
-    currentFile = target;
+    fileBySlot.set(activeNote, target);
     toast(`Salvo em ${target.split(/[\\/]/).pop()}`);
   } catch (error) {
     toast(String(error));
@@ -471,8 +551,8 @@ async function openFromFile(): Promise<void> {
     const content = await readTextFile(chosen);
     // Troca como edicao normal: Ctrl+Z traz de volta o texto que estava aberto.
     editor.replaceAll(content);
-    void saveDraft(content);
-    currentFile = chosen;
+    void saveNote(activeNote, content);
+    fileBySlot.set(activeNote, chosen);
     toast(`Aberto: ${chosen.split(/[\\/]/).pop()} — Ctrl+S salva de volta`);
   } catch (error) {
     toast(String(error));
@@ -603,6 +683,12 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
+  // Ctrl+digito troca de anotacao; com Alt, o mesmo digito move a janela.
+  if (!event.altKey && !event.shiftKey && /^[1-5]$/.test(event.key)) {
+    void switchNote(Number(event.key));
+    return consume(event);
+  }
+
   const bracket = bracketDirection(event);
   if (bracket !== 0) {
     nudgeOpacity(bracket * (event.shiftKey ? OPACITY_JUMP : OPACITY_STEP));
@@ -672,7 +758,11 @@ async function closeApp(): Promise<void> {
   // Salvar e tentativa; fechar e garantia. Uma falha de disco nao pode deixar o
   // usuario preso numa janela que ignora o botao de fechar.
   try {
-    await Promise.all([saveDraft(editor.getText()), saveSettings(settings), persistWindowState()]);
+    await Promise.all([
+      saveNote(activeNote, editor.getText()),
+      saveSettings(settings),
+      persistWindowState(),
+    ]);
   } catch (error) {
     console.error("[ghostpad] falha ao salvar antes de fechar", error);
   }
@@ -788,6 +878,11 @@ function wireEvents(): void {
   });
   el.metricOpacity.addEventListener("click", () => toggleIdleFade());
 
+  el.notes.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>("[data-note]");
+    if (button) void switchNote(Number(button.dataset.note));
+  });
+
   // Sinais de presenca: qualquer um deles cancela o esmaecimento.
   for (const type of ["mousemove", "mousedown", "keydown", "wheel"] as const) {
     window.addEventListener(type, wakeFromIdle, { passive: true });
@@ -841,7 +936,8 @@ async function boot(): Promise<void> {
   revealOnLaunch();
   await applyBackdrop(settings.backdrop, false);
 
-  const initialText = await loadDraft();
+  activeNote = NOTE_SLOTS.includes(settings.activeNote) ? settings.activeNote : 1;
+  const initialText = await loadNote(activeNote);
   editor = createEditor({
     parent: el.editorHost,
     initialText,
@@ -849,6 +945,7 @@ async function boot(): Promise<void> {
     onAppKeydown: handleKeydown,
   });
   updateMetrics(initialText);
+  void refreshNotes();
 
   // Restaura o estado salvo sem passar pelos toggles: no boot os toasts seriam
   // ruido anunciando algo que o usuario ja configurou antes.

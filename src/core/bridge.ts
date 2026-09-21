@@ -60,9 +60,11 @@ export interface SnapshotInfo {
   preview: string;
 }
 
-export const listSnapshots = () => invoke<SnapshotInfo[]>("list_snapshots");
+export const listSnapshots = (slot: number) =>
+  invoke<SnapshotInfo[]>("list_snapshots", { slot });
 
-export const readSnapshot = (id: string) => invoke<string>("read_snapshot", { id });
+export const readSnapshot = (slot: number, id: string) =>
+  invoke<string>("read_snapshot", { slot, id });
 
 /** Programas de gravacao e chamada em execucao, pelo nome do processo. */
 export const detectRecorders = () => invoke<{ label: string }[]>("detect_recorders");
