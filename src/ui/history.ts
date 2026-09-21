@@ -14,6 +14,7 @@
  */
 
 import { listSnapshots, readSnapshot, type SnapshotInfo } from "../core/bridge";
+import { t } from "../core/i18n";
 
 export interface HistoryPanel {
   isOpen(): boolean;
@@ -31,10 +32,10 @@ function formatMoment(ms: number): string {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
 
-  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const time = date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   if (sameDay) return time;
 
-  const day = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const day = date.toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
   return `${day} ${time}`;
 }
 
@@ -49,9 +50,8 @@ export function createHistoryPanel(
 ): HistoryPanel {
   const renderEmpty = () => `
     <div class="gp-sheet__empty">
-      Nenhuma versão guardada ainda.<br />
-      O GhostPad guarda o texto substituído a cada 3 minutos de edição, e o de
-      abas fechadas.
+      ${t("history.empty")}<br />
+      ${t("history.emptyHint")}
     </div>`;
 
   const renderList = (items: SnapshotInfo[]) =>
@@ -60,20 +60,20 @@ export function createHistoryPanel(
         (item) => `
       <button class="gp-history__item" data-snapshot="${item.id}" data-slot="${item.slot}">
         <span class="gp-history__when">${formatMoment(item.savedAtMs)}</span>
-        <span class="gp-history__preview">${escapeHtml(item.preview) || "(vazio)"}</span>
+        <span class="gp-history__preview">${escapeHtml(item.preview) || t("history.emptyPreview")}</span>
         <span class="gp-history__tag">${escapeHtml(describeSlot(item.slot))}</span>
-        <span class="gp-history__size">${item.chars.toLocaleString("pt-BR")} car.</span>
+        <span class="gp-history__size">${t("history.chars", { n: item.chars.toLocaleString() })}</span>
       </button>`,
       )
       .join("");
 
   const render = (items: SnapshotInfo[]) => {
     host.innerHTML = `
-      <div class="gp-sheet__card" role="dialog" aria-label="Versões anteriores">
+      <div class="gp-sheet__card" role="dialog" aria-label="${t("history.title")}">
         <header class="gp-sheet__header">
-          <span>Versões anteriores</span>
-          <span class="gp-sheet__hint"><kbd>Esc</kbd> fecha
-            <button class="gp-sheet__close" data-close aria-label="Fechar histórico">✕</button>
+          <span>${t("history.title")}</span>
+          <span class="gp-sheet__hint"><kbd>Esc</kbd> ${t("shortcuts.escCloses")}
+            <button class="gp-sheet__close" data-close aria-label="${t("history.close")}">✕</button>
           </span>
         </header>
         ${items.length ? renderList(items) : renderEmpty()}
@@ -87,7 +87,7 @@ export function createHistoryPanel(
         render(await listSnapshots());
       } catch (error) {
         render([]);
-        onError(`Não foi possível ler o histórico: ${error}`);
+        onError(t("history.readFailed", { error: String(error) }));
       }
       host.hidden = false;
     },
@@ -113,7 +113,7 @@ export function createHistoryPanel(
           onRestore(text);
           panel.close();
         })
-        .catch((error) => onError(`Não foi possível restaurar: ${error}`));
+        .catch((error) => onError(t("history.restoreFailed", { error: String(error) })));
       return;
     }
 

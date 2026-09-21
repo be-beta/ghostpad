@@ -19,24 +19,24 @@
            alcas de redimensionamento. -->
       <div class="gp-topbar">
         <span class="gp-tabs" id="tabs"></span>
-        <div class="gp-topbar__drag" data-drag title="Arraste para mover"></div>
+        <div class="gp-topbar__drag" data-drag data-i18n-title="window.drag"></div>
       </div>
 
       <!-- Controles que so aparecem quando o mouse chega perto. -->
       <div class="gp-controls" id="controls">
         <!-- Alca de arraste: sem barra de titulo, nada mais indica que a janela
              pode ser movida. Arrastar por aqui e pela faixa do topo funciona igual. -->
-        <div class="gp-btn gp-btn--grip" data-drag title="Arraste para mover" aria-label="Mover janela">
+        <div class="gp-btn gp-btn--grip" data-drag data-i18n-title="window.drag" data-i18n-aria="window.move">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" />
             <circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" />
             <circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" />
           </svg>
         </div>
-        <button class="gp-btn" id="btn-minimize" title="Minimizar" aria-label="Minimizar">
+        <button class="gp-btn" id="btn-minimize" data-i18n-title="window.minimize" data-i18n-aria="window.minimize">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
         </button>
-        <button class="gp-btn gp-btn--danger" id="btn-close" title="Fechar (Ctrl+Q)" aria-label="Fechar">
+        <button class="gp-btn gp-btn--danger" id="btn-close" data-i18n-title="window.close" data-i18n-aria="window.close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>
@@ -47,24 +47,30 @@
 
       <footer class="gp-status" id="status" data-drag>
         <div class="gp-status__group">
-          <button class="gp-chip" id="chip-ontop" data-active="true" title="Sempre visível (Ctrl+P)">
-            <span class="gp-chip__dot"></span><span class="gp-chip__label">Topo</span>
+          <button class="gp-chip" id="chip-ontop" data-active="true" data-i18n-title="chip.onTop.title">
+            <span class="gp-chip__dot"></span><span class="gp-chip__label" data-i18n="chip.onTop"></span>
           </button>
-          <button class="gp-chip" id="chip-ghost" title="Modo fantasma: o mouse atravessa (Ctrl+Shift+G)">
-            <span class="gp-chip__dot"></span><span class="gp-chip__label">Fantasma</span>
+          <button class="gp-chip" id="chip-ghost" data-i18n-title="chip.ghost.title">
+            <span class="gp-chip__dot"></span><span class="gp-chip__label" data-i18n="chip.ghost"></span>
           </button>
-          <button class="gp-chip" id="chip-stealth" title="Invisível em gravações (Ctrl+Shift+H)">
-            <span class="gp-chip__dot"></span><span class="gp-chip__label">Oculto</span>
+          <button class="gp-chip" id="chip-stealth" data-i18n-title="chip.stealth.title">
+            <span class="gp-chip__dot"></span><span class="gp-chip__label" data-i18n="chip.stealth"></span>
           </button>
 
         </div>
 
         <div class="gp-status__group gp-status__group--right">
-          <button class="gp-chip" id="chip-backdrop" title="Fundo da janela (Ctrl+Shift+B)">Transparente</button>
+          <button class="gp-chip" id="chip-backdrop" data-i18n-title="chip.backdrop.title"></button>
           <span class="gp-metrics" id="metrics"></span>
-          <button class="gp-metric gp-metric--dim" id="metric-opacity" title="Opacidade — clique para ligar/desligar o esmaecimento automático">90%</button>
-          <button class="gp-chip gp-chip--icon" id="chip-modules" title="O que mostrar na barra" aria-label="Escolher métricas">⋯</button>
-          <button class="gp-chip gp-chip--icon" id="chip-help" title="Atalhos (Ctrl+/)" aria-label="Atalhos">?</button>
+          <button class="gp-metric gp-metric--dim" id="metric-opacity" data-i18n-title="chip.opacity.title">90%</button>
+          <span class="gp-fontsize">
+            <button class="gp-fontsize__btn" id="font-smaller" data-i18n-title="chip.fontSize.smaller">A−</button>
+            <span class="gp-fontsize__value" id="font-size-value">15</span>
+            <button class="gp-fontsize__btn" id="font-bigger" data-i18n-title="chip.fontSize.bigger">A+</button>
+          </span>
+          <button class="gp-chip gp-chip--icon" id="chip-settings" data-i18n-title="chip.settings.title">⚙</button>
+          <button class="gp-chip gp-chip--icon" id="chip-modules" data-i18n-title="chip.modules.title">⋯</button>
+          <button class="gp-chip gp-chip--icon" id="chip-help" data-i18n-title="chip.help.title">?</button>
         </div>
       </footer>
     </div>
@@ -75,13 +81,13 @@
     <!-- Controles do teleprompter: aparecem ao aproximar o mouse. Existem porque
          ninguem deve ficar preso num modo por nao ter decorado um atalho. -->
     <div class="gp-prompter" id="prompter" hidden>
-      <button class="gp-prompter__btn" data-prompter="pause" title="Pausar ou continuar (Espaço)">
+      <button class="gp-prompter__btn" data-prompter="pause" data-i18n-title="prompter.playPause">
         <span id="prompter-play">▶</span>
       </button>
       <span class="gp-prompter__speed" id="prompter-speed">25</span>
-      <button class="gp-prompter__btn gp-prompter__btn--extra" data-prompter="slower" title="Mais devagar (↓)">−</button>
-      <button class="gp-prompter__btn gp-prompter__btn--extra" data-prompter="faster" title="Mais rápido (↑)">+</button>
-      <button class="gp-prompter__btn gp-prompter__btn--extra gp-prompter__btn--exit" data-prompter="exit" title="Sair do teleprompter (Esc)">✕</button>
+      <button class="gp-prompter__btn gp-prompter__btn--extra" data-prompter="slower" data-i18n-title="prompter.slower">−</button>
+      <button class="gp-prompter__btn gp-prompter__btn--extra" data-prompter="faster" data-i18n-title="prompter.faster">+</button>
+      <button class="gp-prompter__btn gp-prompter__btn--extra gp-prompter__btn--exit" data-prompter="exit" data-i18n-title="prompter.exit">✕</button>
     </div>
 
     <!-- Historico de versoes (Ctrl+Shift+V). Conteudo em src/ui/history.ts. -->
@@ -89,6 +95,9 @@
 
     <!-- Menu de modulos da barra. Conteudo gerado em src/main.ts. -->
     <div class="gp-menu" id="modules" hidden></div>
+
+    <!-- Configuracoes (Ctrl+,). Conteudo em src/ui/settings.ts. -->
+    <div class="gp-sheet" id="settings" hidden></div>
 
     <!-- Painel de atalhos (Ctrl+/). Conteudo gerado em src/ui/shortcuts.ts. -->
     <div class="gp-sheet" id="shortcuts" hidden></div>

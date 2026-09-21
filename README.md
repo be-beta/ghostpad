@@ -89,6 +89,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Teleprompter** com rolagem automática e modo faixa para gravações
+- **Português, inglês e espanhol**, com oito opções de fonte embutidas
 - **Autosave** do texto, com backup
 
 ## Atalhos
@@ -103,6 +104,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+1` … `Ctrl+5` | Troca de aba |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba |
 | `Ctrl+Alt+P` / `Ctrl+Alt+N` | Teleprompter / modo faixa |
+| `Ctrl+,` | Configurações: idioma, fonte e tamanho |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |

@@ -357,7 +357,8 @@ depois o que protege o trabalho, por último os modos especializados.
 | 3 | HUD e métricas | **feito, em teste** |
 | 4 | Segurança do trabalho | **feito, em teste** |
 | 5 | Múltiplas notas | **feito, em teste** |
-| 6 | Teleprompter e modo faixa | **feito, em teste** |
+| 6 | Teleprompter e modo faixa | **feito** |
+| 7 | Configurações: idioma, fonte e tamanho | **feito, em teste** |
 
 ### Fase 1 — Editor e captura instantânea
 
@@ -601,6 +602,40 @@ ninguém. `Esc`, `✕` e `Ctrl+Alt+P` restauram a posição e o tamanho anterior
 
 ---
 
+### Fase 7 — Configurações
+
+Painel em `Ctrl+,` com três escolhas, e só elas: **idioma**, **fonte** e
+**tamanho do texto**. O resto se configura onde é usado — opacidade pelo
+teclado, métricas no menu da barra, atalhos no painel de atalhos. Um painel que
+reúne tudo só porque é um painel vira lista de opções que ninguém lê.
+
+**Idioma** (`src/core/i18n.ts`): português, inglês e espanhol, com as três
+traduções lado a lado no mesmo arquivo. O tipo do dicionário é derivado do
+português, então **esquecer uma chave nos outros dois vira erro de compilação**,
+não um buraco que aparece meses depois com metade da interface traduzida. O
+idioma inicial vem do sistema, quando é um dos três.
+
+Trocar de idioma redesenha o que já está na tela — abas, chips, menus abertos —
+porque texto criado uma vez não muda sozinho.
+
+**Fontes**: Inter, DM Serif Text, EB Garamond, IBM Plex Mono, DM Mono, Syne,
+Comic Neue e a fonte do sistema. Todas OFL e empacotadas, nada baixado em uso.
+Os arquivos de cada família só carregam quando ela é escolhida, e a troca da
+variável CSS acontece **depois** do carregamento — antes, o texto piscaria na
+fonte de fallback. No menu, cada nome aparece na própria fonte.
+
+**Tamanho do texto**: 11 a 30 px, por `Ctrl+Alt+=` / `Ctrl+Alt+−`, pelo painel,
+ou pelos botões `A−` `A+` na barra de status. Mudar o tamanho recalcula a folga
+de leitura do teleprompter, que depende da altura da linha.
+
+### Falha de inicialização visível **[D]**
+
+Um erro no boot deixaria a janela em branco, sem explicação — o oposto do que o
+app promete. Agora ele aparece numa faixa vermelha, com o texto selecionável
+para poder ser copiado.
+
+---
+
 ## 9. Atalhos
 
 | Atalho | Ação | Escopo | Fase |
@@ -626,6 +661,8 @@ ninguém. `Esc`, `✕` e `Ctrl+Alt+P` restauram a posição e o tamanho anterior
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+1…5` | Trocar de aba | local | 5 |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba | local | 5 |
+| `Ctrl+,` | Configurações | local | 7 |
+| `Ctrl+Alt+=` / `Ctrl+Alt+−` | Tamanho do texto | local | 7 |
 | `Ctrl+Alt+P` | Teleprompter | local | 6 |
 | `Ctrl+Alt+N` | Modo faixa | local | 6 |
 | `Espaço` / `↑` `↓` / `Esc` | Pausa / velocidade / sair (em rolagem) | local | 6 |

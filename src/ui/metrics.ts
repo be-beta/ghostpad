@@ -7,6 +7,8 @@
  * tem como saber. Prometer precisao onde nao existe seria pior que aproximar.
  */
 
+import { t } from "../core/i18n";
+
 export type MetricKey = "words" | "chars" | "lines" | "tokens" | "pages";
 
 export type MetricModules = Record<MetricKey, boolean>;
@@ -21,13 +23,8 @@ export const DEFAULT_MODULES: MetricModules = {
   pages: false,
 };
 
-export const MODULE_LABELS: Record<MetricKey, string> = {
-  words: "Palavras",
-  chars: "Caracteres",
-  lines: "Linhas",
-  tokens: "Tokens (aprox.)",
-  pages: "Páginas A4/ABNT (aprox.)",
-};
+export const moduleLabel = (key: MetricKey): string =>
+  t(`metric.${key}` as "metric.words");
 
 /**
  * Caracteres por pagina no padrao ABNT: A4, fonte 12, entrelinha 1,5, margens
@@ -64,8 +61,10 @@ export function computeMetrics(text: string): Metrics {
   };
 }
 
-const plural = (value: number, one: string, many: string) =>
-  `${value.toLocaleString("pt-BR")} ${value === 1 ? one : many}`;
+const numero = (value: number) => value.toLocaleString();
+
+const plural = (key: "words" | "chars" | "lines", value: number) =>
+  t(`metric.${key}.${value === 1 ? "one" : "many"}` as "metric.words.one", { n: numero(value) });
 
 /**
  * Rotulos curtos para quando o espaco aperta.
@@ -74,36 +73,29 @@ const plural = (value: number, one: string, many: string) =>
  * metricas ligadas os dois lados se encontravam. Encurtar o rotulo mantem a
  * informacao; esconder a metrica a perderia.
  */
-const SHORT_UNITS: Record<MetricKey, string> = {
-  words: "pal.",
-  chars: "car.",
-  lines: "lin.",
-  tokens: "tok.",
-  pages: "pág.",
-};
+const shortUnit = (key: MetricKey) => t(`metric.short.${key}` as "metric.short.words");
 
 export function formatMetric(key: MetricKey, metrics: Metrics, compact = false): string {
-  const short = (value: number, prefix = "") =>
-    `${prefix}${value.toLocaleString("pt-BR")} ${SHORT_UNITS[key]}`;
+  const short = (value: number, prefix = "") => `${prefix}${numero(value)} ${shortUnit(key)}`;
 
   switch (key) {
     case "words":
-      return compact ? short(metrics.words) : plural(metrics.words, "palavra", "palavras");
+      return compact ? short(metrics.words) : plural("words", metrics.words);
     case "chars":
-      return compact ? short(metrics.chars) : plural(metrics.chars, "caractere", "caracteres");
+      return compact ? short(metrics.chars) : plural("chars", metrics.chars);
     case "lines":
-      return compact ? short(metrics.lines) : plural(metrics.lines, "linha", "linhas");
+      return compact ? short(metrics.lines) : plural("lines", metrics.lines);
     case "tokens":
       return compact
         ? short(metrics.tokens, "~")
-        : `~${metrics.tokens.toLocaleString("pt-BR")} tokens`;
+        : t("metric.tokens.value", { n: numero(metrics.tokens) });
     case "pages": {
       // Uma casa decimal: "0,4 pág." diz mais sobre o progresso que "0 pág.".
-      const pages = metrics.pages.toLocaleString("pt-BR", {
+      const pages = metrics.pages.toLocaleString(undefined, {
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
       });
-      return `~${pages} pág.`;
+      return t("metric.pages.value", { n: pages });
     }
   }
 }

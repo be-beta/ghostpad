@@ -7,6 +7,7 @@
  */
 
 import type { EffectsReport, GlobalAction, KeyCombo } from "../core/bridge";
+import { t } from "../core/i18n";
 
 interface Row {
   keys: string;
@@ -21,74 +22,79 @@ interface Section {
 }
 
 function sections(effects: EffectsReport): Section[] {
-  const unavailable = "indisponível — atalho em uso por outro app";
+  const reason = t("shortcuts.unavailable");
 
   return [
     {
-      title: "De qualquer lugar",
+      title: t("shortcuts.section.global"),
       rows: [
         {
           keys: effects.summonShortcut ?? "—",
-          label: effects.summonShortcut ? "Chamar ou esconder o GhostPad" : `Chamar o GhostPad (${unavailable})`,
+          label: effects.summonShortcut
+            ? t("shortcuts.summon")
+            : t("shortcuts.summon.off", { reason }),
           action: "summon",
         },
         {
           keys: effects.panicShortcut ?? "—",
-          label: effects.panicShortcut ? "Resgate: desfaz fantasma e oculto, traz a janela" : `Resgate (${unavailable})`,
+          label: effects.panicShortcut ? t("shortcuts.panic") : t("shortcuts.panic.off", { reason }),
           action: "panic",
         },
       ],
     },
     {
-      title: "Texto",
+      title: t("shortcuts.section.text"),
       rows: [
-        { keys: "Ctrl+1…5", label: "Trocar de anotação" },
-        { keys: "Ctrl+Shift+Enter", label: "Copiar tudo e limpar" },
-        { keys: "Ctrl+Shift+C", label: "Copiar tudo" },
-        { keys: "Ctrl+S", label: "Salvar no arquivo atual" },
-        { keys: "Ctrl+Shift+S", label: "Salvar como…" },
-        { keys: "Ctrl+O", label: "Abrir arquivo de texto" },
-        { keys: "Ctrl+Shift+V", label: "Versões anteriores do texto" },
-        { keys: "Ctrl+B / Ctrl+I", label: "Negrito / itálico" },
-        { keys: "Ctrl+F", label: "Buscar e substituir" },
-        { keys: "Ctrl+Z / Ctrl+Y", label: "Desfazer / refazer" },
+        { keys: "Ctrl+1…5", label: t("shortcuts.newTab") },
+        { keys: "Ctrl+T / Ctrl+W", label: t("shortcuts.tabs") },
+        { keys: "Ctrl+Shift+Enter", label: t("shortcuts.copyClear") },
+        { keys: "Ctrl+Shift+C", label: t("shortcuts.copyAll") },
+        { keys: "Ctrl+S", label: t("shortcuts.save") },
+        { keys: "Ctrl+Shift+S", label: t("shortcuts.saveAs") },
+        { keys: "Ctrl+O", label: t("shortcuts.open") },
+        { keys: "Ctrl+Shift+V", label: t("shortcuts.history") },
+        { keys: "Ctrl+B / Ctrl+I", label: t("shortcuts.bold") },
+        { keys: "Ctrl+F", label: t("shortcuts.find") },
+        { keys: "Ctrl+Z / Ctrl+Y", label: t("shortcuts.undo") },
       ],
     },
     {
-      title: "Edição",
+      title: t("shortcuts.section.editing"),
       rows: [
-        { keys: "Alt+↑ / Alt+↓", label: "Mover linha" },
-        { keys: "Shift+Alt+↑ / ↓", label: "Duplicar linha" },
-        { keys: "Ctrl+D", label: "Selecionar próxima ocorrência" },
-        { keys: "Alt+Clique", label: "Adicionar cursor" },
-        { keys: "Tab / Shift+Tab", label: "Indentar / recuar" },
+        { keys: "Alt+↑ / Alt+↓", label: t("shortcuts.moveLine") },
+        { keys: "Shift+Alt+↑ / ↓", label: t("shortcuts.copyLine") },
+        { keys: "Ctrl+D", label: t("shortcuts.selectNext") },
+        { keys: "Alt+Clique", label: t("shortcuts.addCursor") },
+        { keys: "Tab / Shift+Tab", label: t("shortcuts.indent") },
       ],
     },
     {
-      title: "Teleprompter",
+      title: t("shortcuts.section.prompter"),
       rows: [
-        { keys: "Ctrl+Alt+P", label: "Ligar e desligar o teleprompter" },
-        { keys: "Espaço", label: "Pausar e continuar (durante a rolagem)" },
-        { keys: "↑ / ↓", label: "Velocidade (durante a rolagem)" },
-        { keys: "Ctrl+Alt+N", label: "Modo faixa: três linhas no topo da tela" },
-        { keys: "Ctrl+Alt+Shift+← →", label: "Largura da faixa" },
-        { keys: "Esc", label: "Sair do teleprompter" },
+        { keys: "Ctrl+Alt+P", label: t("shortcuts.prompter") },
+        { keys: "Espaço", label: t("shortcuts.prompterPause") },
+        { keys: "↑ / ↓", label: t("shortcuts.prompterSpeed") },
+        { keys: "Ctrl+Alt+N", label: t("shortcuts.notch") },
+        { keys: "Ctrl+Alt+Shift+← →", label: t("shortcuts.notchWidth") },
+        { keys: "Esc", label: t("shortcuts.prompterExit") },
       ],
     },
     {
-      title: "Janela",
+      title: t("shortcuts.section.window"),
       rows: [
-        { keys: "Ctrl+[ / Ctrl+]", label: "Opacidade, de 10 em 10%" },
-        { keys: "Ctrl+Shift+[ / ]", label: "Opacidade em saltos de 50%" },
-        { keys: "Ctrl+P", label: "Sempre visível" },
-        { keys: "Ctrl+Shift+G", label: "Modo fantasma (o mouse atravessa)" },
-        { keys: "Ctrl+Shift+H", label: "Ocultar de gravações" },
-        { keys: "Ctrl+Shift+B", label: "Fundo da janela" },
-        { keys: "Ctrl+Alt+1…5", label: "Encaixar nos cantos" },
-        { keys: "Ctrl+Alt+6…9", label: "Ocupar metade da tela" },
-        { keys: "Ctrl+Alt+0", label: "Ocupar a tela toda" },
-        { keys: "Ctrl+Alt+Shift+setas", label: "Redimensionar" },
-        { keys: "Ctrl+Q", label: "Fechar" },
+        { keys: "Ctrl+[ / Ctrl+]", label: t("shortcuts.opacity") },
+        { keys: "Ctrl+Shift+[ / ]", label: t("shortcuts.opacityJump") },
+        { keys: "Ctrl+Alt+= / −", label: t("shortcuts.fontSize") },
+        { keys: "Ctrl+,", label: t("shortcuts.settings") },
+        { keys: "Ctrl+P", label: t("shortcuts.alwaysOnTop") },
+        { keys: "Ctrl+Shift+G", label: t("shortcuts.ghost") },
+        { keys: "Ctrl+Shift+H", label: t("shortcuts.stealth") },
+        { keys: "Ctrl+Shift+B", label: t("shortcuts.backdrop") },
+        { keys: "Ctrl+Alt+1…5", label: t("shortcuts.corners") },
+        { keys: "Ctrl+Alt+6…9", label: t("shortcuts.halves") },
+        { keys: "Ctrl+Alt+0", label: t("shortcuts.full") },
+        { keys: "Ctrl+Alt+Shift+setas", label: t("shortcuts.resize") },
+        { keys: "Ctrl+Q", label: t("shortcuts.quit") },
       ],
     },
   ];
@@ -126,11 +132,11 @@ export function createShortcutsPanel(
 
   const render = () => {
     host.innerHTML = `
-      <div class="gp-sheet__card" role="dialog" aria-label="Atalhos do GhostPad">
+      <div class="gp-sheet__card" role="dialog" aria-label="${t("shortcuts.title")}">
         <header class="gp-sheet__header">
-          <span>Atalhos</span>
-          <span class="gp-sheet__hint"><kbd>Esc</kbd> fecha
-            <button class="gp-sheet__close" data-close aria-label="Fechar atalhos">✕</button>
+          <span>${t("shortcuts.title")}</span>
+          <span class="gp-sheet__hint"><kbd>Esc</kbd> ${t("shortcuts.escCloses")}
+            <button class="gp-sheet__close" data-close aria-label="${t("shortcuts.close")}">✕</button>
           </span>
         </header>
         ${sections(getEffects())
@@ -141,10 +147,10 @@ export function createShortcutsPanel(
             ${section.rows
               .map((row) => {
                 const keys = capturing && capturing === row.action
-                  ? `<span class="gp-sheet__capturing">Pressione a combinação…</span>`
+                  ? `<span class="gp-sheet__capturing">${t("shortcuts.capturing")}</span>`
                   : renderKeys(row.keys);
                 const rebind = row.action
-                  ? `<button class="gp-sheet__rebind" data-rebind="${row.action}">alterar</button>`
+                  ? `<button class="gp-sheet__rebind" data-rebind="${row.action}">${t("shortcuts.rebind")}</button>`
                   : "";
                 return `<div class="gp-sheet__row"><span class="gp-sheet__keys">${keys}</span><span>${row.label}${rebind}</span></div>`;
               })

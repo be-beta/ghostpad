@@ -27,6 +27,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirro
 import { highlightSelectionMatches, search, searchKeymap } from "@codemirror/search";
 import { HighlightStyle, indentUnit, syntaxHighlighting } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
+import { t } from "../core/i18n";
 import { ghostSearchPanel } from "./search-panel";
 import { tags } from "@lezer/highlight";
 
@@ -254,7 +255,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
     // tamanho sozinho. Titulos com "#" continuam funcionando.
     markdown({ extensions: [{ remove: ["SetextHeading"] }] }),
     syntaxHighlighting(markdownHighlight),
-    placeholder("Escreva algo…"),
+    placeholder(t("editor.placeholder")),
     plainPaste,
     theme,
     keymap.of([

@@ -23,6 +23,8 @@ import {
 } from "@codemirror/search";
 import type { EditorView, Panel } from "@codemirror/view";
 
+import { t } from "../core/i18n";
+
 const CHEVRON_LEFT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>';
 const CHEVRON_RIGHT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>';
 const CLOSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>';
@@ -53,27 +55,27 @@ export function ghostSearchPanel(view: EditorView): Panel {
   dom.className = "gp-find";
 
   const current = getSearchQuery(view.state);
-  const search = field("Buscar");
-  const replace = field("Substituir por");
+  const search = field(t("find.search"));
+  const replace = field(t("find.replace"));
   search.value = current.search;
   replace.value = current.replace;
 
-  const prev = button("gp-find__icon", CHEVRON_LEFT, "Anterior (Shift+Enter)");
-  const next = button("gp-find__icon", CHEVRON_RIGHT, "Próxima (Enter)");
-  const close = button("gp-find__icon gp-find__icon--close", CLOSE, "Fechar (Esc)");
+  const prev = button("gp-find__icon", CHEVRON_LEFT, t("find.previous"));
+  const next = button("gp-find__icon", CHEVRON_RIGHT, t("find.next"));
+  const close = button("gp-find__icon gp-find__icon--close", CLOSE, t("find.close"));
 
-  const caseSensitive = button("gp-find__toggle", "Aa", "Diferenciar maiúsculas de minúsculas");
+  const caseSensitive = button("gp-find__toggle", "Aa", t("find.matchCase"));
   caseSensitive.dataset.on = String(current.caseSensitive);
 
   const replaceOne = document.createElement("button");
   replaceOne.type = "button";
   replaceOne.className = "gp-find__action";
-  replaceOne.textContent = "Substituir";
+  replaceOne.textContent = t("find.replaceOne");
 
   const replaceEvery = document.createElement("button");
   replaceEvery.type = "button";
   replaceEvery.className = "gp-find__action";
-  replaceEvery.textContent = "Todas";
+  replaceEvery.textContent = t("find.replaceAll");
 
   /** Manda a consulta atual para o editor; tudo aqui passa por este ponto. */
   const commit = () => {

@@ -5,7 +5,6 @@
  * Nenhum desses modulos conhece os outros; so este arquivo os conecta.
  */
 
-import "@fontsource-variable/inter";
 import { listen } from "@tauri-apps/api/event";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
@@ -45,15 +44,19 @@ import {
   saveSettings,
   type Settings,
 } from "./core/store";
+import {
+  applyFont,
+  applyFontSize,
+  FONT_SIZE_MAX,
+  FONT_SIZE_MIN,
+  type FontId,
+} from "./core/fonts";
+import { applyStaticTranslations, setLang, t, type Lang } from "./core/i18n";
 import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
 import { createPrompter, SPEED_STEP, type Prompter } from "./editor/prompter";
-import {
-  MODULE_LABELS,
-  enabledCount,
-  renderMetrics,
-  type MetricKey,
-} from "./ui/metrics";
+import { enabledCount, moduleLabel, renderMetrics, type MetricKey } from "./ui/metrics";
 import { createHistoryPanel } from "./ui/history";
+import { createSettingsPanel } from "./ui/settings";
 import { createShortcutsPanel } from "./ui/shortcuts";
 
 const OPACITY_MIN = 0.2;
@@ -80,6 +83,11 @@ const el = {
   modules: document.getElementById("modules") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
+  settings: document.getElementById("settings") as HTMLDivElement,
+  chipSettings: document.getElementById("chip-settings") as HTMLButtonElement,
+  fontSmaller: document.getElementById("font-smaller") as HTMLButtonElement,
+  fontBigger: document.getElementById("font-bigger") as HTMLButtonElement,
+  fontSizeValue: document.getElementById("font-size-value") as HTMLSpanElement,
   prompter: document.getElementById("prompter") as HTMLDivElement,
   prompterPlay: document.getElementById("prompter-play") as HTMLSpanElement,
   prompterSpeed: document.getElementById("prompter-speed") as HTMLSpanElement,
@@ -135,13 +143,20 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
     };
     settings.shortcuts = { ...settings.shortcuts, [action]: combo };
     await saveSettings(settings);
-    toast(`Atalho definido: ${label}`);
+    toast(t("toast.shortcut.set", { label }));
   } catch (error) {
     toast(String(error));
   }
 }
 
 const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
+
+const settingsPanel = createSettingsPanel(el.settings, {
+  values: () => ({ lang: settings.lang, font: settings.font, fontSize: settings.fontSize }),
+  onLang: changeLang,
+  onFont: changeFont,
+  onFontSize: changeFontSize,
+});
 
 /**
  * Como a versao guardada aparece no historico.
@@ -151,7 +166,7 @@ const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindG
  */
 function describeSlot(slot: number): string {
   const index = openNotes.indexOf(slot);
-  return index === -1 ? "aba fechada" : `aba ${index + 1}`;
+  return index === -1 ? t("history.tabClosed") : t("history.tab", { n: index + 1 });
 }
 
 const historyPanel = createHistoryPanel(
@@ -161,7 +176,7 @@ const historyPanel = createHistoryPanel(
     // Entra como edicao normal: Ctrl+Z desfaz a restauracao.
     editor.replaceAll(restored);
     void saveNote(activeNote, restored);
-    toast("Versão restaurada — Ctrl+Z desfaz");
+    toast(t("toast.version.restored"));
   },
   (message) => toast(message),
 );
@@ -258,7 +273,7 @@ function toggleIdleFade(): void {
   settings.idleFade = !settings.idleFade;
   el.metricOpacity.dataset.idle = String(settings.idleFade);
   wakeFromIdle();
-  toast(settings.idleFade ? "Esmaece sozinho quando parado" : "Esmaecimento automático desligado");
+  toast(t(settings.idleFade ? "toast.idle.on" : "toast.idle.off"));
   void saveSettings(settings);
 }
 
@@ -266,6 +281,55 @@ function nudgeOpacity(delta: number): void {
   // Arredonda para a grade de 10%: valores salvos fora dela (ex.: 65%) entram
   // no ritmo no primeiro ajuste em vez de ficarem sempre "quebrados".
   applyOpacity(Math.round((settings.opacity + delta) * 10) / 10);
+  void saveSettings(settings);
+}
+
+// --- Tipografia e idioma ---------------------------------------------------
+
+function renderFontSize(): void {
+  el.fontSizeValue.textContent = String(settings.fontSize);
+  el.fontSmaller.disabled = settings.fontSize <= FONT_SIZE_MIN;
+  el.fontBigger.disabled = settings.fontSize >= FONT_SIZE_MAX;
+}
+
+function changeFontSize(size: number): void {
+  settings.fontSize = applyFontSize(size);
+  renderFontSize();
+  // A folga do teleprompter depende da altura da linha, que acabou de mudar.
+  if (prompter?.state().active) applyReadingPadding(true);
+  void saveSettings(settings);
+}
+
+function changeFont(font: FontId): void {
+  settings.font = font;
+  void applyFont(font).then(() => {
+    if (prompter?.state().active) applyReadingPadding(true);
+  });
+  void saveSettings(settings);
+}
+
+/**
+ * Troca o idioma e redesenha tudo que ja estava na tela.
+ *
+ * Textos criados uma vez (abas, chips, menus abertos) nao mudam sozinhos: sem
+ * este redesenho, metade da interface ficaria no idioma anterior ate a proxima
+ * abertura.
+ */
+function changeLang(lang: Lang): void {
+  settings.lang = lang;
+  setLang(lang);
+  applyStaticTranslations();
+
+  el.chipBackdrop.textContent = backdropLabel(settings.backdrop);
+  el.chipStealth.title = effects.captureExclusionAvailable
+    ? t("chip.stealth.title")
+    : t("chip.stealth.unavailable");
+
+  updateMetrics(editor.getText());
+  renderTabs();
+  if (!el.modules.hidden) renderModulesMenu();
+  settingsPanel.refresh();
+
   void saveSettings(settings);
 }
 
@@ -277,7 +341,7 @@ async function toggleAlwaysOnTop(force?: boolean): Promise<void> {
     await setAlwaysOnTop(next);
     settings.alwaysOnTop = next;
     el.chipOnTop.dataset.active = String(next);
-    toast(next ? "Sempre visível" : "Comportamento normal de janela");
+    toast(t(next ? "toast.onTop.on" : "toast.onTop.off"));
     void saveSettings(settings);
   } catch (error) {
     toast(`Falhou: ${error}`);
@@ -299,9 +363,9 @@ async function toggleGhost(force?: boolean): Promise<void> {
     el.chipGhost.dataset.active = String(next);
     el.body.dataset.ghost = String(next);
     const exit = effects.panicShortcut
-      ? `${effects.panicShortcut} traz de volta`
-      : "clique no ícone da barra de tarefas para voltar";
-    toast(next ? `Modo fantasma — ${exit}` : "Modo fantasma desligado");
+      ? t("toast.ghost.exitShortcut", { shortcut: effects.panicShortcut })
+      : t("toast.ghost.exitTaskbar");
+    toast(next ? t("toast.ghost.on", { exit }) : t("toast.ghost.off"));
   } catch (error) {
     toast(`Falhou: ${error}`);
   }
@@ -319,41 +383,37 @@ async function toggleStealth(force?: boolean): Promise<void> {
     await setExcludeFromCapture(next);
     settings.excludeFromCapture = next;
     el.chipStealth.dataset.active = String(next);
-    toast(next ? "Oculto em gravações e chamadas" : "Visível em gravações");
+    toast(t(next ? "toast.stealth.on" : "toast.stealth.off"));
     void saveSettings(settings);
   } catch (error) {
     el.chipStealth.dataset.active = "false";
     settings.excludeFromCapture = false;
-    toast(`Não foi possível ocultar — você APARECE na gravação (${error})`);
+    toast(t("toast.stealth.failed", { error: String(error) }));
   }
 }
 
 // --- Fundo -----------------------------------------------------------------
 
 const BACKDROP_ORDER: Backdrop[] = ["transparent", "blur", "acrylic"];
-const BACKDROP_LABEL: Record<Backdrop, string> = {
-  transparent: "Transparente",
-  blur: "Desfoque",
-  acrylic: "Acrylic",
-};
+const backdropLabel = (kind: Backdrop) => t(`backdrop.${kind}` as "backdrop.transparent");
 
 async function applyBackdrop(kind: Backdrop, announce: boolean): Promise<void> {
   try {
     await setBackdrop(kind);
     settings.backdrop = kind;
-    el.chipBackdrop.textContent = BACKDROP_LABEL[kind];
+    el.chipBackdrop.textContent = backdropLabel(kind);
     if (announce) {
       // O aviso do acrylic existe porque o comportamento surpreende: ele some
       // justamente quando o usuario clica no app de baixo.
       toast(
         kind === "acrylic"
-          ? "Acrylic — fica sólido quando a janela perde o foco"
-          : `Fundo: ${BACKDROP_LABEL[kind]}`,
+          ? t("toast.backdrop.acrylic")
+          : t("toast.backdrop.set", { name: backdropLabel(kind) }),
       );
       void saveSettings(settings);
     }
   } catch (error) {
-    if (announce) toast(`Fundo indisponível: ${error}`);
+    if (announce) toast(t("toast.backdrop.failed", { error: String(error) }));
     if (kind !== "transparent") await applyBackdrop("transparent", false);
   }
 }
@@ -387,12 +447,13 @@ function updateMetrics(text: string): void {
 function renderModulesMenu(): void {
   el.modules.textContent = "";
 
-  for (const [key, label] of Object.entries(MODULE_LABELS) as [MetricKey, string][]) {
+  const keys: MetricKey[] = ["words", "chars", "lines", "tokens", "pages"];
+  for (const key of keys) {
     const item = document.createElement("button");
     item.className = "gp-menu__item";
     item.dataset.on = String(settings.statusBar[key]);
     item.dataset.module = key;
-    item.innerHTML = `<span class="gp-menu__box"></span>${label}`;
+    item.innerHTML = `<span class="gp-menu__box"></span>${moduleLabel(key)}`;
     el.modules.append(item);
   }
 }
@@ -419,14 +480,14 @@ function onTextChange(text: string): void {
 async function copyAll(): Promise<boolean> {
   const text = editor.getText();
   if (!text.trim()) {
-    toast("Nada para copiar");
+    toast(t("toast.copy.empty"));
     return false;
   }
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    toast(`Não foi possível copiar: ${error}`);
+    toast(t("toast.copy.failed", { error: String(error) }));
     return false;
   }
 }
@@ -443,7 +504,7 @@ async function copyAllAndClear(): Promise<void> {
   // Texto limpo e uma anotacao nova: salvar depois nao pode sobrescrever o
   // arquivo da anotacao anterior sem avisar.
   fileBySlot.delete(activeNote);
-  toast("Copiado e limpo — Ctrl+Z desfaz");
+  toast(t("toast.copy.cleared"));
 }
 
 // --- Anotacoes e abas ------------------------------------------------------
@@ -456,14 +517,14 @@ function renderTabs(): void {
     tab.className = "gp-tab";
     tab.dataset.note = String(slot);
     tab.dataset.active = String(slot === activeNote);
-    tab.title = `Anotação ${index + 1} (Ctrl+${index + 1})`;
+    tab.title = `${t("history.tab", { n: index + 1 })} (Ctrl+${index + 1})`;
     tab.append(document.createTextNode(String(index + 1)));
 
     const close = document.createElement("span");
     close.className = "gp-tab__close";
     close.dataset.close = String(slot);
     close.textContent = "×";
-    close.title = "Fechar (Ctrl+W)";
+    close.title = t("shortcuts.tabs");
     tab.append(close);
 
     el.tabs.append(tab);
@@ -474,7 +535,7 @@ function renderTabs(): void {
     add.className = "gp-tabs__add";
     add.dataset.add = "true";
     add.textContent = "+";
-    add.title = "Nova anotação (Ctrl+T)";
+    add.title = t("shortcuts.tabs");
     el.tabs.append(add);
   }
 }
@@ -494,7 +555,7 @@ async function switchNote(slot: number): Promise<void> {
   } catch (error) {
     // Avisa, mas nao prende: ficar preso numa aba por causa de um erro de
     // gravacao seria pior que o erro. A sessao guardada preserva o texto.
-    toast(`Falha ao salvar a anotação: ${error}`);
+    toast(t("toast.note.saveFailed", { error: String(error) }));
   }
   sessions.set(activeNote, editor.captureSession());
 
@@ -522,7 +583,7 @@ async function openSession(slot: number): Promise<void> {
 
 async function newNote(): Promise<void> {
   if (openNotes.length >= MAX_NOTES) {
-    toast(`Limite de ${MAX_NOTES} anotações`);
+    toast(t("toast.note.limit", { count: MAX_NOTES }));
     return;
   }
 
@@ -552,7 +613,7 @@ async function newNote(): Promise<void> {
  * sem nenhuma anotacao nao teria onde escrever.
  */
 async function closeActiveNote(slot = activeNote): Promise<void> {
-  const recovery = "Ctrl+Shift+V recupera";
+  const recovery = t("toast.note.recovery");
 
   if (openNotes.length === 1) {
     await closeNote(slot);
@@ -560,7 +621,7 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
     editor.newSession("");
     updateMetrics("");
     fileBySlot.delete(slot);
-    toast(`Anotação limpa — ${recovery}`);
+    toast(t("toast.note.cleared", { recovery }));
     return;
   }
 
@@ -587,7 +648,7 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
 
   renderTabs();
 
-  toast(`Anotação fechada — ${recovery}`);
+  toast(t("toast.note.closed", { recovery }));
 }
 
 // --- Teleprompter ----------------------------------------------------------
@@ -639,7 +700,7 @@ function togglePrompter(): void {
   // Parado: ligar o teleprompter e se preparar para ler. O espaco (ou o botao
   // no canto) da a partida quando a pessoa estiver pronta.
   prompter.start();
-  if (!isNotch()) toast("Teleprompter pronto — espaço começa, Esc sai");
+  if (!isNotch()) toast(t("toast.prompter.ready"));
 }
 
 /**
@@ -704,7 +765,7 @@ async function toggleNotch(): Promise<void> {
     await appWindow.setSize(new PhysicalSize(width, height));
     await appWindow.setPosition(new PhysicalPosition(x, y));
     applyReadingPadding(prompter?.state().active ?? false);
-    toast("Modo faixa desligado");
+    toast(t("toast.notch.off"));
     return;
   }
 
@@ -714,7 +775,7 @@ async function toggleNotch(): Promise<void> {
 
   el.body.dataset.notch = "true";
   await applyNotch();
-  toast("Modo faixa — Ctrl+Alt+Shift+←→ muda a largura, Ctrl+Alt+N volta");
+  toast(t("toast.notch.on"));
 }
 
 // --- Arquivos do usuario ---------------------------------------------------
@@ -734,7 +795,7 @@ function suggestedFileName(text: string): string {
     .map((line) => line.trim())
     .find((line) => line.length > 0);
 
-  if (!firstLine) return "nota.txt";
+  if (!firstLine) return `${t("file.default")}.txt`;
 
   const clean = firstLine
     .replace(/^#+\s*/, "")
@@ -742,7 +803,7 @@ function suggestedFileName(text: string): string {
     .slice(0, 40)
     .trim();
 
-  return `${clean || "nota"}.txt`;
+  return `${clean || t("file.default")}.txt`;
 }
 
 async function saveToFile(forceDialog = false): Promise<void> {
@@ -751,14 +812,14 @@ async function saveToFile(forceDialog = false): Promise<void> {
 
   if (!target || forceDialog) {
     target = await saveDialog({
-      title: "Salvar nota",
+      title: t("dialog.save"),
       defaultPath: suggestedFileName(text),
       // Filtros separados: assim o tipo do arquivo e escolhido na propria
       // janela do Windows, sem mais um passo dentro do app.
       filters: [
-        { name: "Texto (*.txt)", extensions: ["txt"] },
-        { name: "Markdown (*.md)", extensions: ["md"] },
-        { name: "Todos os arquivos", extensions: ["*"] },
+        { name: t("dialog.filter.text"), extensions: ["txt"] },
+        { name: t("dialog.filter.markdown"), extensions: ["md"] },
+        { name: t("dialog.filter.all"), extensions: ["*"] },
       ],
     });
     if (!target) return; // cancelado
@@ -767,7 +828,7 @@ async function saveToFile(forceDialog = false): Promise<void> {
   try {
     await writeTextFile(target, text);
     fileBySlot.set(activeNote, target);
-    toast(`Salvo em ${target.split(/[\\/]/).pop()}`);
+    toast(t("toast.file.saved", { file: String(target.split(/[\\/]/).pop()) }));
   } catch (error) {
     toast(String(error));
   }
@@ -775,11 +836,11 @@ async function saveToFile(forceDialog = false): Promise<void> {
 
 async function openFromFile(): Promise<void> {
   const chosen = await openDialog({
-    title: "Abrir nota",
+    title: t("dialog.open"),
     multiple: false,
     filters: [
-      { name: "Texto e Markdown", extensions: ["txt", "md"] },
-      { name: "Todos os arquivos", extensions: ["*"] },
+      { name: t("dialog.filter.textMarkdown"), extensions: ["txt", "md"] },
+      { name: t("dialog.filter.all"), extensions: ["*"] },
     ],
   });
   if (typeof chosen !== "string") return;
@@ -790,7 +851,7 @@ async function openFromFile(): Promise<void> {
     editor.replaceAll(content);
     void saveNote(activeNote, content);
     fileBySlot.set(activeNote, chosen);
-    toast(`Aberto: ${chosen.split(/[\\/]/).pop()} — Ctrl+S salva de volta`);
+    toast(t("toast.file.opened", { file: String(chosen.split(/[\\/]/).pop()) }));
   } catch (error) {
     toast(String(error));
   }
@@ -817,8 +878,7 @@ async function checkRecorders(): Promise<void> {
     if (!novos.length) return;
 
     for (const label of novos) warnedRecorders.add(label);
-    const atalho = "Ctrl+Shift+H";
-    toast(`${novos.join(" e ")} em execução — ${atalho} oculta o GhostPad da gravação`);
+    toast(t("toast.recorder", { apps: novos.join(" + "), shortcut: "Ctrl+Shift+H" }));
   } catch {
     // Deteccao e conveniencia: falhar aqui nao pode atrapalhar a escrita.
   }
@@ -873,6 +933,12 @@ const RESIZE_BY_ARROW: Record<string, [number, number]> = {
 };
 
 function handleKeydown(event: KeyboardEvent): boolean {
+  if (event.key === "Escape" && settingsPanel.isOpen()) {
+    settingsPanel.close();
+    editor.focus();
+    return consume(event);
+  }
+
   if (event.key === "Escape" && historyPanel.isOpen()) {
     historyPanel.close();
     editor.focus();
@@ -914,6 +980,22 @@ function handleKeydown(event: KeyboardEvent): boolean {
 
   const ctrl = event.ctrlKey || event.metaKey;
   if (!ctrl) return false;
+
+  if (event.key === ",") {
+    settingsPanel.toggle();
+    if (!settingsPanel.isOpen()) editor.focus();
+    return consume(event);
+  }
+
+  // Ctrl+Alt+= e Ctrl+Alt+− mudam o tamanho do texto, como em qualquer editor.
+  if (event.altKey && (event.key === "=" || event.key === "+")) {
+    changeFontSize(settings.fontSize + 1);
+    return consume(event);
+  }
+  if (event.altKey && (event.key === "-" || event.key === "_")) {
+    changeFontSize(settings.fontSize - 1);
+    return consume(event);
+  }
 
   if (isSlash(event)) {
     shortcutsPanel.toggle();
@@ -986,7 +1068,7 @@ function handleKeydown(event: KeyboardEvent): boolean {
         if (!event.repeat) void copyAllAndClear();
         return consume(event);
       case "c":
-        void copyAll().then((ok) => ok && toast("Todo o texto foi copiado"));
+        void copyAll().then((ok) => ok && toast(t("toast.copy.done")));
         return consume(event);
       case "s":
         if (!event.repeat) void saveToFile(true);
@@ -1179,6 +1261,9 @@ function wireEvents(): void {
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
+  el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
+  el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
+  el.fontBigger.addEventListener("click", () => changeFontSize(settings.fontSize + 1));
   el.chipModules.addEventListener("click", () => toggleModulesMenu());
 
   el.modules.addEventListener("click", (event) => {
@@ -1261,11 +1346,19 @@ async function boot(): Promise<void> {
   }
   if (!effects.captureExclusionAvailable) {
     el.chipStealth.disabled = true;
-    el.chipStealth.title = "Indisponível nesta versão do Windows";
+    el.chipStealth.title = t("chip.stealth.unavailable");
   }
 
   await initStores();
   settings = await loadSettings();
+
+  // Idioma e tipografia antes de qualquer desenho: assim nada aparece no idioma
+  // errado nem com a fonte errada, nem por um instante.
+  setLang(settings.lang);
+  applyStaticTranslations();
+  await applyFont(settings.font);
+  settings.fontSize = applyFontSize(settings.fontSize);
+  renderFontSize();
 
   applyOpacity(settings.opacity);
   revealOnLaunch();
@@ -1290,7 +1383,7 @@ async function boot(): Promise<void> {
     onChange: onPrompterChange,
     onEnd: () => {
       // O fim do roteiro e a unica hora em que vale interromper a leitura.
-      toast("Fim do texto");
+      toast(t("toast.prompter.end"));
     },
   });
 
@@ -1305,7 +1398,7 @@ async function boot(): Promise<void> {
       el.chipStealth.dataset.active = "true";
     } catch {
       settings.excludeFromCapture = false;
-      toast("Modo oculto não pôde ser restaurado — você aparece em gravações");
+      toast(t("toast.stealth.notRestored"));
     }
   }
 
@@ -1322,4 +1415,14 @@ async function boot(): Promise<void> {
   editor.focus();
 }
 
-void boot();
+/**
+ * Uma falha aqui deixaria a janela em branco, sem nenhuma explicacao — o oposto
+ * do que o app promete. Falhar visivelmente permite copiar o erro e seguir.
+ */
+void boot().catch((error) => {
+  console.error("[ghostpad] falha ao iniciar", error);
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `<div class="gp-boot-error">GhostPad não conseguiu iniciar.<br /><code>${String(error)}</code></div>`,
+  );
+});

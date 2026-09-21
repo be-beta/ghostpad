@@ -15,6 +15,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { load, type Store } from "@tauri-apps/plugin-store";
 import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE, type FontId } from "./fonts";
+import { detectLang, type Lang } from "./i18n";
 import { DEFAULT_MODULES, type MetricModules } from "../ui/metrics";
 
 export interface Settings {
@@ -30,6 +32,9 @@ export interface Settings {
   statusBar: MetricModules;
   /** Largura da faixa do teleprompter, em pixels logicos. */
   notchWidth: number;
+  lang: Lang;
+  font: FontId;
+  fontSize: number;
   openNotes: number[];
   activeNote: number;
 }
@@ -47,6 +52,10 @@ export const DEFAULT_SETTINGS: Settings = {
   idleFade: true,
   // Linha curta e mais facil de ler descendo: o olho pega a frase inteira.
   notchWidth: 620,
+  // Comeca no idioma do sistema, entre os tres que o app fala.
+  lang: detectLang(),
+  font: DEFAULT_FONT,
+  fontSize: DEFAULT_FONT_SIZE,
   /** Anotacoes abertas, na ordem das abas. Comeca com uma so. */
   openNotes: [1],
   /** Anotacao aberta por ultimo. */
