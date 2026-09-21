@@ -357,7 +357,7 @@ depois o que protege o trabalho, por último os modos especializados.
 | 3 | HUD e métricas | **feito, em teste** |
 | 4 | Segurança do trabalho | **feito, em teste** |
 | 5 | Múltiplas notas | **feito, em teste** |
-| 6 | Teleprompter e modo notch | a fazer |
+| 6 | Teleprompter e modo faixa | **feito, em teste** |
 
 ### Fase 1 — Editor e captura instantânea
 
@@ -530,11 +530,28 @@ remove, e as abas abertas voltam na sessão seguinte. Teto de 5.
   A etiqueta mostra a **posição atual** da aba ("aba 2") ou "aba fechada" — o
   número interno do espaço não diria nada ao usuário, já que as posições mudam.
 
-### Fase 6 — Teleprompter e modo notch
+### Fase 6 — Teleprompter e modo faixa
 
-- Rolagem por `requestAnimationFrame`, 10–150 px/s, pausa no `Espaço`
-- Linha de foco central opcional
-- Modo notch: faixa de 3 linhas centralizada no topo, com máscara gradiente
+**Motor** (`src/editor/prompter.ts`): `requestAnimationFrame` com acumulador
+fracionário. `scrollTop` só aceita inteiros, e arredondar a cada quadro faria a
+leitura tremer — exatamente o que um teleprompter não pode fazer. Velocidade de
+10 a 150 px/s, em passos de 5.
+
+**Em rolagem o texto fica somente leitura** (`Compartment` do CodeMirror sobre
+`EditorView.editable`). Duas razões: protege o roteiro de uma tecla acidental
+durante a gravação e libera as teclas simples para controlar a rolagem —
+`Espaço` pausa, `↑`/`↓` mudam a velocidade, `Esc` sai — sem competir com a
+digitação. Pausar zera o relógio do motor; sem isso, o tempo parado viraria um
+salto ao voltar.
+
+**Modo faixa** (`Ctrl+Alt+N`): três linhas no topo central da tela, logo abaixo
+da webcam, para o olhar ficar na câmera. Abas, barra de status e controles saem
+de cena; uma máscara em gradiente mantém a linha central nítida e dissolve as
+vizinhas, o que guia o olho sem enfeite nenhum.
+
+A altura vem da **altura real de uma linha** (tamanho da fonte × entrelinha),
+não de um número fixo: quem aumenta a fonte espera que a faixa acompanhe. A
+geometria anterior é guardada e devolvida ao sair.
 
 ---
 
@@ -563,6 +580,9 @@ remove, e as abas abertas voltam na sessão seguinte. Teto de 5.
 | `Ctrl+Alt+Shift+setas` | Redimensionar | local | 2 |
 | `Ctrl+1…5` | Trocar de aba | local | 5 |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba | local | 5 |
+| `Ctrl+Alt+P` | Teleprompter | local | 6 |
+| `Ctrl+Alt+N` | Modo faixa | local | 6 |
+| `Espaço` / `↑` `↓` / `Esc` | Pausa / velocidade / sair (em rolagem) | local | 6 |
 
 ¹ Se ocupado, cai para `Ctrl+Alt+Shift+G` e depois `Ctrl+Alt+Shift+F12`.
 ² Se ocupado, cai para `Ctrl+Shift+Space` e depois `Ctrl+Alt+Shift+Space`.

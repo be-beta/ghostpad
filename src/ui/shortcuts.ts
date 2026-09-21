@@ -65,6 +65,16 @@ function sections(effects: EffectsReport): Section[] {
       ],
     },
     {
+      title: "Teleprompter",
+      rows: [
+        { keys: "Ctrl+Alt+P", label: "Ligar e desligar o teleprompter" },
+        { keys: "Espaço", label: "Pausar e continuar (durante a rolagem)" },
+        { keys: "↑ / ↓", label: "Velocidade (durante a rolagem)" },
+        { keys: "Ctrl+Alt+N", label: "Modo faixa: três linhas no topo da tela" },
+        { keys: "Esc", label: "Sair do teleprompter" },
+      ],
+    },
+    {
       title: "Janela",
       rows: [
         { keys: "Ctrl+[ / Ctrl+]", label: "Opacidade, de 10 em 10%" },

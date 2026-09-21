@@ -41,6 +41,10 @@ export const setExcludeFromCapture = (enable: boolean) =>
 export const snapToCorner = (corner: Corner, margin = 12) =>
   invoke<void>("snap_to_corner", { corner, margin });
 
+/** Faixa fina no topo central da tela; medidas em pixels logicos. */
+export const placeTopCenter = (width: number, height: number, margin = 6) =>
+  invoke<void>("place_top_center", { width, height, margin });
+
 export type HalfSide = "left" | "right" | "top" | "bottom" | "full";
 
 export const snapHalf = (side: HalfSide, margin = 12) =>

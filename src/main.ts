@@ -8,6 +8,7 @@
 import "@fontsource-variable/inter";
 import { listen } from "@tauri-apps/api/event";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
+import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
 
 import {
   appWindow,
@@ -15,6 +16,7 @@ import {
   detectRecorders,
   getEffectsReport,
   persistWindowState,
+  placeTopCenter,
   readTextFile,
   setAlwaysOnTop,
   rememberSize,
@@ -44,6 +46,7 @@ import {
   type Settings,
 } from "./core/store";
 import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
+import { createPrompter, SPEED_STEP, type Prompter } from "./editor/prompter";
 import {
   MODULE_LABELS,
   enabledCount,
@@ -584,6 +587,69 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
   toast(`Anotação fechada — ${recovery}`);
 }
 
+// --- Teleprompter ----------------------------------------------------------
+
+let prompter: Prompter;
+/** Geometria de antes do modo faixa, para a janela voltar ao que era. */
+let beforeNotch: { x: number; y: number; width: number; height: number } | null = null;
+
+/**
+ * Liga e desliga o teleprompter.
+ *
+ * Em rolagem o texto fica somente leitura. Isso protege o roteiro de uma tecla
+ * acidental durante a gravacao e, de quebra, libera as teclas simples (espaço,
+ * setas) para controlar a rolagem sem competir com a digitacao.
+ */
+function togglePrompter(): void {
+  if (prompter.state().active) {
+    prompter.stop();
+    return;
+  }
+
+  prompter.start();
+  const { speed } = prompter.state();
+  toast(`Teleprompter a ${speed} px/s — espaço pausa, ↑↓ velocidade, Esc sai`);
+}
+
+/** Reage ao motor: somente leitura, linha de foco e aviso de pausa. */
+function onPrompterChange(state: { active: boolean; paused: boolean; speed: number }): void {
+  el.body.dataset.prompter = String(state.active);
+  editor.setEditable(!state.active);
+  if (!state.active) editor.focus();
+}
+
+/**
+ * Modo faixa: tres linhas no topo da tela, logo abaixo da webcam.
+ *
+ * A altura sai da altura real de uma linha do editor, e nao de um numero fixo:
+ * quem muda o tamanho da fonte espera que a faixa acompanhe.
+ */
+async function toggleNotch(): Promise<void> {
+  if (beforeNotch) {
+    const { x, y, width, height } = beforeNotch;
+    beforeNotch = null;
+    el.body.dataset.notch = "false";
+    await appWindow.setSize(new PhysicalSize(width, height));
+    await appWindow.setPosition(new PhysicalPosition(x, y));
+    toast("Modo faixa desligado");
+    return;
+  }
+
+  const position = await appWindow.outerPosition();
+  const size = await appWindow.outerSize();
+  beforeNotch = { x: position.x, y: position.y, width: size.width, height: size.height };
+
+  el.body.dataset.notch = "true";
+
+  const lineHeight =
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-font-size")) *
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gp-line-height"));
+  const altura = Math.round(lineHeight * 3 + 20);
+
+  await placeTopCenter(Math.round(window.screen.width * 0.42), altura);
+  toast("Modo faixa — Ctrl+Alt+N volta ao normal");
+}
+
 // --- Arquivos do usuario ---------------------------------------------------
 
 /**
@@ -758,6 +824,29 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
+  // Teclas simples valem enquanto o teleprompter rola: o texto esta somente
+  // leitura, entao elas nao competem com a digitacao.
+  if (prompter?.state().active && !event.ctrlKey && !event.altKey) {
+    switch (event.key) {
+      case " ":
+        prompter.togglePause();
+        toast(prompter.state().paused ? "Pausado" : "Rolando");
+        return consume(event);
+      case "ArrowUp":
+        prompter.nudgeSpeed(SPEED_STEP);
+        toast(`${prompter.state().speed} px/s`);
+        return consume(event);
+      case "ArrowDown":
+        prompter.nudgeSpeed(-SPEED_STEP);
+        toast(`${prompter.state().speed} px/s`);
+        return consume(event);
+      case "Escape":
+        prompter.stop();
+        toast("Teleprompter desligado");
+        return consume(event);
+    }
+  }
+
   const ctrl = event.ctrlKey || event.metaKey;
   if (!ctrl) return false;
 
@@ -775,6 +864,17 @@ function handleKeydown(event: KeyboardEvent): boolean {
     }
     if (HALF_BY_DIGIT[event.key]) {
       void snapHalf(HALF_BY_DIGIT[event.key]);
+      return consume(event);
+    }
+  }
+
+  if (event.altKey && !event.shiftKey) {
+    if (event.key === "p" || event.key === "P") {
+      togglePrompter();
+      return consume(event);
+    }
+    if (event.key === "n" || event.key === "N") {
+      void toggleNotch();
       return consume(event);
     }
   }
@@ -1075,6 +1175,12 @@ async function boot(): Promise<void> {
   });
   updateMetrics(initialText);
   renderTabs();
+
+  prompter = createPrompter({
+    scroller: () => editor.scroller(),
+    onChange: onPrompterChange,
+    onEnd: () => toast("Fim do texto"),
+  });
 
   // Restaura o estado salvo sem passar pelos toggles: no boot os toasts seriam
   // ruido anunciando algo que o usuario ja configurou antes.

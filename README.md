@@ -7,8 +7,8 @@ sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analis
 uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
 apareça no vídeo.
 
-> **Estado:** Fase 5 — janela, editor, métricas, histórico e múltiplas notas
-> prontos; teleprompter em seguida.
+> **Estado:** roteiro original concluído — janela, editor, métricas, histórico,
+> múltiplas notas e teleprompter.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Manifesto
@@ -88,6 +88,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Até cinco anotações** em abas discretas no topo, cada uma com seu desfazer
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
+- **Teleprompter** com rolagem automática e modo faixa para gravações
 - **Autosave** do texto, com backup
 
 ## Atalhos
@@ -101,6 +102,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+O` | Abrir arquivo de texto |
 | `Ctrl+1` … `Ctrl+5` | Troca de aba |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba |
+| `Ctrl+Alt+P` / `Ctrl+Alt+N` | Teleprompter / modo faixa |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |

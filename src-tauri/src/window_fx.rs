@@ -358,6 +358,37 @@ pub fn snap_half(window: WebviewWindow, side: String, margin: u32) -> Result<(),
         .map_err(|e| e.to_string())
 }
 
+/// Coloca a janela como uma faixa fina no topo central da tela (modo notch).
+///
+/// Medidas chegam em pixels logicos porque quem as calcula e o frontend, a
+/// partir da altura real de uma linha de texto.
+#[tauri::command]
+pub fn place_top_center(
+    window: WebviewWindow,
+    width: f64,
+    height: f64,
+    margin: f64,
+) -> Result<(), String> {
+    let monitor = window
+        .current_monitor()
+        .map_err(|e| e.to_string())?
+        .ok_or("Nenhum monitor detectado")?;
+
+    let scale = monitor.scale_factor();
+    let area = monitor.work_area();
+
+    let w = (width * scale).round() as i32;
+    let h = (height * scale).round() as i32;
+    set_outer_size(&window, w, h)?;
+
+    let x = area.position.x + (area.size.width as i32 - w) / 2;
+    let y = area.position.y + (margin * scale).round() as i32;
+
+    window
+        .set_position(PhysicalPosition::new(x, y))
+        .map_err(|e| e.to_string())
+}
+
 /// Traz a janela de volta ao alcance do usuario.
 ///
 /// Rede de seguranca para quando o GhostPad ficar em modo fantasma, oculto ou

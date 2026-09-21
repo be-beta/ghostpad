@@ -81,6 +81,7 @@ pub fn run() {
             window_fx::set_always_on_top,
             window_fx::snap_to_corner,
             window_fx::snap_half,
+            window_fx::place_top_center,
             window_fx::resize_by,
             window_fx::remember_size,
             window_fx::panic_recover,

@@ -856,6 +856,62 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
   font-size: 10px;
 }
 
+/* --- Teleprompter ---------------------------------------------------------- */
+
+/* Linha de leitura: discreta, so para o olho ter onde pousar. */
+.gp-focusline {
+  position: fixed;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  z-index: 15;
+  height: 1px;
+  background: rgba(110, 231, 183, 0.25);
+  opacity: 0;
+  transition: opacity 200ms var(--gp-ease);
+  pointer-events: none;
+}
+
+body[data-prompter="true"] .gp-focusline {
+  opacity: 1;
+}
+
+/* Sem cursor piscando: no teleprompter ninguem esta digitando. */
+body[data-prompter="true"] .cm-cursor {
+  display: none !important;
+}
+
+/* --- Modo faixa (notch) ---------------------------------------------------- */
+
+/* Tres linhas sob a webcam: tudo que nao for texto sai de cena. */
+body[data-notch="true"] .gp-topbar,
+body[data-notch="true"] .gp-status,
+body[data-notch="true"] .gp-controls {
+  display: none;
+}
+
+body[data-notch="true"] .gp-editor-wrap {
+  padding-top: 0;
+}
+
+/* A linha central fica nitida e as vizinhas se dissolvem, o que guia o olho
+   sem precisar de nenhum enfeite. */
+body[data-notch="true"] .gp-editor {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.45) 22%,
+    #000 42%,
+    #000 58%,
+    rgba(0, 0, 0, 0.45) 78%,
+    transparent 100%
+  );
+}
+
+body[data-notch="true"] .gp-focusline {
+  display: none;
+}
+
 /* --- Toast ----------------------------------------------------------------- */
 
 .gp-toast {

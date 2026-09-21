@@ -5,7 +5,13 @@
  * escrever, focar, limpar) e nunca toca no CodeMirror diretamente.
  */
 
-import { EditorSelection, EditorState, Prec, type Extension } from "@codemirror/state";
+import {
+  Compartment,
+  EditorSelection,
+  EditorState,
+  Prec,
+  type Extension,
+} from "@codemirror/state";
 import {
   EditorView,
   drawSelection,
@@ -181,6 +187,13 @@ const plainPaste = EditorView.clipboardInputFilter.of((text) =>
     .replace(/[\u200b\u200c\u200d\ufeff]/g, ""),
 );
 
+/**
+ * Alternavel em tempo de execucao: no teleprompter o texto vira somente
+ * leitura, o que tambem libera as teclas simples (espaco, setas) para controlar
+ * a rolagem sem competir com a digitacao.
+ */
+const editable = new Compartment();
+
 // --- API -------------------------------------------------------------------
 
 /**
@@ -202,12 +215,17 @@ export interface GhostEditor {
   restoreSession(session: EditorSession): void;
   /** Comeca uma sessao nova, sem historico herdado de outra anotacao. */
   newSession(text: string): void;
+  /** Liga e desliga a edicao (o teleprompter usa somente leitura). */
+  setEditable(value: boolean): void;
+  /** Elemento que rola, usado pelo teleprompter. */
+  scroller(): HTMLElement;
   view: EditorView;
 }
 
 export function createEditor(options: EditorOptions): GhostEditor {
   const extensions: Extension[] = [
     // Atalhos do app primeiro: uma tecla do GhostPad nunca chega ao editor.
+    editable.of(EditorView.editable.of(true)),
     Prec.highest(
       EditorView.domEventHandlers({
         keydown: (event) => options.onAppKeydown(event),
@@ -257,6 +275,10 @@ export function createEditor(options: EditorOptions): GhostEditor {
 
   return {
     view,
+    setEditable: (value) => {
+      view.dispatch({ effects: editable.reconfigure(EditorView.editable.of(value)) });
+    },
+    scroller: () => view.scrollDOM,
     captureSession: () => view.state,
     restoreSession: (session) => {
       view.setState(session);
