@@ -9,6 +9,12 @@
 //!   draft.txt       texto atual
 //!   draft.bak.txt   versao imediatamente anterior
 //!   draft.json      formato antigo, lido uma unica vez para migrar
+//!   snapshots/      versoes anteriores, uma a cada 3 minutos de edicao
+//!
+//! Todo comando daqui e `async` de proposito. No Tauri, comando sincrono roda na
+//! thread principal, e gravar com `sync_all` a cada pausa de digitacao travava a
+//! janela por instantes — o Windows chegava a trocar o cursor do mouse para o de
+//! "ocupado" enquanto a pessoa digitava.
 
 use std::fs;
 use std::io::Write;
@@ -120,7 +126,7 @@ fn snapshot_previous(app: &AppHandle, previous: &str) {
 }
 
 #[tauri::command]
-pub fn list_snapshots(app: AppHandle) -> Result<Vec<SnapshotInfo>, String> {
+pub async fn list_snapshots(app: AppHandle) -> Result<Vec<SnapshotInfo>, String> {
     let dir = snapshots_dir(&app)?;
     let mut items: Vec<SnapshotInfo> = fs::read_dir(&dir)
         .map_err(|e| e.to_string())?
@@ -146,7 +152,7 @@ pub fn list_snapshots(app: AppHandle) -> Result<Vec<SnapshotInfo>, String> {
 }
 
 #[tauri::command]
-pub fn read_snapshot(app: AppHandle, id: String) -> Result<String, String> {
+pub async fn read_snapshot(app: AppHandle, id: String) -> Result<String, String> {
     // Nome vem do proprio app, mas e validado: so digitos nunca escapam da pasta.
     if !id.chars().all(|c| c.is_ascii_digit()) {
         return Err("Identificador invalido".into());
@@ -154,8 +160,35 @@ pub fn read_snapshot(app: AppHandle, id: String) -> Result<String, String> {
     fs::read_to_string(snapshots_dir(&app)?.join(format!("{id}.txt"))).map_err(|e| e.to_string())
 }
 
+/// Le um arquivo de texto escolhido pelo usuario no dialogo do sistema.
+///
+/// O caminho vem do dialogo nativo, nao de texto digitado: o usuario escolhe
+/// explicitamente o arquivo, arquivo por arquivo.
 #[tauri::command]
-pub fn load_draft(app: AppHandle) -> Result<String, String> {
+pub async fn read_text_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path).map_err(|e| format!("Não foi possível abrir: {e}"))
+}
+
+/// Grava o texto num arquivo escolhido pelo usuario, de forma atomica.
+#[tauri::command]
+pub async fn write_text_file(path: String, text: String) -> Result<(), String> {
+    let target = PathBuf::from(&path);
+    let tmp = target.with_extension("ghostpad.tmp");
+
+    {
+        let mut file = fs::File::create(&tmp).map_err(|e| format!("Não foi possível salvar: {e}"))?;
+        file.write_all(text.as_bytes()).map_err(|e| e.to_string())?;
+        file.sync_all().map_err(|e| e.to_string())?;
+    }
+
+    fs::rename(&tmp, &target).map_err(|e| {
+        let _ = fs::remove_file(&tmp);
+        format!("Não foi possível salvar: {e}")
+    })
+}
+
+#[tauri::command]
+pub async fn load_draft(app: AppHandle) -> Result<String, String> {
     let dir = data_dir(&app)?;
 
     for name in ["draft.txt", "draft.bak.txt"] {
@@ -180,7 +213,7 @@ pub fn load_draft(app: AppHandle) -> Result<String, String> {
 /// substitui o arquivo. Uma queda no meio deixa o arquivo antigo intacto, nunca
 /// um arquivo pela metade.
 #[tauri::command]
-pub fn save_draft(app: AppHandle, lock: State<'_, NotesLock>, text: String) -> Result<(), String> {
+pub async fn save_draft(app: AppHandle, lock: State<'_, NotesLock>, text: String) -> Result<(), String> {
     let _guard = lock.0.lock().map_err(|_| "lock envenenado".to_string())?;
     let dir = data_dir(&app)?;
     let main = dir.join("draft.txt");

@@ -222,6 +222,34 @@ Proteções, porque opacidade e posição salvas podem esconder o app:
 
 ---
 
+## 5.4 Disco e varreduras fora da thread principal **[D]**
+
+*Encontrado por um sintoma pequeno:* o cursor do mouse piscava ao digitar, mas
+só quando o ponteiro estava sobre a janela do GhostPad.
+
+No Tauri, comando **síncrono** é resolvido na thread que processa a mensagem —
+a principal (`body_blocking` → `kind.block(...)` no `tauri-macros`). Comando
+`async` vai para `async_runtime::spawn`, numa thread de trabalho.
+
+O autosave gravava com `sync_all()` (força a escrita ao disco) a cada pausa de
+digitação, na thread principal. A janela ficava sem responder por instantes e o
+Windows trocava o cursor para o de "ocupado" — visível apenas sobre a janela
+travada. O cursor piscando era sintoma de travamento real da interface.
+
+Todos os comandos que tocam disco (`notes.rs`) ou varrem processos (`watch.rs`)
+são `async` agora.
+
+### Arquivos de texto do usuário
+
+`Ctrl+S` salva e `Ctrl+O` abre, pelo diálogo nativo (`tauri-plugin-dialog`).
+Gravação atômica, como a do rascunho interno.
+
+**O arquivo do usuário nunca é gravado sozinho.** O autosave continua indo só
+para o rascunho interno; o arquivo dele muda quando ele manda salvar. Abrir um
+arquivo entra como edição normal, então `Ctrl+Z` traz de volta o texto anterior.
+
+---
+
 ## 6. Persistência
 
 `%APPDATA%/com.ghostpad.app/`

@@ -26,6 +26,7 @@
     "core:window:allow-set-focus",
     "core:webview:allow-internal-toggle-devtools",
     "opener:default",
+    "dialog:default",
     "store:default",
     "global-shortcut:default"
   ]

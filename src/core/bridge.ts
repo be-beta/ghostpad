@@ -46,6 +46,13 @@ export type HalfSide = "left" | "right" | "top" | "bottom" | "full";
 export const snapHalf = (side: HalfSide, margin = 12) =>
   invoke<void>("snap_half", { side, margin });
 
+/** Le um arquivo escolhido pelo usuario no dialogo do sistema. */
+export const readTextFile = (path: string) => invoke<string>("read_text_file", { path });
+
+/** Grava o texto num arquivo escolhido pelo usuario. */
+export const writeTextFile = (path: string, text: string) =>
+  invoke<void>("write_text_file", { path, text });
+
 export interface SnapshotInfo {
   id: string;
   savedAtMs: number;

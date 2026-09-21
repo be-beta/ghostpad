@@ -84,6 +84,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Barra de status modular**: palavras, caracteres, linhas, tokens e páginas
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
+- **Abrir e salvar arquivos** `.txt` e `.md`, sem depender de outro editor
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Autosave** do texto, com backup
@@ -95,6 +96,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+/` | Painel com todos os atalhos |
 | `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
+| `Ctrl+S` / `Ctrl+O` | Salvar em arquivo / abrir arquivo |
 | `Ctrl+Shift+S` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |

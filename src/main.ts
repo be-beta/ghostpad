@@ -7,12 +7,14 @@
 
 import "@fontsource-variable/inter";
 import { listen } from "@tauri-apps/api/event";
+import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 
 import {
   appWindow,
   detectRecorders,
   getEffectsReport,
   persistWindowState,
+  readTextFile,
   setAlwaysOnTop,
   rememberSize,
   resizeBy,
@@ -20,6 +22,7 @@ import {
   setClickThrough,
   setGlobalShortcut,
   snapHalf,
+  writeTextFile,
   type GlobalAction,
   type HalfSide,
   type KeyCombo,
@@ -393,6 +396,83 @@ async function copyAllAndClear(): Promise<void> {
   toast("Copiado e limpo — Ctrl+Z desfaz");
 }
 
+// --- Arquivos do usuario ---------------------------------------------------
+
+/**
+ * Arquivo aberto ou salvo nesta sessao, se houver.
+ *
+ * O texto continua sendo salvo sozinho no rascunho interno; o arquivo do
+ * usuario so muda quando ele manda salvar. Gravar sozinho por cima de um
+ * arquivo dele seria assumir uma responsabilidade que ele nao delegou.
+ */
+let currentFile: string | null = null;
+
+/** Sugere um nome a partir da primeira linha com conteudo. */
+function suggestedFileName(text: string): string {
+  const firstLine = text
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  if (!firstLine) return "nota.txt";
+
+  const clean = firstLine
+    .replace(/^#+\s*/, "")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .slice(0, 40)
+    .trim();
+
+  return `${clean || "nota"}.txt`;
+}
+
+async function saveToFile(forceDialog = false): Promise<void> {
+  const text = editor.getText();
+  let target = currentFile;
+
+  if (!target || forceDialog) {
+    target = await saveDialog({
+      title: "Salvar nota",
+      defaultPath: suggestedFileName(text),
+      filters: [
+        { name: "Texto", extensions: ["txt", "md"] },
+        { name: "Todos os arquivos", extensions: ["*"] },
+      ],
+    });
+    if (!target) return; // cancelado
+  }
+
+  try {
+    await writeTextFile(target, text);
+    currentFile = target;
+    toast(`Salvo em ${target.split(/[\\/]/).pop()}`);
+  } catch (error) {
+    toast(String(error));
+  }
+}
+
+async function openFromFile(): Promise<void> {
+  const chosen = await openDialog({
+    title: "Abrir nota",
+    multiple: false,
+    filters: [
+      { name: "Texto", extensions: ["txt", "md"] },
+      { name: "Todos os arquivos", extensions: ["*"] },
+    ],
+  });
+  if (typeof chosen !== "string") return;
+
+  try {
+    const content = await readTextFile(chosen);
+    // Troca como edicao normal: Ctrl+Z traz de volta o texto que estava aberto.
+    editor.replaceAll(content);
+    void saveDraft(content);
+    currentFile = chosen;
+    toast(`Aberto: ${chosen.split(/[\\/]/).pop()} — Ctrl+S salva de volta`);
+  } catch (error) {
+    toast(String(error));
+  }
+}
+
 // --- Aviso de gravacao -----------------------------------------------------
 
 const RECORDER_POLL_MS = 25_000;
@@ -552,6 +632,12 @@ function handleKeydown(event: KeyboardEvent): boolean {
   switch (key) {
     case "p":
       void toggleAlwaysOnTop();
+      return consume(event);
+    case "s":
+      if (!event.repeat) void saveToFile();
+      return consume(event);
+    case "o":
+      if (!event.repeat) void openFromFile();
       return consume(event);
     case "q":
       if (!event.repeat) void closeApp();

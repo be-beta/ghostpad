@@ -30,6 +30,7 @@ pub fn run() {
 
     builder = builder
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build());
 
     #[cfg(desktop)]
@@ -66,6 +67,8 @@ pub fn run() {
             notes::load_draft,
             notes::save_draft,
             notes::list_snapshots,
+            notes::read_text_file,
+            notes::write_text_file,
             notes::read_snapshot,
             watch::detect_recorders,
             window_state::persist_window_state,

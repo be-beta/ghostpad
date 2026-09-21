@@ -81,7 +81,7 @@ pub fn running_process_names() -> Vec<String> {
 
 /// Lista os gravadores em execucao, sem repetir o mesmo programa.
 #[tauri::command]
-pub fn detect_recorders() -> Vec<Recorder> {
+pub async fn detect_recorders() -> Vec<Recorder> {
     let running = running_process_names();
     let mut found: Vec<String> = Vec::new();
 

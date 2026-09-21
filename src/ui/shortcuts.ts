@@ -44,6 +44,8 @@ function sections(effects: EffectsReport): Section[] {
       rows: [
         { keys: "Ctrl+Shift+Enter", label: "Copiar tudo e limpar" },
         { keys: "Ctrl+Shift+C", label: "Copiar tudo" },
+        { keys: "Ctrl+S", label: "Salvar em arquivo" },
+        { keys: "Ctrl+O", label: "Abrir arquivo de texto" },
         { keys: "Ctrl+Shift+S", label: "Versões anteriores do texto" },
         { keys: "Ctrl+B / Ctrl+I", label: "Negrito / itálico" },
         { keys: "Ctrl+F", label: "Buscar e substituir" },
