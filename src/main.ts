@@ -41,6 +41,7 @@ import {
 import { createEditor, type GhostEditor } from "./editor/editor";
 import {
   MODULE_LABELS,
+  enabledCount,
   renderMetrics,
   type MetricKey,
 } from "./ui/metrics";
@@ -305,8 +306,14 @@ function cycleBackdrop(): void {
 
 // --- Texto -----------------------------------------------------------------
 
+/**
+ * Encurta os rotulos quando a barra fica disputada: janela estreita ou tres ou
+ * mais metricas ligadas. Antes disso, as metricas invadiam os chips de estado.
+ */
 function updateMetrics(text: string): void {
-  renderMetrics(el.metrics, text, settings.statusBar);
+  const compact = el.body.dataset.narrow === "true" || enabledCount(settings.statusBar) >= 3;
+  el.body.dataset.dense = String(enabledCount(settings.statusBar) >= 4);
+  renderMetrics(el.metrics, text, settings.statusBar, compact);
 }
 
 // --- Menu de modulos da barra ---------------------------------------------
@@ -583,8 +590,11 @@ function wireWindowGestures(): void {
  */
 function watchWidth(): void {
   const apply = (width: number) => {
+    const before = el.body.dataset.narrow;
     el.body.dataset.narrow = String(width < 520);
     el.body.dataset.tiny = String(width < 400);
+    // O rotulo curto depende da faixa de largura, entao redesenha ao mudar.
+    if (before !== el.body.dataset.narrow && editor) updateMetrics(editor.getText());
   };
 
   apply(window.innerWidth);

@@ -6,7 +6,10 @@
  */
 
 :root {
-  --gp-radius: 16px;
+  /* Igual ao arredondamento nativo da janela no Windows 11. Com 16px, a
+     casca ficava mais redonda que a janela e o vao entre as duas curvas
+     mostrava o app de tras, formando pequenas abas claras nos cantos. */
+  --gp-radius: 8px;
   --gp-opacity: 0.85; /* controlada pelo usuario, Ctrl+[ e Ctrl+] */
   --gp-bg: 18, 18, 18;
   --gp-text: #f3f4f6;
@@ -285,8 +288,20 @@ body[data-ghost="true"] .gp-resize {
 /* Janela estreita: os chips de estado viram so o ponto colorido e as metricas
    extras somem. Sem isto, os dois lados da barra se sobrepunham. */
 body[data-narrow="true"] .gp-chip__label,
-body[data-narrow="true"] #chip-backdrop {
+body[data-narrow="true"] #chip-backdrop,
+body[data-dense="true"] .gp-chip__label {
   display: none;
+}
+
+/* As metricas tem prioridade sobre os chips de estado na disputa por espaco:
+   os chips comunicam estado com o ponto colorido mesmo sem o rotulo. */
+.gp-status__group:first-child {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+.gp-status__group--right {
+  flex: 0 0 auto;
 }
 
 body[data-narrow="true"] .gp-chip {

@@ -67,16 +67,36 @@ export function computeMetrics(text: string): Metrics {
 const plural = (value: number, one: string, many: string) =>
   `${value.toLocaleString("pt-BR")} ${value === 1 ? one : many}`;
 
-export function formatMetric(key: MetricKey, metrics: Metrics): string {
+/**
+ * Rotulos curtos para quando o espaco aperta.
+ *
+ * A barra divide a largura com os chips de estado, entao com tres ou mais
+ * metricas ligadas os dois lados se encontravam. Encurtar o rotulo mantem a
+ * informacao; esconder a metrica a perderia.
+ */
+const SHORT_UNITS: Record<MetricKey, string> = {
+  words: "pal.",
+  chars: "car.",
+  lines: "lin.",
+  tokens: "tok.",
+  pages: "pág.",
+};
+
+export function formatMetric(key: MetricKey, metrics: Metrics, compact = false): string {
+  const short = (value: number, prefix = "") =>
+    `${prefix}${value.toLocaleString("pt-BR")} ${SHORT_UNITS[key]}`;
+
   switch (key) {
     case "words":
-      return plural(metrics.words, "palavra", "palavras");
+      return compact ? short(metrics.words) : plural(metrics.words, "palavra", "palavras");
     case "chars":
-      return plural(metrics.chars, "caractere", "caracteres");
+      return compact ? short(metrics.chars) : plural(metrics.chars, "caractere", "caracteres");
     case "lines":
-      return plural(metrics.lines, "linha", "linhas");
+      return compact ? short(metrics.lines) : plural(metrics.lines, "linha", "linhas");
     case "tokens":
-      return `~${metrics.tokens.toLocaleString("pt-BR")} tokens`;
+      return compact
+        ? short(metrics.tokens, "~")
+        : `~${metrics.tokens.toLocaleString("pt-BR")} tokens`;
     case "pages": {
       // Uma casa decimal: "0,4 pág." diz mais sobre o progresso que "0 pág.".
       const pages = metrics.pages.toLocaleString("pt-BR", {
@@ -88,8 +108,16 @@ export function formatMetric(key: MetricKey, metrics: Metrics): string {
   }
 }
 
+export const enabledCount = (modules: MetricModules) =>
+  Object.values(modules).filter(Boolean).length;
+
 /** Renderiza so os modulos ligados, na ordem fixa da barra. */
-export function renderMetrics(host: HTMLElement, text: string, modules: MetricModules): void {
+export function renderMetrics(
+  host: HTMLElement,
+  text: string,
+  modules: MetricModules,
+  compact: boolean,
+): void {
   const metrics = computeMetrics(text);
   const order: MetricKey[] = ["words", "chars", "lines", "tokens", "pages"];
 
@@ -99,7 +127,7 @@ export function renderMetrics(host: HTMLElement, text: string, modules: MetricMo
     const span = document.createElement("span");
     span.className = "gp-metric";
     span.dataset.metric = key;
-    span.textContent = formatMetric(key, metrics);
+    span.textContent = formatMetric(key, metrics, compact);
     host.append(span);
   }
 }
