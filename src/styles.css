@@ -671,50 +671,7 @@ body[data-narrow="true"] .gp-barprompter {
 }
 
 /* Janela estreita: o tamanho do texto fica nas configuracoes. */
-body[data-narrow="true"] .gp-barprompter {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  padding-right: 4px;
-  margin-right: 2px;
-  border-right: 1px solid var(--gp-line);
-}
-
-.gp-barprompter__btn {
-  min-width: 18px;
-  padding: 2px 4px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--gp-text-dim);
-  font-family: inherit;
-  font-size: 11px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.gp-barprompter__btn:hover {
-  background: var(--gp-surface);
-  color: var(--gp-text);
-}
-
-.gp-barprompter__btn[data-on="true"] {
-  color: var(--gp-accent);
-}
-
-.gp-barprompter__speed {
-  min-width: 18px;
-  color: var(--gp-text-dim);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-body[data-narrow="true"] .gp-barprompter {
-  display: none;
-}
-
-.gp-fontsize {
+body[data-narrow="true"] .gp-fontsize {
   display: none;
 }
 

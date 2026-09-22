@@ -740,6 +740,19 @@ o espaço do tamanho anterior. Agora o app pede uma remedição depois de trocar
 tamanho ou família, **no quadro seguinte**: medir antes de a fonte estar
 aplicada no DOM mediria o tamanho antigo de novo.
 
+### O rastro do desenho antigo **[D]**
+
+Aumentar o texto às vezes deixava o desenho anterior visível por baixo do novo,
+com a linha do cursor parada na altura de antes. A causa não é medição: numa
+janela transparente o WebView2 repinta só o retângulo que julga sujo e compõe o
+resultado sobre o que já estava na tela, e como o fundo do app também é
+translúcido o desenho velho continua aparecendo.
+
+`forceRepaint()` liga e desliga a opacidade do documento por um quadro, o que
+invalida a camada inteira e obriga o apagamento antes do desenho. Usa `opacity`
+e não `transform` ou `filter`: essas duas criariam bloco de conteúdo para os
+elementos fixos e moveriam a barra e os painéis.
+
 ### Falha de inicialização visível **[D]**
 
 Um erro no boot deixaria a janela em branco, sem explicação — o oposto do que o
