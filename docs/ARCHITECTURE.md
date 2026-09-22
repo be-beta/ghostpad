@@ -628,6 +628,16 @@ fonte de fallback. No menu, cada nome aparece na própria fonte.
 ou pelos botões `A−` `A+` na barra de status. Mudar o tamanho recalcula a folga
 de leitura do teleprompter, que depende da altura da linha.
 
+### Abas que se recolhem sozinhas **[D]**
+
+Depois de 30 s sem troca de aba, as abas viram pontos: só o da anotação aberta
+fica aceso, e o `+` sai de cena. Elas passam a maior parte do tempo sem uso, e
+quem está escrevendo não precisa ver a lista inteira — basta saber onde está.
+O mouse por perto traz tudo de volta.
+
+O `+` some junto de propósito: criar uma anotação não é algo que se faça sem
+olhar, então ele não precisa ocupar espaço permanente.
+
 ### A barra inteira é opcional **[D]**
 
 O menu `⋯` passou a controlar dois grupos: **contagens** (palavras, caracteres,

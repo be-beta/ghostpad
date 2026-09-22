@@ -129,7 +129,6 @@ const pt = {
 
   // Painel de atalhos
   "shortcuts.title": "Atalhos",
-  "shortcuts.escCloses": "fecha",
   "shortcuts.close": "Fechar atalhos",
   "shortcuts.rebind": "alterar",
   "shortcuts.capturing": "Pressione a combinação…",
@@ -206,7 +205,6 @@ const pt = {
   "settings.fontSize": "Tamanho do texto",
   "settings.fontSize.value": "{n} px",
   "settings.font.system": "Fonte do sistema",
-  "settings.restartHint": "As mudanças valem na hora.",
 };
 
 export type Dictionary = typeof pt;
@@ -316,7 +314,6 @@ const en: Dictionary = {
   "history.restoreFailed": "Could not restore: {error}",
 
   "shortcuts.title": "Shortcuts",
-  "shortcuts.escCloses": "closes",
   "shortcuts.close": "Close shortcuts",
   "shortcuts.rebind": "change",
   "shortcuts.capturing": "Press the combination…",
@@ -390,7 +387,6 @@ const en: Dictionary = {
   "settings.fontSize": "Text size",
   "settings.fontSize.value": "{n} px",
   "settings.font.system": "System font",
-  "settings.restartHint": "Changes apply immediately.",
 };
 
 const es: Dictionary = {
@@ -498,7 +494,6 @@ const es: Dictionary = {
   "history.restoreFailed": "No se pudo restaurar: {error}",
 
   "shortcuts.title": "Atajos",
-  "shortcuts.escCloses": "cierra",
   "shortcuts.close": "Cerrar atajos",
   "shortcuts.rebind": "cambiar",
   "shortcuts.capturing": "Pulsa la combinación…",
@@ -572,7 +567,6 @@ const es: Dictionary = {
   "settings.fontSize": "Tamaño del texto",
   "settings.fontSize.value": "{n} px",
   "settings.font.system": "Fuente del sistema",
-  "settings.restartHint": "Los cambios se aplican al instante.",
 };
 
 const DICTIONARIES: Record<Lang, Dictionary> = { pt, en, es };

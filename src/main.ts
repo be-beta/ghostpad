@@ -552,6 +552,25 @@ async function copyAllAndClear(): Promise<void> {
 
 // --- Anotacoes e abas ------------------------------------------------------
 
+/**
+ * Depois de um tempo sem trocar de aba, as abas viram pontinhos.
+ *
+ * Elas passam a maior parte do tempo sem uso, e quem esta escrevendo nao precisa
+ * ver a lista inteira o tempo todo — basta saber onde esta. O mouse por perto
+ * traz tudo de volta, inclusive o botao de nova aba.
+ */
+const TABS_COLLAPSE_MS = 30_000;
+
+let tabsTimer: number | undefined;
+
+function scheduleTabsCollapse(): void {
+  if (tabsTimer) window.clearTimeout(tabsTimer);
+  el.body.dataset.tabs = "open";
+  tabsTimer = window.setTimeout(() => {
+    el.body.dataset.tabs = "collapsed";
+  }, TABS_COLLAPSE_MS);
+}
+
 function renderTabs(): void {
   el.tabs.textContent = "";
 
@@ -608,6 +627,7 @@ async function switchNote(slot: number): Promise<void> {
 
   await openSession(slot);
   renderTabs();
+  scheduleTabsCollapse();
 }
 
 /** Poe uma anotacao na tela, com a sessao guardada se houver. */
@@ -1341,6 +1361,10 @@ function wireEvents(): void {
   });
   el.metricOpacity.addEventListener("click", () => toggleIdleFade());
 
+  // O mouse por perto abre as abas; sair recomeca a contagem.
+  el.tabs.addEventListener("mouseenter", scheduleTabsCollapse);
+  el.tabs.addEventListener("mouseleave", scheduleTabsCollapse);
+
   el.tabs.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
 
@@ -1434,6 +1458,7 @@ async function boot(): Promise<void> {
   });
   updateMetrics(initialText);
   renderTabs();
+  scheduleTabsCollapse();
 
   prompter = createPrompter({
     scroller: () => editor.scroller(),

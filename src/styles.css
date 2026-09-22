@@ -199,6 +199,34 @@ body {
   color: var(--gp-text);
 }
 
+/* Recolhidas: cada aba vira um ponto e so a atual fica acesa. O + some junto,
+   porque criar aba nao e algo que se faca sem olhar. */
+body[data-tabs="collapsed"] .gp-tab {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  gap: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+  color: transparent;
+  overflow: hidden;
+}
+
+body[data-tabs="collapsed"] .gp-tab[data-active="true"] {
+  background: var(--gp-accent);
+}
+
+body[data-tabs="collapsed"] .gp-tab__close,
+body[data-tabs="collapsed"] .gp-tabs__add {
+  display: none !important;
+}
+
+.gp-tab,
+.gp-tabs__add {
+  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease),
+    width 160ms var(--gp-ease), padding 160ms var(--gp-ease);
+}
+
 /* Janela estreita: as abas viram so o numero, sem o X. */
 body[data-tiny="true"] .gp-tab__close {
   display: none !important;

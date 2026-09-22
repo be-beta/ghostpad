@@ -135,8 +135,7 @@ export function createShortcutsPanel(
       <div class="gp-sheet__card" role="dialog" aria-label="${t("shortcuts.title")}">
         <header class="gp-sheet__header">
           <span>${t("shortcuts.title")}</span>
-          <span class="gp-sheet__hint"><kbd>Esc</kbd> ${t("shortcuts.escCloses")}
-            <button class="gp-sheet__close" data-close aria-label="${t("shortcuts.close")}">✕</button>
+          <span class="gp-sheet__hint"><button class="gp-sheet__close" data-close aria-label="${t("shortcuts.close")}">✕</button>
           </span>
         </header>
         ${sections(getEffects())
