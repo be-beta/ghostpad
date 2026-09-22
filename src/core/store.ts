@@ -17,6 +17,7 @@ import { load, type Store } from "@tauri-apps/plugin-store";
 import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE, type FontId } from "./fonts";
 import { detectLang, type Lang } from "./i18n";
+import { DEFAULT_ACCENT, DEFAULT_THEME, type AccentId, type Theme } from "./theme";
 import { DEFAULT_CONTROLS, DEFAULT_MODULES, type BarControls, type MetricModules } from "../ui/metrics";
 
 export interface Settings {
@@ -37,6 +38,8 @@ export interface Settings {
   lang: Lang;
   font: FontId;
   fontSize: number;
+  theme: Theme;
+  accent: AccentId;
   openNotes: number[];
   activeNote: number;
 }
@@ -58,6 +61,9 @@ export const DEFAULT_SETTINGS: Settings = {
   lang: detectLang(),
   font: DEFAULT_FONT,
   fontSize: DEFAULT_FONT_SIZE,
+  // Acompanha o Windows por padrao: o computador ja sabe a hora do dia.
+  theme: DEFAULT_THEME,
+  accent: DEFAULT_ACCENT,
   /** Anotacoes abertas, na ordem das abas. Comeca com uma so. */
   openNotes: [1],
   /** Anotacao aberta por ultimo. */

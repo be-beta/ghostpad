@@ -12,12 +12,15 @@
 
 import { FONTS, FONT_SIZE_MAX, FONT_SIZE_MIN, type FontId } from "../core/fonts";
 import { LANGUAGES, t, type Lang } from "../core/i18n";
+import { ACCENTS, type AccentId, type Theme } from "../core/theme";
 
 export interface SettingsValues {
   lang: Lang;
   font: FontId;
   fontSize: number;
   idleFade: boolean;
+  theme: Theme;
+  accent: AccentId;
 }
 
 export interface SettingsPanel {
@@ -35,11 +38,13 @@ export interface SettingsHandlers {
   onFont: (font: FontId) => void;
   onFontSize: (size: number) => void;
   onIdleFade: (value: boolean) => void;
+  onTheme: (theme: Theme) => void;
+  onAccent: (accent: AccentId) => void;
 }
 
 export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandlers): SettingsPanel {
   const render = () => {
-    const { lang, font, fontSize, idleFade } = handlers.values();
+    const { lang, font, fontSize, idleFade, theme, accent } = handlers.values();
 
     const idiomas = LANGUAGES.map(
       (item) => `
@@ -61,6 +66,29 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
         </button>`,
     ).join("");
 
+    const temas = (["system", "light", "dark"] as Theme[])
+      .map(
+        (item) => `
+        <button class="gp-option" data-theme="${item}" data-on="${item === theme}">
+          ${t(`theme.${item}` as "theme.system")}
+        </button>`,
+      )
+      .join("");
+
+    // O botão é a própria cor: nomear seis tons daria uma lista para ler em vez
+    // de uma escolha para ver. O nome fica na dica, para quem precisar dele.
+    const cores = ACCENTS.map(
+      (item) => `
+        <button
+          class="gp-swatch"
+          data-accent="${item.id}"
+          data-on="${item.id === accent}"
+          style="background: rgb(${item.rgb}); color: rgb(${item.rgb})"
+          title="${t(`accent.${item.id}` as "accent.mint")}"
+          aria-label="${t(`accent.${item.id}` as "accent.mint")}"
+        ></button>`,
+    ).join("");
+
     host.innerHTML = `
       <div class="gp-sheet__card" role="dialog" aria-label="${t("settings.title")}">
         <header class="gp-sheet__header">
@@ -72,6 +100,16 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
         <section class="gp-sheet__section">
           <h2>${t("settings.language")}</h2>
           <div class="gp-options">${idiomas}</div>
+        </section>
+
+        <section class="gp-sheet__section">
+          <h2>${t("settings.theme")}</h2>
+          <div class="gp-options">${temas}</div>
+        </section>
+
+        <section class="gp-sheet__section">
+          <h2>${t("settings.accent")}</h2>
+          <div class="gp-options">${cores}</div>
         </section>
 
         <section class="gp-sheet__section">
@@ -137,6 +175,20 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     const size = target.closest<HTMLElement>("[data-size]")?.dataset.size;
     if (size) {
       handlers.onFontSize(handlers.values().fontSize + Number(size));
+      render();
+      return;
+    }
+
+    const tema = target.closest<HTMLElement>("[data-theme]")?.dataset.theme;
+    if (tema) {
+      handlers.onTheme(tema as Theme);
+      render();
+      return;
+    }
+
+    const cor = target.closest<HTMLElement>("[data-accent]")?.dataset.accent;
+    if (cor) {
+      handlers.onAccent(cor as AccentId);
       render();
       return;
     }

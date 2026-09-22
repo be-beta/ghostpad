@@ -132,7 +132,7 @@ const theme = EditorView.theme(
       padding: "0 18px 12px",
       caretColor: "var(--gp-accent)",
       // Contraste sobre qualquer fundo quando a opacidade esta baixa.
-      textShadow: "0 1px 2px rgba(0, 0, 0, 0.45)",
+      textShadow: "var(--gp-text-shadow)",
     },
     ".cm-line": { padding: "0" },
     ".cm-cursor, .cm-dropCursor": {
@@ -140,18 +140,18 @@ const theme = EditorView.theme(
       borderLeftWidth: "2px",
     },
     "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection":
-      { backgroundColor: "rgba(110, 231, 183, 0.22) !important" },
-    ".cm-selectionMatch": { backgroundColor: "rgba(255, 255, 255, 0.08)" },
-    ".cm-placeholder": { color: "rgba(243, 244, 246, 0.25)" },
+      { backgroundColor: "rgba(var(--gp-accent-rgb), 0.22) !important" },
+    ".cm-selectionMatch": { backgroundColor: "var(--gp-surface)" },
+    ".cm-placeholder": { color: "var(--gp-text-faint)" },
 
     // A moldura do painel continua vindo do tema; o conteudo e nosso.
     ".cm-panels": {
-      backgroundColor: "rgba(10, 10, 10, 0.94)",
+      backgroundColor: "var(--gp-panel)",
       color: "var(--gp-text)",
-      borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+      borderTop: "1px solid var(--gp-border)",
       fontFamily: "var(--gp-font)",
     },
-    ".cm-panels.cm-panels-top": { borderBottom: "1px solid rgba(255, 255, 255, 0.08)" },
+    ".cm-panels.cm-panels-top": { borderBottom: "1px solid var(--gp-border)" },
     ".cm-searchMatch": { backgroundColor: "rgba(250, 204, 21, 0.25)" },
     ".cm-searchMatch-selected": { backgroundColor: "rgba(250, 204, 21, 0.5)" },
   },
@@ -167,12 +167,12 @@ const markdownHighlight = HighlightStyle.define([
   { tag: tags.strong, fontWeight: "700" },
   { tag: tags.emphasis, fontStyle: "italic" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
-  { tag: tags.link, color: "#93c5fd" },
-  { tag: tags.url, color: "#93c5fd" },
+  { tag: tags.link, color: "var(--gp-link)" },
+  { tag: tags.url, color: "var(--gp-link)" },
   { tag: tags.monospace, fontFamily: '"Cascadia Code", Consolas, monospace', fontSize: "0.92em" },
   { tag: tags.quote, color: "var(--gp-text-dim)" },
   // Os marcadores (#, **, -) ficam discretos para o texto dominar.
-  { tag: tags.processingInstruction, color: "rgba(243, 244, 246, 0.35)" },
+  { tag: tags.processingInstruction, color: "var(--gp-text-faint)" },
   { tag: tags.list, color: "var(--gp-text)" },
 ]);
 

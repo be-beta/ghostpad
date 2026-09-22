@@ -628,9 +628,44 @@ fonte de fallback. No menu, cada nome aparece na própria fonte.
 ou pelos botões `A−` `A+` na barra de status. Mudar o tamanho recalcula a folga
 de leitura do teleprompter, que depende da altura da linha.
 
+### Tema e cor de destaque **[D]**
+
+Todas as cores viraram variáveis: o tema escuro é a base e o claro redefine só o
+que muda. Nada no resto do CSS cita cor fixa, então um tema novo é uma lista de
+variáveis, não uma caçada por `rgba()` espalhados.
+
+O modo **sistema** usa `prefers-color-scheme`, então acompanha o Windows
+trocando de claro para escuro **sem o app vigiar nada**. É o padrão.
+
+O destaque é guardado em componentes (`110, 231, 183`) e não como cor pronta,
+porque a interface o usa em várias transparências. Seis opções, e o botão de
+escolha **é a própria cor** — nomear seis tons daria uma lista para ler em vez
+de uma escolha para ver; o nome fica na dica.
+
+No tema claro a sombra do texto vira um halo branco: texto escuro também precisa
+se destacar do que estiver atrás da janela.
+
+### Animações só de composição **[D]**
+
+Painéis, menus e o indicador do teleprompter entram com `opacity` e `transform`
+— as duas propriedades que a placa de vídeo compõe sem recalcular layout, então
+a animação não disputa com a digitação. Animar largura ou altura custaria um
+recálculo por quadro. Tudo respeita `prefers-reduced-motion`.
+
+### Rolagem fracionária no teleprompter **[D]**
+
+*Corrigido depois de testar a leitura em voz alta.* A velocidade padrão (25 px/s)
+era rápida demais, e em 10 px/s o texto tremia: a cada quadro o avanço é menor
+que um pixel, e arredondar fazia o texto andar aos saltos.
+
+Agora a posição é mantida em número fracionário e entregue assim ao DOM, que
+aceita frações. O mínimo caiu para **2 px/s**, o padrão para **10**, e o passo
+é variável: 1 px/s abaixo de 20, 5 até 60, 10 acima. A diferença entre 8 e 13
+muda toda a leitura; entre 100 e 105, ninguém percebe.
+
 ### Abas que se recolhem sozinhas **[D]**
 
-Depois de 30 s sem troca de aba, as abas viram pontos: só o da anotação aberta
+Depois de 15 s sem troca de aba, as abas viram pontos: só o da anotação aberta
 fica aceso, e o `+` sai de cena. Elas passam a maior parte do tempo sem uso, e
 quem está escrevendo não precisa ver a lista inteira — basta saber onde está.
 O mouse por perto traz tudo de volta.

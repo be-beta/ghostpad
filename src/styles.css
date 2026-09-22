@@ -5,21 +5,81 @@
  * e manter o texto legivel sobre um fundo que pode ser qualquer coisa.
  */
 
+/* Paleta.
+ *
+ * O tema escuro é a base; o claro redefine só o que muda. Nada no resto do
+ * arquivo cita cor fixa — assim um tema novo é uma lista de variáveis, não uma
+ * caçada por rgba() espalhados.
+ *
+ * `--gp-accent-rgb` guarda os componentes, e não a cor pronta, porque o app usa
+ * o destaque em várias transparências diferentes.
+ */
 :root {
-  /* Igual ao arredondamento nativo da janela no Windows 11. Com 16px, a
-     casca ficava mais redonda que a janela e o vao entre as duas curvas
-     mostrava o app de tras, formando pequenas abas claras nos cantos. */
   --gp-radius: 8px;
   --gp-opacity: 0.85; /* controlada pelo usuario, Ctrl+[ e Ctrl+] */
-  --gp-bg: 18, 18, 18;
-  --gp-text: #f3f4f6;
-  --gp-text-dim: rgba(243, 244, 246, 0.55);
-  --gp-accent: #6ee7b7;
+  --gp-accent-rgb: 110, 231, 183;
+  --gp-accent: rgb(var(--gp-accent-rgb));
   --gp-danger: #f87171;
   --gp-font: "Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --gp-font-size: 15px;
   --gp-line-height: 1.6;
   --gp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Tema escuro */
+  --gp-bg: 18, 18, 18;
+  --gp-text: #f3f4f6;
+  --gp-text-dim: rgba(243, 244, 246, 0.55);
+  --gp-text-faint: rgba(243, 244, 246, 0.3);
+  --gp-surface: rgba(255, 255, 255, 0.08);
+  --gp-surface-strong: rgba(255, 255, 255, 0.16);
+  --gp-border: rgba(255, 255, 255, 0.11);
+  --gp-line: rgba(255, 255, 255, 0.05);
+  --gp-grip: rgba(255, 255, 255, 0.3);
+  --gp-panel: rgba(14, 14, 14, 0.96);
+  --gp-panel-soft: rgba(10, 10, 10, 0.72);
+  --gp-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --gp-link: #93c5fd;
+  color-scheme: dark;
+}
+
+/* Tema claro: escolhido explicitamente, ou seguindo o Windows no modo sistema. */
+:root[data-theme="light"],
+:root[data-theme="system"] {
+  --gp-bg: 244, 244, 246;
+  --gp-text: #17191f;
+  --gp-text-dim: rgba(23, 25, 31, 0.6);
+  --gp-text-faint: rgba(23, 25, 31, 0.35);
+  --gp-surface: rgba(0, 0, 0, 0.06);
+  --gp-surface-strong: rgba(0, 0, 0, 0.13);
+  --gp-border: rgba(0, 0, 0, 0.14);
+  --gp-line: rgba(0, 0, 0, 0.06);
+  --gp-grip: rgba(0, 0, 0, 0.3);
+  --gp-panel: rgba(250, 250, 251, 0.97);
+  --gp-panel-soft: rgba(250, 250, 251, 0.8);
+  /* Halo claro: o texto escuro precisa se destacar do que estiver atrás. */
+  --gp-text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55);
+  --gp-link: #1d4ed8;
+  color-scheme: light;
+}
+
+/* No modo sistema, o escuro volta quando o Windows está escuro. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --gp-bg: 18, 18, 18;
+    --gp-text: #f3f4f6;
+    --gp-text-dim: rgba(243, 244, 246, 0.55);
+    --gp-text-faint: rgba(243, 244, 246, 0.3);
+    --gp-surface: rgba(255, 255, 255, 0.08);
+    --gp-surface-strong: rgba(255, 255, 255, 0.16);
+    --gp-border: rgba(255, 255, 255, 0.11);
+    --gp-line: rgba(255, 255, 255, 0.05);
+    --gp-grip: rgba(255, 255, 255, 0.3);
+    --gp-panel: rgba(14, 14, 14, 0.96);
+    --gp-panel-soft: rgba(10, 10, 10, 0.72);
+    --gp-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --gp-link: #93c5fd;
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -64,7 +124,7 @@ body {
   height: 100%;
   border-radius: var(--gp-radius);
   /* Borda de 1px: separa a janela do conteudo de baixo quando ambos sao escuros. */
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px var(--gp-surface);
   overflow: hidden;
 }
 
@@ -102,7 +162,7 @@ body {
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--gp-grip);
   transform: translateX(-50%) scaleX(0.6);
   opacity: 0;
   transition: opacity 160ms var(--gp-ease), transform 160ms var(--gp-ease);
@@ -141,12 +201,12 @@ body {
 }
 
 .gp-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text);
 }
 
 .gp-tab[data-active="true"] {
-  background: rgba(110, 231, 183, 0.16);
+  background: rgba(var(--gp-accent-rgb), 0.16);
   color: var(--gp-accent);
   font-weight: 600;
 }
@@ -187,7 +247,7 @@ body {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(243, 244, 246, 0.35);
+  color: var(--gp-text-faint);
   font-family: inherit;
   font-size: 14px;
   line-height: 1;
@@ -195,7 +255,7 @@ body {
 }
 
 .gp-tabs__add:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text);
 }
 
@@ -207,7 +267,7 @@ body[data-tabs="collapsed"] .gp-tab {
   padding: 0;
   gap: 0;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--gp-surface-strong);
   color: transparent;
   overflow: hidden;
 }
@@ -312,14 +372,14 @@ body[data-ghost="true"] .gp-resize {
   padding: 0;
   border: none;
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text-dim);
   cursor: pointer;
   transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
 }
 
 .gp-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--gp-surface-strong);
   color: var(--gp-text);
 }
 
@@ -377,7 +437,7 @@ body[data-ghost="true"] .gp-resize {
 
 .gp-editor .cm-scroller::-webkit-scrollbar-thumb {
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--gp-border);
 }
 
 /* --- Barra de status ------------------------------------------------------- */
@@ -459,14 +519,14 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
 }
 
 .gp-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
 }
 
 .gp-chip__dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--gp-border);
   transition: background-color 120ms var(--gp-ease), box-shadow 120ms var(--gp-ease);
 }
 
@@ -476,7 +536,7 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
 
 .gp-chip[data-active="true"] .gp-chip__dot {
   background: var(--gp-accent);
-  box-shadow: 0 0 6px rgba(110, 231, 183, 0.7);
+  box-shadow: 0 0 6px rgba(var(--gp-accent-rgb), 0.7);
 }
 
 /* Recurso indisponivel nesta maquina: visivel, mas claramente fora de alcance. */
@@ -546,7 +606,7 @@ body[data-tiny="true"] .gp-metrics .gp-metric:nth-child(n + 2) {
 }
 
 .gp-fontsize__btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text);
 }
 
@@ -590,9 +650,9 @@ body[data-narrow="true"] .gp-fontsize {
   flex: 1 1 auto;
   min-width: 0;
   padding: 6px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--gp-border);
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--gp-surface);
   color: var(--gp-text);
   font-family: inherit;
   font-size: 12px;
@@ -600,11 +660,11 @@ body[data-narrow="true"] .gp-fontsize {
 
 .gp-find__field:focus {
   outline: none;
-  border-color: rgba(110, 231, 183, 0.5);
+  border-color: rgba(var(--gp-accent-rgb), 0.5);
 }
 
 .gp-find__field::placeholder {
-  color: rgba(243, 244, 246, 0.35);
+  color: var(--gp-text-faint);
 }
 
 /* Alvo de 28px: o painel anterior tinha botoes pequenos demais para acertar. */
@@ -617,7 +677,7 @@ body[data-narrow="true"] .gp-fontsize {
   padding: 0 10px;
   border: none;
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text-dim);
   font-family: inherit;
   font-size: 12px;
@@ -644,7 +704,7 @@ body[data-narrow="true"] .gp-fontsize {
 .gp-find__icon:hover,
 .gp-find__toggle:hover,
 .gp-find__action:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--gp-surface-strong);
   color: var(--gp-text);
 }
 
@@ -658,7 +718,7 @@ body[data-narrow="true"] .gp-fontsize {
 }
 
 .gp-find__toggle[data-on="true"] {
-  background: rgba(110, 231, 183, 0.22);
+  background: rgba(var(--gp-accent-rgb), 0.22);
   color: var(--gp-accent);
 }
 
@@ -682,7 +742,7 @@ body[data-narrow="true"] .gp-fontsize {
 }
 
 .gp-history__item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
 }
 
 .gp-history__when {
@@ -701,7 +761,7 @@ body[data-narrow="true"] .gp-fontsize {
 .gp-history__tag {
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--gp-surface);
   color: var(--gp-text-dim);
   font-size: 10px;
   white-space: nowrap;
@@ -732,8 +792,8 @@ body[data-narrow="true"] .gp-fontsize {
   min-width: 180px;
   padding: 5px;
   border-radius: 10px;
-  background: rgba(14, 14, 14, 0.97);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 10px 26px rgba(0, 0, 0, 0.5);
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border), 0 10px 26px rgba(0, 0, 0, 0.5);
   font-size: 12px;
 }
 
@@ -768,7 +828,7 @@ body[data-narrow="true"] .gp-fontsize {
 }
 
 .gp-menu__item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
 }
 
 /* Caixa de marcacao desenhada em CSS: um caractere de marca mudaria de
@@ -779,7 +839,7 @@ body[data-narrow="true"] .gp-fontsize {
   height: 13px;
   flex: 0 0 auto;
   border-radius: 4px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 0 1px var(--gp-border);
 }
 
 .gp-menu__item[data-on="true"] .gp-menu__box {
@@ -818,8 +878,8 @@ body[data-narrow="true"] .gp-fontsize {
   overflow-y: auto;
   padding: 14px 16px 6px;
   border-radius: 12px;
-  background: rgba(14, 14, 14, 0.97);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 12px 32px rgba(0, 0, 0, 0.5);
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border), 0 12px 32px rgba(0, 0, 0, 0.5);
   font-size: 12px;
   user-select: none;
 }
@@ -830,7 +890,7 @@ body[data-narrow="true"] .gp-fontsize {
 
 .gp-sheet__card::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--gp-border);
 }
 
 .gp-sheet__header {
@@ -860,7 +920,7 @@ body[data-narrow="true"] .gp-fontsize {
   padding: 0;
   border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
   color: var(--gp-text-dim);
   font-family: inherit;
   font-size: 13px;
@@ -869,7 +929,7 @@ body[data-narrow="true"] .gp-fontsize {
 }
 
 .gp-sheet__close:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--gp-surface-strong);
   color: var(--gp-text);
 }
 
@@ -888,7 +948,7 @@ body[data-narrow="true"] .gp-fontsize {
   align-items: center;
   gap: 12px;
   padding: 4px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--gp-line);
 }
 
 .gp-sheet__keys {
@@ -901,8 +961,8 @@ body[data-narrow="true"] .gp-fontsize {
 .gp-sheet kbd {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  background: var(--gp-surface);
+  box-shadow: inset 0 -1px 0 var(--gp-surface);
   font-family: inherit;
   font-size: 11px;
   white-space: nowrap;
@@ -913,7 +973,7 @@ body[data-narrow="true"] .gp-fontsize {
   padding: 1px 6px;
   border: none;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--gp-surface);
   color: var(--gp-text-dim);
   font-family: inherit;
   font-size: 10px;
@@ -921,7 +981,7 @@ body[data-narrow="true"] .gp-fontsize {
 }
 
 .gp-sheet__rebind:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--gp-surface-strong);
   color: var(--gp-text);
 }
 
@@ -945,7 +1005,7 @@ body[data-narrow="true"] .gp-fontsize {
   right: 12px;
   z-index: 15;
   height: 1px;
-  background: rgba(110, 231, 183, 0.25);
+  background: rgba(var(--gp-accent-rgb), 0.25);
   opacity: 0;
   transition: opacity 200ms var(--gp-ease);
   pointer-events: none;
@@ -975,15 +1035,15 @@ body[data-prompter="true"] .cm-cursor {
   gap: 3px;
   padding: 3px 5px;
   border-radius: 999px;
-  background: rgba(10, 10, 10, 0.72);
+  background: var(--gp-panel-soft);
   opacity: 0.45;
   transition: opacity 160ms var(--gp-ease), background-color 160ms var(--gp-ease);
 }
 
 .gp-prompter:hover,
 .gp-prompter[data-visible="true"] {
-  background: rgba(10, 10, 10, 0.94);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border);
   opacity: 1;
 }
 
@@ -1005,7 +1065,7 @@ body[data-prompter="true"] .cm-cursor {
 }
 
 .gp-prompter__btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--gp-surface-strong);
 }
 
 .gp-prompter__btn--exit:hover {
@@ -1080,7 +1140,7 @@ body[data-notch="true"] .gp-focusline {
   padding: 6px 10px;
   border: none;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--gp-surface);
   color: var(--gp-text);
   font-family: inherit;
   font-size: 12px;
@@ -1090,7 +1150,7 @@ body[data-notch="true"] .gp-focusline {
 }
 
 .gp-option:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--gp-surface-strong);
 }
 
 .gp-option[disabled] {
@@ -1099,7 +1159,7 @@ body[data-notch="true"] .gp-focusline {
 }
 
 .gp-option[data-on="true"] {
-  background: rgba(110, 231, 183, 0.18);
+  background: rgba(var(--gp-accent-rgb), 0.18);
   color: var(--gp-accent);
 }
 
@@ -1133,8 +1193,8 @@ body[data-notch="true"] .gp-focusline {
   max-width: calc(100% - 32px);
   padding: 7px 14px;
   border-radius: 999px;
-  background: rgba(10, 10, 10, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border);
   color: var(--gp-text);
   font-size: 12px;
   text-align: center;
@@ -1166,7 +1226,7 @@ body[data-prompter="true"] .gp-toast[data-visible="true"] {
 /* Modo fantasma: sem isto o usuario nao tem como saber que os cliques estao
    atravessando, ja que nada na tela muda quando ele clica. */
 body[data-ghost="true"] .gp-shell {
-  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(var(--gp-accent-rgb), 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1193,4 +1253,80 @@ body[data-ghost="true"] .gp-shell {
 .gp-boot-error code {
   color: #fecaca;
   font-size: 11px;
+}
+
+/* --- Entradas -------------------------------------------------------------
+ *
+ * Só `opacity` e `transform`: a placa de vídeo compõe as duas sem recalcular
+ * layout, então a animação não disputa com a digitação. Animar largura ou
+ * altura custaria um recálculo por quadro.
+ */
+
+@keyframes gp-sheet-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes gp-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+@keyframes gp-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+.gp-sheet:not([hidden]) {
+  animation: gp-sheet-in 140ms var(--gp-ease);
+}
+
+.gp-sheet:not([hidden]) .gp-sheet__card {
+  animation: gp-card-in 180ms var(--gp-ease);
+}
+
+.gp-menu:not([hidden]) {
+  transform-origin: bottom right;
+  animation: gp-menu-in 140ms var(--gp-ease);
+}
+
+.gp-prompter:not([hidden]) {
+  animation: gp-menu-in 160ms var(--gp-ease);
+}
+
+/* Painel de busca entrando pelo topo do editor. */
+.cm-panels-top {
+  animation: gp-menu-in 140ms var(--gp-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::after,
+  *::before {
+    animation-duration: 1ms !important;
+  }
+}
+
+/* Amostras de destaque: a cor é a informação, então o botão é a própria cor. */
+.gp-swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 140ms var(--gp-ease), box-shadow 140ms var(--gp-ease);
+}
+
+.gp-swatch:hover {
+  transform: scale(1.12);
+}
+
+.gp-swatch[data-on="true"] {
+  box-shadow: 0 0 0 2px rgba(var(--gp-bg), 1), 0 0 0 4px currentColor;
 }

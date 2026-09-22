@@ -90,6 +90,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Teleprompter** com rolagem automática e modo faixa para gravações
 - **Português, inglês e espanhol**, com oito opções de fonte embutidas
+- **Tema claro, escuro ou do sistema**, com cor de destaque à escolha
 - **Autosave** do texto, com backup
 
 ## Atalhos

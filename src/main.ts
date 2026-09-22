@@ -52,8 +52,9 @@ import {
   type FontId,
 } from "./core/fonts";
 import { applyStaticTranslations, setLang, t, type Lang } from "./core/i18n";
+import { applyAccent, applyTheme, type AccentId, type Theme } from "./core/theme";
 import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
-import { createPrompter, SPEED_STEP, type Prompter } from "./editor/prompter";
+import { createPrompter, type Prompter } from "./editor/prompter";
 import {
   CONTROL_KEYS,
   controlLabel,
@@ -166,6 +167,8 @@ const settingsPanel = createSettingsPanel(el.settings, {
     font: settings.font,
     fontSize: settings.fontSize,
     idleFade: settings.idleFade,
+    theme: settings.theme,
+    accent: settings.accent,
   }),
   onLang: changeLang,
   onFont: changeFont,
@@ -174,6 +177,16 @@ const settingsPanel = createSettingsPanel(el.settings, {
   // pode estar escondida da barra.
   onIdleFade: (value) => {
     if (value !== settings.idleFade) toggleIdleFade();
+  },
+  onTheme: (theme: Theme) => {
+    settings.theme = theme;
+    applyTheme(theme);
+    void saveSettings(settings);
+  },
+  onAccent: (accent: AccentId) => {
+    settings.accent = accent;
+    applyAccent(accent);
+    void saveSettings(settings);
   },
 });
 
@@ -559,7 +572,7 @@ async function copyAllAndClear(): Promise<void> {
  * ver a lista inteira o tempo todo — basta saber onde esta. O mouse por perto
  * traz tudo de volta, inclusive o botao de nova aba.
  */
-const TABS_COLLAPSE_MS = 30_000;
+const TABS_COLLAPSE_MS = 15_000;
 
 let tabsTimer: number | undefined;
 
@@ -1030,10 +1043,10 @@ function handleKeydown(event: KeyboardEvent): boolean {
         prompter.togglePause();
         return consume(event);
       case "ArrowUp":
-        prompter.nudgeSpeed(SPEED_STEP);
+        prompter.nudgeSpeed(1);
         return consume(event);
       case "ArrowDown":
-        prompter.nudgeSpeed(-SPEED_STEP);
+        prompter.nudgeSpeed(-1);
         return consume(event);
       case "Escape":
         void exitPrompter();
@@ -1308,8 +1321,8 @@ function wireEvents(): void {
       .prompter;
 
     if (action === "pause") prompter.togglePause();
-    else if (action === "faster") prompter.nudgeSpeed(SPEED_STEP);
-    else if (action === "slower") prompter.nudgeSpeed(-SPEED_STEP);
+    else if (action === "faster") prompter.nudgeSpeed(1);
+    else if (action === "slower") prompter.nudgeSpeed(-1);
     else if (action === "exit") void exitPrompter();
   });
   document.addEventListener("mouseleave", () => {
@@ -1437,6 +1450,8 @@ async function boot(): Promise<void> {
   // errado nem com a fonte errada, nem por um instante.
   setLang(settings.lang);
   applyStaticTranslations();
+  applyTheme(settings.theme);
+  applyAccent(settings.accent);
   await applyFont(settings.font);
   settings.fontSize = applyFontSize(settings.fontSize);
   renderFontSize();
