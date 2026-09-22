@@ -638,11 +638,29 @@ lidos por `event.code` (posição física da tecla) em vez do caractere.
 Vale como regra: **`Ctrl+Alt` só com teclas que não produzem caractere** —
 dígitos, setas e letras sobrevivem, símbolos não.
 
+### Cada destaque tem um tom por tema **[D]**
+
+A mesma cor não serve aos dois fundos: o roxo `#3215ad` some no tema escuro, e
+um menta claro desaparece no tema claro. Cada destaque guarda **dois tons** —
+escolhidos para ter contraste no fundo em que aparecem, mantendo a identidade da
+cor. A amostra no painel mostra o tom que vale no tema atual; mostrar uma cor
+fixa que não é a final seria enganoso.
+
+No modo "sistema" o CSS troca de tema sozinho, mas o tom do destaque não —
+por isso o app escuta `prefers-color-scheme` e troca junto.
+
+### O modo faixa precisa dos próprios controles **[D]**
+
+Na faixa a barra de status some, e quem não sabia o atalho ficava preso no topo
+da tela. Os controles do teleprompter agora aparecem no canto **sempre que a
+faixa está ativa**, mesmo com a rolagem parada — e o `✕` deles sai dos dois
+modos de uma vez.
+
 ### A barra inteira é opcional, inclusive os estados **[D]**
 
-Além das contagens e dos controles, os três chips de estado (topo, fantasma,
-oculto) e os controles do teleprompter agora entram e saem pelo menu `⋯`. Quem
-nunca usa um modo não precisa vê-lo: a barra pode ficar sem nada.
+O menu `⋯` tem três grupos: **contagens**, **controles** (tamanho do texto,
+opacidade, teleprompter) e **modos da janela** (topo, fantasma, oculto, fundo).
+Quem nunca usa um modo não precisa vê-lo: a barra pode ficar sem nada.
 
 ### Teleprompter em tela cheia **[D]**
 

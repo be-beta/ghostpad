@@ -52,11 +52,18 @@ import {
   type FontId,
 } from "./core/fonts";
 import { applyStaticTranslations, setLang, t, type Lang } from "./core/i18n";
-import { applyAccent, applyTheme, type AccentId, type Theme } from "./core/theme";
+import {
+  applyAccent,
+  applyTheme,
+  watchSystemTheme,
+  type AccentId,
+  type Theme,
+} from "./core/theme";
 import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
 import { createPrompter, type Prompter } from "./editor/prompter";
 import {
   CONTROL_KEYS,
+  MODE_KEYS,
   controlLabel,
   enabledCount,
   moduleLabel,
@@ -183,11 +190,13 @@ const settingsPanel = createSettingsPanel(el.settings, {
   onTheme: (theme: Theme) => {
     settings.theme = theme;
     applyTheme(theme);
+    // O tom do destaque depende do tema, entao acompanha a troca.
+    applyAccent(settings.accent, theme);
     void saveSettings(settings);
   },
   onAccent: (accent: AccentId) => {
     settings.accent = accent;
-    applyAccent(accent);
+    applyAccent(accent, settings.theme);
     void saveSettings(settings);
   },
 });
@@ -327,6 +336,13 @@ function renderFontSize(): void {
 }
 
 function changeFontSize(size: number): void {
+  // Um valor invalido aqui virava "NaNpx" no CSS: o navegador ignora e o texto
+  // parece nao responder. Melhor ficar onde esta do que sumir sem explicacao.
+  if (!Number.isFinite(size)) {
+    toast("Tamanho de texto inválido");
+    return;
+  }
+
   settings.fontSize = applyFontSize(size);
   renderFontSize();
   editor?.remeasure();
@@ -505,6 +521,11 @@ function renderModulesMenu(): void {
 
   grupo(t("menu.controls"));
   for (const key of CONTROL_KEYS) {
+    item(key, "control", controlLabel(key), settings.barControls[key]);
+  }
+
+  grupo(t("menu.modes"));
+  for (const key of MODE_KEYS) {
     item(key, "control", controlLabel(key), settings.barControls[key]);
   }
 }
@@ -820,7 +841,9 @@ function onPrompterChange(state: { active: boolean; paused: boolean; speed: numb
   el.body.dataset.prompter = String(state.active);
   editor.setEditable(!state.active);
 
-  el.prompter.hidden = !state.active;
+  // Visível também no modo faixa mesmo com a rolagem parada: lá a barra de
+  // status some, e sem isto não haveria como sair sem saber o atalho.
+  el.prompter.hidden = !state.active && !isNotch();
   renderBarPrompter();
   el.prompterPlay.textContent = state.paused ? "▶" : "❚❚";
   el.prompterSpeed.textContent = String(state.speed);
@@ -910,6 +933,7 @@ async function toggleNotch(): Promise<void> {
     const { x, y, width, height } = beforeNotch;
     beforeNotch = null;
     el.body.dataset.notch = "false";
+    el.prompter.hidden = !prompter?.state().active;
     await appWindow.setSize(new PhysicalSize(width, height));
     await appWindow.setPosition(new PhysicalPosition(x, y));
     applyReadingPadding(prompter?.state().active ?? false);
@@ -922,6 +946,7 @@ async function toggleNotch(): Promise<void> {
   beforeNotch = { x: position.x, y: position.y, width: size.width, height: size.height };
 
   el.body.dataset.notch = "true";
+  el.prompter.hidden = false;
   await applyNotch();
   toast(t("toast.notch.on"));
 }
@@ -1380,6 +1405,15 @@ function watchWidth(): void {
 
 function wireEvents(): void {
   wireWindowGestures();
+
+  // Um erro solto deixava a interface parada sem dizer por que — o usuario
+  // clicava e "nada acontecia". Agora ele aparece e pode ser relatado.
+  window.addEventListener("error", (event) => {
+    toast(`Erro: ${event.message}`);
+  });
+  window.addEventListener("unhandledrejection", (event) => {
+    toast(`Erro: ${String(event.reason)}`);
+  });
   watchWidth();
 
   // Controles aparecem so quando o mouse chega perto do canto superior direito.
@@ -1553,7 +1587,13 @@ async function boot(): Promise<void> {
   setLang(settings.lang);
   applyStaticTranslations();
   applyTheme(settings.theme);
-  applyAccent(settings.accent);
+  applyAccent(settings.accent, settings.theme);
+  // No modo "sistema", o Windows pode trocar de claro para escuro a qualquer
+  // hora; o tom do destaque precisa trocar junto.
+  watchSystemTheme(() => {
+    applyAccent(settings.accent, settings.theme);
+    settingsPanel.refresh();
+  });
   await applyFont(settings.font);
   settings.fontSize = applyFontSize(settings.fontSize);
   renderFontSize();

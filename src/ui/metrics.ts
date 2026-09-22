@@ -25,15 +25,10 @@ export type ControlKey =
 
 export type BarControls = Record<ControlKey, boolean>;
 
-export const CONTROL_KEYS: ControlKey[] = [
-  "onTop",
-  "ghost",
-  "stealth",
-  "prompter",
-  "fontSize",
-  "opacity",
-  "backdrop",
-];
+/** Botões de modo da janela, agrupados à parte no menu. */
+export const MODE_KEYS: ControlKey[] = ["onTop", "ghost", "stealth", "backdrop"];
+
+export const CONTROL_KEYS: ControlKey[] = ["fontSize", "opacity", "prompter"];
 
 export const DEFAULT_CONTROLS: BarControls = {
   onTop: true,

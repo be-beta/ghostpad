@@ -295,9 +295,14 @@ export function createEditor(options: EditorOptions): GhostEditor {
     content: () => view.contentDOM,
     lineHeight: () => view.defaultLineHeight,
     remeasure: () => {
-      // Num quadro seguinte: a fonte nova precisa estar aplicada no DOM antes
-      // de o editor medir, senao ele remede o tamanho antigo.
+      // Tres tentativas de proposito. A fonte precisa estar aplicada no DOM
+      // antes da medicao, e o instante em que isso acontece varia: o proximo
+      // quadro cobre o caso comum, o tempo curto cobre a aplicacao do CSS, e
+      // `fonts.ready` cobre a familia que ainda estava carregando. Medir de
+      // novo e barato; ficar com a altura errada trava a linha no lugar antigo.
       requestAnimationFrame(() => view.requestMeasure());
+      window.setTimeout(() => view.requestMeasure(), 160);
+      void document.fonts?.ready.then(() => view.requestMeasure());
     },
     captureSession: () => view.state,
     restoreSession: (session) => {

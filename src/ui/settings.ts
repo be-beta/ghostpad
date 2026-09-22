@@ -12,7 +12,7 @@
 
 import { FONTS, FONT_SIZE_MAX, FONT_SIZE_MIN, type FontId } from "../core/fonts";
 import { LANGUAGES, t, type Lang } from "../core/i18n";
-import { ACCENTS, type AccentId, type Theme } from "../core/theme";
+import { ACCENTS, effectiveTheme, type AccentId, type Theme } from "../core/theme";
 
 export interface SettingsValues {
   lang: Lang;
@@ -77,13 +77,16 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
 
     // O botão é a própria cor: nomear seis tons daria uma lista para ler em vez
     // de uma escolha para ver. O nome fica na dica, para quem precisar dele.
+    // A amostra mostra o tom que vai valer no tema atual, e não uma cor fixa:
+    // escolher por uma amostra que não é a cor final seria enganoso.
+    const tonalidade = effectiveTheme(theme);
     const cores = ACCENTS.map(
       (item) => `
         <button
           class="gp-swatch"
           data-accent="${item.id}"
           data-on="${item.id === accent}"
-          style="background: rgb(${item.rgb}); color: rgb(${item.rgb})"
+          style="background: rgb(${item[tonalidade]}); color: rgb(${item[tonalidade]})"
           title="${t(`accent.${item.id}` as "accent.mint")}"
           aria-label="${t(`accent.${item.id}` as "accent.mint")}"
         ></button>`,
