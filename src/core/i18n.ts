@@ -88,6 +88,12 @@ const pt = {
   "backdrop.blur": "Desfoque",
   "backdrop.acrylic": "Acrylic",
 
+  "menu.metrics": "Contagens",
+  "menu.controls": "Controles",
+  "bar.fontSize": "Tamanho do texto",
+  "bar.opacity": "Opacidade",
+  "bar.backdrop": "Fundo da janela",
+  "bar.states": "Topo, fantasma e oculto",
   // Métricas
   "metric.words": "Palavras",
   "metric.chars": "Caracteres",
@@ -190,6 +196,9 @@ const pt = {
   "prompter.exit": "Sair do teleprompter (Esc)",
 
   // Configurações
+  "settings.idleFade": "Esmaecer quando parado",
+  "settings.on": "Ligado",
+  "settings.off": "Desligado",
   "settings.title": "Configurações",
   "settings.close": "Fechar configurações",
   "settings.language": "Idioma",
@@ -269,6 +278,12 @@ const en: Dictionary = {
   "backdrop.blur": "Blur",
   "backdrop.acrylic": "Acrylic",
 
+  "menu.metrics": "Counts",
+  "menu.controls": "Controls",
+  "bar.fontSize": "Text size",
+  "bar.opacity": "Opacity",
+  "bar.backdrop": "Window background",
+  "bar.states": "Top, ghost and hidden",
   "metric.words": "Words",
   "metric.chars": "Characters",
   "metric.lines": "Lines",
@@ -365,6 +380,9 @@ const en: Dictionary = {
   "prompter.faster": "Faster (↑)",
   "prompter.exit": "Exit the teleprompter (Esc)",
 
+  "settings.idleFade": "Fade when idle",
+  "settings.on": "On",
+  "settings.off": "Off",
   "settings.title": "Settings",
   "settings.close": "Close settings",
   "settings.language": "Language",
@@ -442,6 +460,12 @@ const es: Dictionary = {
   "backdrop.blur": "Desenfoque",
   "backdrop.acrylic": "Acrylic",
 
+  "menu.metrics": "Recuentos",
+  "menu.controls": "Controles",
+  "bar.fontSize": "Tamaño del texto",
+  "bar.opacity": "Opacidad",
+  "bar.backdrop": "Fondo de la ventana",
+  "bar.states": "Encima, fantasma y oculto",
   "metric.words": "Palabras",
   "metric.chars": "Caracteres",
   "metric.lines": "Líneas",
@@ -538,6 +562,9 @@ const es: Dictionary = {
   "prompter.faster": "Más rápido (↑)",
   "prompter.exit": "Salir del teleprompter (Esc)",
 
+  "settings.idleFade": "Desvanecer cuando está quieto",
+  "settings.on": "Activado",
+  "settings.off": "Desactivado",
   "settings.title": "Ajustes",
   "settings.close": "Cerrar ajustes",
   "settings.language": "Idioma",

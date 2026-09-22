@@ -13,6 +13,23 @@ export type MetricKey = "words" | "chars" | "lines" | "tokens" | "pages";
 
 export type MetricModules = Record<MetricKey, boolean>;
 
+/** Controles da barra que podem ser escondidos, além das contagens. */
+export type ControlKey = "fontSize" | "opacity" | "backdrop";
+
+export type BarControls = Record<ControlKey, boolean>;
+
+export const CONTROL_KEYS: ControlKey[] = ["fontSize", "opacity", "backdrop"];
+
+export const DEFAULT_CONTROLS: BarControls = {
+  fontSize: true,
+  opacity: true,
+  // Desligado por padrão: o desfoque nativo falha em parte das máquinas, então
+  // o seletor de fundo só interessa a quem for testá-lo.
+  backdrop: false,
+};
+
+export const controlLabel = (key: ControlKey): string => t(`bar.${key}` as "bar.fontSize");
+
 export const DEFAULT_MODULES: MetricModules = {
   words: true,
   chars: false,

@@ -1,10 +1,13 @@
 /**
  * Painel de configurações (Ctrl+,).
  *
- * Só o que muda a experiência de escrever: idioma, fonte e tamanho do texto. O
- * resto do app se configura onde é usado — opacidade pelo teclado, métricas no
- * menu da barra, atalhos no painel de atalhos. Um painel que reúne tudo só
- * porque é um painel vira lista de opções que ninguém lê.
+ * Só o que muda a experiência de escrever: idioma, fonte, tamanho do texto e o
+ * esmaecimento automático. O resto se configura onde é usado — opacidade pelo
+ * teclado, conteúdo da barra no menu dela, atalhos no painel de atalhos. Um
+ * painel que reúne tudo só porque é um painel vira lista que ninguém lê.
+ *
+ * O esmaecimento está aqui, e não só na barra, porque o controle dele é clicar
+ * na opacidade — que agora pode estar escondida.
  */
 
 import { FONTS, FONT_SIZE_MAX, FONT_SIZE_MIN, type FontId } from "../core/fonts";
@@ -14,6 +17,7 @@ export interface SettingsValues {
   lang: Lang;
   font: FontId;
   fontSize: number;
+  idleFade: boolean;
 }
 
 export interface SettingsPanel {
@@ -30,11 +34,12 @@ export interface SettingsHandlers {
   onLang: (lang: Lang) => void;
   onFont: (font: FontId) => void;
   onFontSize: (size: number) => void;
+  onIdleFade: (value: boolean) => void;
 }
 
 export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandlers): SettingsPanel {
   const render = () => {
-    const { lang, font, fontSize } = handlers.values();
+    const { lang, font, fontSize, idleFade } = handlers.values();
 
     const idiomas = LANGUAGES.map(
       (item) => `
@@ -84,6 +89,14 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
           </div>
         </section>
 
+        <section class="gp-sheet__section">
+          <h2>${t("settings.idleFade")}</h2>
+          <div class="gp-options">
+            <button class="gp-option" data-idle="on" data-on="${idleFade}">${t("settings.on")}</button>
+            <button class="gp-option" data-idle="off" data-on="${!idleFade}">${t("settings.off")}</button>
+          </div>
+        </section>
+
         <p class="gp-sheet__note">${t("settings.restartHint")}</p>
       </div>`;
   };
@@ -126,6 +139,13 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     const size = target.closest<HTMLElement>("[data-size]")?.dataset.size;
     if (size) {
       handlers.onFontSize(handlers.values().fontSize + Number(size));
+      render();
+      return;
+    }
+
+    const idle = target.closest<HTMLElement>("[data-idle]")?.dataset.idle;
+    if (idle) {
+      handlers.onIdleFade(idle === "on");
       render();
       return;
     }

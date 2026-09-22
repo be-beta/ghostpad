@@ -54,7 +54,15 @@ import {
 import { applyStaticTranslations, setLang, t, type Lang } from "./core/i18n";
 import { createEditor, type EditorSession, type GhostEditor } from "./editor/editor";
 import { createPrompter, SPEED_STEP, type Prompter } from "./editor/prompter";
-import { enabledCount, moduleLabel, renderMetrics, type MetricKey } from "./ui/metrics";
+import {
+  CONTROL_KEYS,
+  controlLabel,
+  enabledCount,
+  moduleLabel,
+  renderMetrics,
+  type ControlKey,
+  type MetricKey,
+} from "./ui/metrics";
 import { createHistoryPanel } from "./ui/history";
 import { createSettingsPanel } from "./ui/settings";
 import { createShortcutsPanel } from "./ui/shortcuts";
@@ -85,6 +93,7 @@ const el = {
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
   settings: document.getElementById("settings") as HTMLDivElement,
   chipSettings: document.getElementById("chip-settings") as HTMLButtonElement,
+  fontSize: document.getElementById("fontsize") as HTMLSpanElement,
   fontSmaller: document.getElementById("font-smaller") as HTMLButtonElement,
   fontBigger: document.getElementById("font-bigger") as HTMLButtonElement,
   fontSizeValue: document.getElementById("font-size-value") as HTMLSpanElement,
@@ -152,10 +161,20 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
 const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
 
 const settingsPanel = createSettingsPanel(el.settings, {
-  values: () => ({ lang: settings.lang, font: settings.font, fontSize: settings.fontSize }),
+  values: () => ({
+    lang: settings.lang,
+    font: settings.font,
+    fontSize: settings.fontSize,
+    idleFade: settings.idleFade,
+  }),
   onLang: changeLang,
   onFont: changeFont,
   onFontSize: changeFontSize,
+  // Tambem vive aqui porque o atalho dele e clicar na opacidade — e a opacidade
+  // pode estar escondida da barra.
+  onIdleFade: (value) => {
+    if (value !== settings.idleFade) toggleIdleFade();
+  },
 });
 
 /**
@@ -295,6 +314,7 @@ function renderFontSize(): void {
 function changeFontSize(size: number): void {
   settings.fontSize = applyFontSize(size);
   renderFontSize();
+  editor?.remeasure();
   // A folga do teleprompter depende da altura da linha, que acabou de mudar.
   if (prompter?.state().active) applyReadingPadding(true);
   void saveSettings(settings);
@@ -303,6 +323,7 @@ function changeFontSize(size: number): void {
 function changeFont(font: FontId): void {
   settings.font = font;
   void applyFont(font).then(() => {
+    editor?.remeasure();
     if (prompter?.state().active) applyReadingPadding(true);
   });
   void saveSettings(settings);
@@ -447,15 +468,37 @@ function updateMetrics(text: string): void {
 function renderModulesMenu(): void {
   el.modules.textContent = "";
 
+  const grupo = (titulo: string) => {
+    const header = document.createElement("h3");
+    header.className = "gp-menu__group";
+    header.textContent = titulo;
+    el.modules.append(header);
+  };
+
+  const item = (key: string, tipo: "module" | "control", label: string, ligado: boolean) => {
+    const button = document.createElement("button");
+    button.className = "gp-menu__item";
+    button.dataset.on = String(ligado);
+    button.dataset[tipo] = key;
+    button.innerHTML = `<span class="gp-menu__box"></span>${label}`;
+    el.modules.append(button);
+  };
+
+  grupo(t("menu.metrics"));
   const keys: MetricKey[] = ["words", "chars", "lines", "tokens", "pages"];
-  for (const key of keys) {
-    const item = document.createElement("button");
-    item.className = "gp-menu__item";
-    item.dataset.on = String(settings.statusBar[key]);
-    item.dataset.module = key;
-    item.innerHTML = `<span class="gp-menu__box"></span>${moduleLabel(key)}`;
-    el.modules.append(item);
+  for (const key of keys) item(key, "module", moduleLabel(key), settings.statusBar[key]);
+
+  grupo(t("menu.controls"));
+  for (const key of CONTROL_KEYS) {
+    item(key, "control", controlLabel(key), settings.barControls[key]);
   }
+}
+
+/** Mostra ou esconde os controles da barra conforme a escolha do usuario. */
+function applyBarControls(): void {
+  el.fontSize.hidden = !settings.barControls.fontSize;
+  el.metricOpacity.hidden = !settings.barControls.opacity;
+  el.chipBackdrop.hidden = !settings.barControls.backdrop;
 }
 
 function toggleModulesMenu(open?: boolean): void {
@@ -1267,12 +1310,26 @@ function wireEvents(): void {
   el.chipModules.addEventListener("click", () => toggleModulesMenu());
 
   el.modules.addEventListener("click", (event) => {
-    const item = (event.target as HTMLElement).closest<HTMLElement>("[data-module]");
-    if (!item) return;
-    const key = item.dataset.module as MetricKey;
-    settings.statusBar = { ...settings.statusBar, [key]: !settings.statusBar[key] };
-    item.dataset.on = String(settings.statusBar[key]);
-    updateMetrics(editor.getText());
+    const alvo = (event.target as HTMLElement).closest<HTMLElement>("[data-module], [data-control]");
+    if (!alvo) return;
+
+    const metrica = alvo.dataset.module as MetricKey | undefined;
+    if (metrica) {
+      settings.statusBar = { ...settings.statusBar, [metrica]: !settings.statusBar[metrica] };
+      alvo.dataset.on = String(settings.statusBar[metrica]);
+      updateMetrics(editor.getText());
+    }
+
+    const controle = alvo.dataset.control as ControlKey | undefined;
+    if (controle) {
+      settings.barControls = {
+        ...settings.barControls,
+        [controle]: !settings.barControls[controle],
+      };
+      alvo.dataset.on = String(settings.barControls[controle]);
+      applyBarControls();
+    }
+
     void saveSettings(settings);
   });
 
@@ -1408,6 +1465,7 @@ async function boot(): Promise<void> {
   }
 
   el.metricOpacity.dataset.idle = String(settings.idleFade);
+  applyBarControls();
   scheduleIdleFade();
 
   wireEvents();

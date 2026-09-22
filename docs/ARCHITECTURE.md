@@ -628,6 +628,29 @@ fonte de fallback. No menu, cada nome aparece na própria fonte.
 ou pelos botões `A−` `A+` na barra de status. Mudar o tamanho recalcula a folga
 de leitura do teleprompter, que depende da altura da linha.
 
+### A barra inteira é opcional **[D]**
+
+O menu `⋯` passou a controlar dois grupos: **contagens** (palavras, caracteres,
+linhas, tokens, páginas) e **controles** (tamanho do texto, opacidade, fundo da
+janela). Cada um liga e desliga em separado, então a barra pode ficar com uma
+única informação — ou com nenhuma.
+
+O seletor de fundo vem **desligado por padrão**: o desfoque nativo falha em
+parte das máquinas, então ele só interessa a quem for testá-lo.
+
+Esconder a opacidade criava uma armadilha: o único jeito de ligar o
+esmaecimento automático era clicar nela. Por isso o esmaecimento passou também
+para o painel de configurações. Um controle não pode desaparecer junto com a
+única porta de entrada dele.
+
+### Tipografia exige remedir **[D]**
+
+O CodeMirror guarda a altura das linhas em cache e não percebe mudanças de
+tipografia vindas do CSS — trocar o tamanho do texto deixava as linhas ocupando
+o espaço do tamanho anterior. Agora o app pede uma remedição depois de trocar
+tamanho ou família, **no quadro seguinte**: medir antes de a fonte estar
+aplicada no DOM mediria o tamanho antigo de novo.
+
 ### Falha de inicialização visível **[D]**
 
 Um erro no boot deixaria a janela em branco, sem explicação — o oposto do que o

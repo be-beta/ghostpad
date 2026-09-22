@@ -17,7 +17,7 @@ import { load, type Store } from "@tauri-apps/plugin-store";
 import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE, type FontId } from "./fonts";
 import { detectLang, type Lang } from "./i18n";
-import { DEFAULT_MODULES, type MetricModules } from "../ui/metrics";
+import { DEFAULT_CONTROLS, DEFAULT_MODULES, type BarControls, type MetricModules } from "../ui/metrics";
 
 export interface Settings {
   opacity: number;
@@ -30,6 +30,8 @@ export interface Settings {
   shortcuts: Partial<Record<GlobalAction, KeyCombo>>;
   /** Metricas visiveis na barra de status. */
   statusBar: MetricModules;
+  /** Controles visiveis na barra de status. */
+  barControls: BarControls;
   /** Largura da faixa do teleprompter, em pixels logicos. */
   notchWidth: number;
   lang: Lang;
@@ -62,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   activeNote: 1,
   shortcuts: {},
   statusBar: { ...DEFAULT_MODULES },
+  barControls: { ...DEFAULT_CONTROLS },
 };
 
 // Modo fantasma fica fora de propósito: iniciar nele deixaria o app sem
@@ -82,6 +85,7 @@ export async function loadSettings(): Promise<Settings> {
     ...DEFAULT_SETTINGS,
     ...(saved ?? {}),
     statusBar: { ...DEFAULT_SETTINGS.statusBar, ...(saved?.statusBar ?? {}) },
+    barControls: { ...DEFAULT_SETTINGS.barControls, ...(saved?.barControls ?? {}) },
     // Uma aba precisa existir sempre: lista vazia deixaria o app sem texto.
     openNotes: saved?.openNotes?.length ? [...saved.openNotes] : [...DEFAULT_SETTINGS.openNotes],
     shortcuts: { ...(saved?.shortcuts ?? {}) },

@@ -709,6 +709,20 @@ body[data-narrow="true"] .gp-fontsize {
   font-size: 12px;
 }
 
+/* Titulo de grupo: separa contagens de controles sem precisar de linha. */
+.gp-menu__group {
+  margin: 8px 8px 2px;
+  color: var(--gp-text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-menu__group:first-child {
+  margin-top: 2px;
+}
+
 .gp-menu__item {
   display: flex;
   align-items: center;

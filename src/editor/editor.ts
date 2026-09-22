@@ -224,6 +224,14 @@ export interface GhostEditor {
   content(): HTMLElement;
   /** Altura de uma linha, em pixels. */
   lineHeight(): number;
+  /**
+   * Manda o editor medir tudo de novo.
+   *
+   * O CodeMirror guarda a altura das linhas em cache e nao percebe mudancas de
+   * tipografia que vem do CSS. Sem isto, trocar o tamanho do texto deixava as
+   * linhas ocupando o espaco do tamanho anterior ate algo mais forcar a conta.
+   */
+  remeasure(): void;
   view: EditorView;
 }
 
@@ -286,6 +294,11 @@ export function createEditor(options: EditorOptions): GhostEditor {
     scroller: () => view.scrollDOM,
     content: () => view.contentDOM,
     lineHeight: () => view.defaultLineHeight,
+    remeasure: () => {
+      // Num quadro seguinte: a fonte nova precisa estar aplicada no DOM antes
+      // de o editor medir, senao ele remede o tamanho antigo.
+      requestAnimationFrame(() => view.requestMeasure());
+    },
     captureSession: () => view.state,
     restoreSession: (session) => {
       view.setState(session);
