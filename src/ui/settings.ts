@@ -69,7 +69,7 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     const temas = (["system", "light", "dark"] as Theme[])
       .map(
         (item) => `
-        <button class="gp-option" data-theme="${item}" data-on="${item === theme}">
+        <button class="gp-option" data-theme-option="${item}" data-on="${item === theme}">
           ${t(`theme.${item}` as "theme.system")}
         </button>`,
       )
@@ -137,11 +137,51 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
       </div>`;
   };
 
+  /**
+   * Atualiza só os marcadores de seleção.
+   *
+   * Refazer o painel inteiro a cada clique reiniciava a animação de entrada, o
+   * que aparecia como uma piscada a cada escolha.
+   */
+  const syncState = () => {
+    const { lang, font, fontSize, idleFade, theme, accent } = handlers.values();
+
+    // A chave vai explicita: a ordem dos atributos de um elemento nao e
+    // garantida, entao ler "o primeiro" daria certo por acaso.
+    const marcar = (chave: string, atual: string) => {
+      for (const node of host.querySelectorAll<HTMLElement>(`[data-${chave}]`)) {
+        node.dataset.on = String(node.getAttribute(`data-${chave}`) === atual);
+      }
+    };
+
+    marcar("lang", lang);
+    marcar("font", font);
+    marcar("theme-option", theme);
+    marcar("accent", accent);
+
+    for (const node of host.querySelectorAll<HTMLElement>("[data-idle]")) {
+      node.dataset.on = String((node.dataset.idle === "on") === idleFade);
+    }
+
+    const valor = host.querySelector<HTMLElement>(".gp-options__value");
+    if (valor) valor.textContent = t("settings.fontSize.value", { n: fontSize });
+
+    const menor = host.querySelector<HTMLButtonElement>('[data-size="-1"]');
+    const maior = host.querySelector<HTMLButtonElement>('[data-size="1"]');
+    if (menor) menor.disabled = fontSize <= FONT_SIZE_MIN;
+    if (maior) maior.disabled = fontSize >= FONT_SIZE_MAX;
+  };
+
   const panel: SettingsPanel = {
     isOpen: () => !host.hidden,
     open() {
       render();
       host.hidden = false;
+      // A animação de entrada vale para a abertura, não para cada clique.
+      host.classList.add("gp-sheet--enter");
+      host.addEventListener("animationend", () => host.classList.remove("gp-sheet--enter"), {
+        once: true,
+      });
     },
     close() {
       host.hidden = true;
@@ -168,35 +208,35 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     const font = target.closest<HTMLElement>("[data-font]")?.dataset.font;
     if (font) {
       handlers.onFont(font as FontId);
-      render();
+      syncState();
       return;
     }
 
     const size = target.closest<HTMLElement>("[data-size]")?.dataset.size;
     if (size) {
       handlers.onFontSize(handlers.values().fontSize + Number(size));
-      render();
+      syncState();
       return;
     }
 
-    const tema = target.closest<HTMLElement>("[data-theme]")?.dataset.theme;
+    const tema = target.closest<HTMLElement>("[data-theme-option]")?.dataset.themeOption;
     if (tema) {
       handlers.onTheme(tema as Theme);
-      render();
+      syncState();
       return;
     }
 
     const cor = target.closest<HTMLElement>("[data-accent]")?.dataset.accent;
     if (cor) {
       handlers.onAccent(cor as AccentId);
-      render();
+      syncState();
       return;
     }
 
     const idle = target.closest<HTMLElement>("[data-idle]")?.dataset.idle;
     if (idle) {
       handlers.onIdleFade(idle === "on");
-      render();
+      syncState();
       return;
     }
 

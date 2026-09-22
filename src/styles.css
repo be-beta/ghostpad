@@ -262,7 +262,8 @@ body {
 /* Recolhidas: cada aba vira um ponto e so a atual fica acesa. O + some junto,
    porque criar aba nao e algo que se faca sem olhar. */
 body[data-tabs="collapsed"] .gp-tab {
-  width: 9px;
+  max-width: 9px;
+  min-width: 9px;
   height: 9px;
   padding: 0;
   gap: 0;
@@ -281,10 +282,18 @@ body[data-tabs="collapsed"] .gp-tabs__add {
   display: none !important;
 }
 
+/* `max-width` no lugar de `width`: largura automatica nao anima, e era por isso
+   que as abas recolhiam num corte seco e so a volta parecia suave. */
+.gp-tab {
+  max-width: 160px;
+  overflow: hidden;
+}
+
 .gp-tab,
 .gp-tabs__add {
-  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease),
-    width 160ms var(--gp-ease), padding 160ms var(--gp-ease);
+  transition: background-color 140ms var(--gp-ease), color 140ms var(--gp-ease),
+    max-width 180ms var(--gp-ease), min-width 180ms var(--gp-ease),
+    height 180ms var(--gp-ease), padding 180ms var(--gp-ease);
 }
 
 /* Janela estreita: as abas viram so o numero, sem o X. */
@@ -1286,7 +1295,7 @@ body[data-ghost="true"] .gp-shell {
   animation: gp-sheet-in 140ms var(--gp-ease);
 }
 
-.gp-sheet:not([hidden]) .gp-sheet__card {
+.gp-sheet--enter .gp-sheet__card {
   animation: gp-card-in 180ms var(--gp-ease);
 }
 
