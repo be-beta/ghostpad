@@ -14,18 +14,37 @@ export type MetricKey = "words" | "chars" | "lines" | "tokens" | "pages";
 export type MetricModules = Record<MetricKey, boolean>;
 
 /** Controles da barra que podem ser escondidos, além das contagens. */
-export type ControlKey = "fontSize" | "opacity" | "backdrop";
+export type ControlKey =
+  | "fontSize"
+  | "opacity"
+  | "backdrop"
+  | "onTop"
+  | "ghost"
+  | "stealth"
+  | "prompter";
 
 export type BarControls = Record<ControlKey, boolean>;
 
-export const CONTROL_KEYS: ControlKey[] = ["fontSize", "opacity", "backdrop"];
+export const CONTROL_KEYS: ControlKey[] = [
+  "onTop",
+  "ghost",
+  "stealth",
+  "prompter",
+  "fontSize",
+  "opacity",
+  "backdrop",
+];
 
 export const DEFAULT_CONTROLS: BarControls = {
+  onTop: true,
+  ghost: true,
+  stealth: true,
   fontSize: true,
   opacity: true,
-  // Desligado por padrão: o desfoque nativo falha em parte das máquinas, então
-  // o seletor de fundo só interessa a quem for testá-lo.
+  // Desligados por padrão: o desfoque nativo falha em parte das máquinas, e os
+  // controles do teleprompter só interessam a quem usa o modo.
   backdrop: false,
+  prompter: false,
 };
 
 export const controlLabel = (key: ControlKey): string => t(`bar.${key}` as "bar.fontSize");

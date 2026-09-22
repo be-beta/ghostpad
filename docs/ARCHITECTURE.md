@@ -628,6 +628,32 @@ fonte de fallback. No menu, cada nome aparece na própria fonte.
 ou pelos botões `A−` `A+` na barra de status. Mudar o tamanho recalcula a folga
 de leitura do teleprompter, que depende da altura da linha.
 
+### `Ctrl+Alt` é `AltGr` no Windows **[D]**
+
+O atalho de tamanho do texto era `Ctrl+Alt+=`, e num teclado ABNT2 chegava ao
+app como `§`: o Windows trata `Ctrl+Alt` como `AltGr`, que produz os caracteres
+alternativos do layout. Passou a ser `Ctrl+=` e `Ctrl+−`, a convenção de zoom,
+lidos por `event.code` (posição física da tecla) em vez do caractere.
+
+Vale como regra: **`Ctrl+Alt` só com teclas que não produzem caractere** —
+dígitos, setas e letras sobrevivem, símbolos não.
+
+### A barra inteira é opcional, inclusive os estados **[D]**
+
+Além das contagens e dos controles, os três chips de estado (topo, fantasma,
+oculto) e os controles do teleprompter agora entram e saem pelo menu `⋯`. Quem
+nunca usa um modo não precisa vê-lo: a barra pode ficar sem nada.
+
+### Teleprompter em tela cheia **[D]**
+
+`Ctrl+Alt+F`, ou o botão na barra. A janela ocupa a área útil e o texto cresce
+80%, porque uma fonte de leitura de perto fica pequena demais a dois metros de
+distância. Tamanho e geometria anteriores voltam na saída, e sair do
+teleprompter sai da tela cheia junto — a tela cheia existe para ele.
+
+O botão de play da barra **liga o teleprompter** se ele estiver desligado: quem
+clica em play quer ler, não descobrir que precisava ligar o modo antes.
+
 ### Tema e cor de destaque **[D]**
 
 Todas as cores viraram variáveis: o tema escuro é a base e o claro redefine só o

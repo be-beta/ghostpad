@@ -95,6 +95,8 @@ const el = {
   settings: document.getElementById("settings") as HTMLDivElement,
   chipSettings: document.getElementById("chip-settings") as HTMLButtonElement,
   fontSize: document.getElementById("fontsize") as HTMLSpanElement,
+  barPrompter: document.getElementById("bar-prompter") as HTMLSpanElement,
+  barPrompterSpeed: document.getElementById("bar-prompter-speed") as HTMLSpanElement,
   fontSmaller: document.getElementById("font-smaller") as HTMLButtonElement,
   fontBigger: document.getElementById("font-bigger") as HTMLButtonElement,
   fontSizeValue: document.getElementById("font-size-value") as HTMLSpanElement,
@@ -509,9 +511,30 @@ function renderModulesMenu(): void {
 
 /** Mostra ou esconde os controles da barra conforme a escolha do usuario. */
 function applyBarControls(): void {
-  el.fontSize.hidden = !settings.barControls.fontSize;
-  el.metricOpacity.hidden = !settings.barControls.opacity;
-  el.chipBackdrop.hidden = !settings.barControls.backdrop;
+  const mostrar = settings.barControls;
+  el.fontSize.hidden = !mostrar.fontSize;
+  el.metricOpacity.hidden = !mostrar.opacity;
+  el.chipBackdrop.hidden = !mostrar.backdrop;
+  el.chipOnTop.hidden = !mostrar.onTop;
+  el.chipGhost.hidden = !mostrar.ghost;
+  el.chipStealth.hidden = !mostrar.stealth;
+  el.barPrompter.hidden = !mostrar.prompter;
+}
+
+/** Reflete o estado do teleprompter nos botões da barra. */
+function renderBarPrompter(): void {
+  const estado = prompter?.state();
+  const botao = el.barPrompter.querySelector<HTMLElement>('[data-bar-prompter="play"]');
+  if (botao) botao.textContent = estado?.active && !estado.paused ? "❚❚" : "▶";
+
+  el.barPrompterSpeed.textContent = String(estado?.speed ?? 10);
+
+  const marcar = (acao: string, ligado: boolean) => {
+    const node = el.barPrompter.querySelector<HTMLElement>(`[data-bar-prompter="${acao}"]`);
+    if (node) node.dataset.on = String(ligado);
+  };
+  marcar("notch", isNotch());
+  marcar("stage", beforeStage !== null);
 }
 
 function toggleModulesMenu(open?: boolean): void {
@@ -788,6 +811,7 @@ function togglePrompter(): void {
  */
 async function exitPrompter(): Promise<void> {
   prompter.stop();
+  if (beforeStage) await toggleStage();
   if (isNotch()) await toggleNotch();
 }
 
@@ -797,6 +821,7 @@ function onPrompterChange(state: { active: boolean; paused: boolean; speed: numb
   editor.setEditable(!state.active);
 
   el.prompter.hidden = !state.active;
+  renderBarPrompter();
   el.prompterPlay.textContent = state.paused ? "▶" : "❚❚";
   el.prompterSpeed.textContent = String(state.speed);
 
@@ -812,6 +837,53 @@ function onPrompterChange(state: { active: boolean; paused: boolean; speed: numb
  * A altura sai da altura real de uma linha do editor, e nao de um numero fixo:
  * quem muda o tamanho da fonte espera que a faixa acompanhe.
  */
+/** Geometria e tamanho de texto de antes da tela cheia. */
+let beforeStage: { x: number; y: number; width: number; height: number; fontSize: number } | null =
+  null;
+
+/**
+ * Teleprompter em tela cheia: a janela ocupa a area util e o texto cresce.
+ *
+ * Serve para quem le de longe, com o monitor inteiro virando teleprompter. O
+ * tamanho do texto sobe junto porque uma fonte de leitura de perto fica pequena
+ * demais a dois metros de distancia; o valor anterior volta na saida.
+ */
+async function toggleStage(): Promise<void> {
+  if (beforeStage) {
+    const { x, y, width, height, fontSize } = beforeStage;
+    beforeStage = null;
+    el.body.dataset.stage = "false";
+    changeFontSize(fontSize);
+    await appWindow.setSize(new PhysicalSize(width, height));
+    await appWindow.setPosition(new PhysicalPosition(x, y));
+    toast(t("toast.stage.off"));
+    renderBarPrompter();
+    return;
+  }
+
+  if (isNotch()) await toggleNotch();
+
+  const position = await appWindow.outerPosition();
+  const size = await appWindow.outerSize();
+  beforeStage = {
+    x: position.x,
+    y: position.y,
+    width: size.width,
+    height: size.height,
+    fontSize: settings.fontSize,
+  };
+
+  el.body.dataset.stage = "true";
+  await snapHalf("full");
+  changeFontSize(Math.min(FONT_SIZE_MAX, Math.round(settings.fontSize * 1.8)));
+
+  if (!prompter.state().active) togglePrompter();
+  else applyReadingPadding(true);
+
+  toast(t("toast.stage.on"));
+  renderBarPrompter();
+}
+
 /** Altura da faixa: tres linhas do editor mais uma folga pequena. */
 function notchHeight(): number {
   const lineHeight =
@@ -1063,14 +1135,17 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
-  // Ctrl+Alt+= e Ctrl+Alt+− mudam o tamanho do texto, como em qualquer editor.
-  if (event.altKey && (event.key === "=" || event.key === "+")) {
-    changeFontSize(settings.fontSize + 1);
-    return consume(event);
-  }
-  if (event.altKey && (event.key === "-" || event.key === "_")) {
-    changeFontSize(settings.fontSize - 1);
-    return consume(event);
+  // Ctrl+= e Ctrl+−, a convenção de zoom. Antes era Ctrl+Alt, mas no Windows
+  // Ctrl+Alt equivale a AltGr, que em teclados ABNT2 produz outro caractere: a
+  // tecla chegava aqui como "§". `event.code` é a posição física, que não muda
+  // com o layout.
+  if (!event.altKey) {
+    const maior = event.code === "Equal" || event.code === "NumpadAdd";
+    const menor = event.code === "Minus" || event.code === "NumpadSubtract";
+    if (maior || menor) {
+      changeFontSize(settings.fontSize + (maior ? 1 : -1));
+      return consume(event);
+    }
   }
 
   if (isSlash(event)) {
@@ -1097,7 +1172,11 @@ function handleKeydown(event: KeyboardEvent): boolean {
       return consume(event);
     }
     if (event.key === "n" || event.key === "N") {
-      void toggleNotch();
+      void toggleNotch().then(renderBarPrompter);
+      return consume(event);
+    }
+    if (event.key === "f" || event.key === "F") {
+      void toggleStage();
       return consume(event);
     }
   }
@@ -1340,6 +1419,29 @@ function wireEvents(): void {
   el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
   el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
   el.fontBigger.addEventListener("click", () => changeFontSize(settings.fontSize + 1));
+
+  el.barPrompter.addEventListener("click", (event) => {
+    const acao = (event.target as HTMLElement).closest<HTMLElement>("[data-bar-prompter]")?.dataset
+      .barPrompter;
+    if (!acao) return;
+
+    // O play liga o teleprompter se ele estiver desligado: quem clica em play
+    // quer ler, nao descobrir que precisava ligar o modo antes.
+    if (acao === "play") {
+      if (!prompter.state().active) togglePrompter();
+      else prompter.togglePause();
+    } else if (acao === "faster") {
+      prompter.nudgeSpeed(1);
+    } else if (acao === "slower") {
+      prompter.nudgeSpeed(-1);
+    } else if (acao === "notch") {
+      void toggleNotch().then(renderBarPrompter);
+    } else if (acao === "stage") {
+      void toggleStage();
+    }
+
+    renderBarPrompter();
+  });
   el.chipModules.addEventListener("click", () => toggleModulesMenu());
 
   el.modules.addEventListener("click", (event) => {
@@ -1506,6 +1608,7 @@ async function boot(): Promise<void> {
 
   el.metricOpacity.dataset.idle = String(settings.idleFade);
   applyBarControls();
+  renderBarPrompter();
   scheduleIdleFade();
 
   wireEvents();

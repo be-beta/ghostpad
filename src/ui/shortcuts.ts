@@ -75,6 +75,7 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Espaço", label: t("shortcuts.prompterPause") },
         { keys: "↑ / ↓", label: t("shortcuts.prompterSpeed") },
         { keys: "Ctrl+Alt+N", label: t("shortcuts.notch") },
+        { keys: "Ctrl+Alt+F", label: t("shortcuts.stage") },
         { keys: "Ctrl+Alt+Shift+← →", label: t("shortcuts.notchWidth") },
         { keys: "Esc", label: t("shortcuts.prompterExit") },
       ],
@@ -84,7 +85,7 @@ function sections(effects: EffectsReport): Section[] {
       rows: [
         { keys: "Ctrl+[ / Ctrl+]", label: t("shortcuts.opacity") },
         { keys: "Ctrl+Shift+[ / ]", label: t("shortcuts.opacityJump") },
-        { keys: "Ctrl+Alt+= / −", label: t("shortcuts.fontSize") },
+        { keys: "Ctrl+= / Ctrl+−", label: t("shortcuts.fontSize") },
         { keys: "Ctrl+,", label: t("shortcuts.settings") },
         { keys: "Ctrl+P", label: t("shortcuts.alwaysOnTop") },
         { keys: "Ctrl+Shift+G", label: t("shortcuts.ghost") },
@@ -166,6 +167,11 @@ export function createShortcutsPanel(
       // Renderiza a cada abertura: os atalhos globais podem ter mudado.
       render();
       host.hidden = false;
+      // A animação de entrada vale para a abertura, não para cada redesenho.
+      host.classList.add("gp-sheet--enter");
+      host.addEventListener("animationend", () => host.classList.remove("gp-sheet--enter"), {
+        once: true,
+      });
     },
     close() {
       if (capturing) stopCapture();

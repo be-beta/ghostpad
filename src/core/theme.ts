@@ -11,7 +11,7 @@
 
 export type Theme = "system" | "light" | "dark";
 
-export type AccentId = "mint" | "blue" | "violet" | "amber" | "coral" | "slate";
+export type AccentId = "mint" | "blue" | "violet" | "amber" | "coral" | "purple" | "slate";
 
 export interface Accent {
   id: AccentId;
@@ -25,6 +25,7 @@ export const ACCENTS: Accent[] = [
   { id: "violet", rgb: "167, 139, 250" },
   { id: "amber", rgb: "251, 191, 36" },
   { id: "coral", rgb: "251, 113, 133" },
+  { id: "purple", rgb: "50, 21, 173" },
   { id: "slate", rgb: "148, 163, 184" },
 ];
 

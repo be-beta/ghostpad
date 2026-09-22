@@ -89,6 +89,11 @@ export function createHistoryPanel(
         onError(t("history.readFailed", { error: String(error) }));
       }
       host.hidden = false;
+      // A animação de entrada vale para a abertura, não para cada redesenho.
+      host.classList.add("gp-sheet--enter");
+      host.addEventListener("animationend", () => host.classList.remove("gp-sheet--enter"), {
+        once: true,
+      });
     },
     close() {
       host.hidden = true;
