@@ -10,6 +10,9 @@ apareça no vídeo.
 > **Estado:** roteiro original concluído — janela, editor, métricas, histórico,
 > múltiplas notas e teleprompter.
 > Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+>
+> **Nome:** o app se chamara **Harp** no lancamento. Conceito, manifesto,
+> tom de voz e briefing do site em [docs/IDENTIDADE.md](docs/IDENTIDADE.md).
 
 ## Manifesto
 
