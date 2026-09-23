@@ -1,0 +1,73 @@
+# Publica uma versão do Harp.
+#
+# Dispara ao marcar uma tag `v*` (`git tag v0.1.0 && git push origin v0.1.0`).
+# O instalador é enviado com nome fixo, `Harp-Setup.exe`, para que o botão de
+# download do site possa apontar sempre para o mesmo endereço:
+#
+#   https://github.com/be-beta/harp/releases/latest/download/Harp-Setup.exe
+#
+# O instalador não é assinado. Na primeira execução o Windows mostra o aviso do
+# SmartScreen; um certificado custa caro e a Store cobra conta de desenvolvedor,
+# então por enquanto o aviso é o preço de distribuir de graça. O README explica
+# como passar por ele.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run tauri build
+
+      - name: Nome fixo para o instalador
+        shell: pwsh
+        run: |
+          $nsis = Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe | Select-Object -First 1
+          if (-not $nsis) { throw "instalador NSIS nao encontrado" }
+          Copy-Item $nsis.FullName Harp-Setup.exe
+          # A soma vai junto: e o que o winget pede, e o que permite a quem
+          # baixa conferir que o arquivo e o mesmo que saiu daqui.
+          (Get-FileHash Harp-Setup.exe -Algorithm SHA256).Hash | Out-File -Encoding ascii Harp-Setup.exe.sha256
+
+      # Sem tag, o disparo manual serve só para saber se o build ainda passa.
+      - name: Guardar o instalador
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Harp-Setup
+          path: Harp-Setup.exe
+
+      - name: Publicar
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" `
+            Harp-Setup.exe Harp-Setup.exe.sha256 `
+            --title "Harp ${{ github.ref_name }}" `
+            --generate-notes

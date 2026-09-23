@@ -8,7 +8,8 @@ Windows, gratuito, tudo local.
 > **Estado:** roteiro original concluído — janela, editor, métricas, histórico,
 > múltiplas notas e teleprompter. Ainda sem versão publicada.
 > Arquitetura e decisões em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
-> conceito, manifesto e identidade em [docs/IDENTIDADE.md](docs/IDENTIDADE.md).
+> conceito, manifesto e identidade em [docs/IDENTIDADE.md](docs/IDENTIDADE.md);
+> como publicar em [docs/DISTRIBUICAO.md](docs/DISTRIBUICAO.md).
 >
 > O projeto se chamou **GhostPad** até aqui. Quem usou a versão antiga não perde
 > nada: a pasta de dados é migrada na primeira abertura.
@@ -81,6 +82,22 @@ Sem conta, sem nuvem, sem telemetria, sem rede.
 Não é gerenciador de notas, não organiza sua vida, não sincroniza, não tem
 pastas nem etiquetas, não quer virar seu segundo cérebro. É uma superfície para
 escrever por cima do que você está fazendo — e sair da frente depois.
+
+## Instalação
+
+[**Baixar o Harp**](https://github.com/be-beta/harp/releases/latest/download/Harp-Setup.exe)
+— Windows 10 (2004+) ou 11, gratuito.
+
+O instalador ainda não é assinado, então na primeira vez o Windows mostra a tela
+azul do **SmartScreen**. Não é vírus nem erro: é o aviso que o Windows dá a todo
+programa novo sem certificado, que custa algumas centenas de dólares por ano.
+Para continuar, clique em **Mais informações** e depois em **Executar assim
+mesmo**.
+
+Quem preferir conferir antes: cada versão publica o `SHA256` do instalador ao
+lado dele, e o arquivo é construído em público pelo
+[workflow de release](.github/workflows/release.yml) — ninguém, nem o autor,
+envia um binário feito na própria máquina.
 
 ## Recursos
 

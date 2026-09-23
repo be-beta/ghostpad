@@ -188,6 +188,6 @@ dois.
       `io.github.be-beta.harp`.
 - [x] Licença MIT.
 - [ ] Completar o nome do autor na licença (está só "Bernardo").
-- [ ] Decidir se o site fica em pasta própria do mesmo repositório ou em
-      repositório separado.
+- [x] Site no mesmo repositório, em pasta própria (não em `/docs`, que já é a
+      documentação técnica). Ver [DISTRIBUICAO.md](DISTRIBUICAO.md).
 - [ ] Primeira versão publicada em Releases.
