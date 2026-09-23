@@ -34,6 +34,8 @@ import { tags } from "@lezer/highlight";
 export interface EditorOptions {
   parent: HTMLElement;
   initialText: string;
+  /** Tamanho do texto em pixels. */
+  fontSize: number;
   /** Chamado a cada alteracao do documento. */
   onChange: (text: string) => void;
   /**
@@ -120,7 +122,6 @@ const theme = EditorView.theme(
       height: "100%",
       color: "var(--gp-text)",
       backgroundColor: "transparent",
-      fontSize: "var(--gp-font-size)",
     },
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
@@ -195,6 +196,30 @@ const plainPaste = EditorView.clipboardInputFilter.of((text) =>
  */
 const editable = new Compartment();
 
+/**
+ * Tipografia como extensao, e nao como variavel de CSS trocada por fora.
+ *
+ * O CodeMirror guarda altura de linha e largura de caractere em cache e so
+ * remede quando percebe que algo mudou. Uma variavel de CSS trocada por fora
+ * passa despercebida: o texto crescia, mas a camada do cursor continuava
+ * desenhada com a medida antiga, e a barra ficava na altura anterior.
+ *
+ * Trocando o tema do editor, o proprio CodeMirror marca a tipografia como suja
+ * e remede tudo. E o caminho previsto pela biblioteca, e nao um empurrao no
+ * cache dela.
+ */
+const typography = new Compartment();
+
+/**
+ * O tamanho vai literal, e nao como `var()`: o valor precisa estar no tema para
+ * que uma troca seja uma troca de verdade. A familia continua vindo do CSS, que
+ * a carrega sob demanda; como este tema e reconstruido junto, trocar de fonte
+ * tambem dispara a remedicao.
+ */
+function typographyTheme(size: number): Extension {
+  return EditorView.theme({ "&": { fontSize: `${size}px` } });
+}
+
 // --- API -------------------------------------------------------------------
 
 /**
@@ -224,14 +249,8 @@ export interface GhostEditor {
   content(): HTMLElement;
   /** Altura de uma linha, em pixels. */
   lineHeight(): number;
-  /**
-   * Manda o editor medir tudo de novo.
-   *
-   * O CodeMirror guarda a altura das linhas em cache e nao percebe mudancas de
-   * tipografia que vem do CSS. Sem isto, trocar o tamanho do texto deixava as
-   * linhas ocupando o espaco do tamanho anterior ate algo mais forcar a conta.
-   */
-  remeasure(): void;
+  /** Avisa que o tamanho ou a familia do texto mudou. */
+  setTypography(size: number): void;
   view: EditorView;
 }
 
@@ -239,6 +258,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
   const extensions: Extension[] = [
     // Atalhos do app primeiro: uma tecla do GhostPad nunca chega ao editor.
     editable.of(EditorView.editable.of(true)),
+    typography.of(typographyTheme(options.fontSize)),
     Prec.highest(
       EditorView.domEventHandlers({
         keydown: (event) => options.onAppKeydown(event),
@@ -294,15 +314,8 @@ export function createEditor(options: EditorOptions): GhostEditor {
     scroller: () => view.scrollDOM,
     content: () => view.contentDOM,
     lineHeight: () => view.defaultLineHeight,
-    remeasure: () => {
-      // Tres tentativas de proposito. A fonte precisa estar aplicada no DOM
-      // antes da medicao, e o instante em que isso acontece varia: o proximo
-      // quadro cobre o caso comum, o tempo curto cobre a aplicacao do CSS, e
-      // `fonts.ready` cobre a familia que ainda estava carregando. Medir de
-      // novo e barato; ficar com a altura errada trava a linha no lugar antigo.
-      requestAnimationFrame(() => view.requestMeasure());
-      window.setTimeout(() => view.requestMeasure(), 160);
-      void document.fonts?.ready.then(() => view.requestMeasure());
+    setTypography: (size) => {
+      view.dispatch({ effects: typography.reconfigure(typographyTheme(size)) });
     },
     captureSession: () => view.state,
     restoreSession: (session) => {

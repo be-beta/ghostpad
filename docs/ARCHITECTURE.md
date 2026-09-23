@@ -732,26 +732,21 @@ esmaecimento automático era clicar nela. Por isso o esmaecimento passou também
 para o painel de configurações. Um controle não pode desaparecer junto com a
 única porta de entrada dele.
 
-### Tipografia exige remedir **[D]**
+### Tipografia é extensão, não variável de CSS **[D]**
 
-O CodeMirror guarda a altura das linhas em cache e não percebe mudanças de
-tipografia vindas do CSS — trocar o tamanho do texto deixava as linhas ocupando
-o espaço do tamanho anterior. Agora o app pede uma remedição depois de trocar
-tamanho ou família, **no quadro seguinte**: medir antes de a fonte estar
-aplicada no DOM mediria o tamanho antigo de novo.
+O CodeMirror guarda altura de linha e largura de caractere em cache e só remede
+quando percebe que algo mudou. O tamanho do texto vinha de uma variável de CSS
+trocada por fora, que ele não tem como perceber: o texto crescia, mas a camada
+do cursor continuava desenhada com a medida antiga.
 
-### O rastro do desenho antigo **[D]**
+Pedir `requestMeasure()` depois da troca resolvia às vezes — a remedição só
+acontece de fato quando a altura do conteúdo muda de valor, e essa condição
+podia já ter sido consumida por outra medição no mesmo quadro. Agora o tamanho
+vive num `Compartment` com o valor literal no tema do editor; trocá-lo é uma
+troca de verdade, e o próprio CodeMirror marca a tipografia como suja.
 
-Aumentar o texto às vezes deixava o desenho anterior visível por baixo do novo,
-com a linha do cursor parada na altura de antes. A causa não é medição: numa
-janela transparente o WebView2 repinta só o retângulo que julga sujo e compõe o
-resultado sobre o que já estava na tela, e como o fundo do app também é
-translúcido o desenho velho continua aparecendo.
-
-`forceRepaint()` liga e desliga a opacidade do documento por um quadro, o que
-invalida a camada inteira e obriga o apagamento antes do desenho. Usa `opacity`
-e não `transform` ou `filter`: essas duas criariam bloco de conteúdo para os
-elementos fixos e moveriam a barra e os painéis.
+A família continua vindo do CSS, que a carrega sob demanda, mas o tema é
+reconstruído junto — então trocar de fonte também dispara a remedição.
 
 ### Falha de inicialização visível **[D]**
 

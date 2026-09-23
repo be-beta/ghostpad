@@ -335,35 +335,6 @@ function renderFontSize(): void {
   el.fontBigger.disabled = settings.fontSize >= FONT_SIZE_MAX;
 }
 
-let repaintPending = false;
-
-/**
- * Obriga o WebView a repintar a janela inteira.
- *
- * Numa janela transparente o WebView2 repinta so o retangulo que julga sujo e
- * compoe o resultado por cima do que ja estava na tela. Como o fundo do app
- * tambem e translucido, o desenho antigo continua aparecendo por baixo do novo:
- * e o rastro do texto no tamanho anterior. Ligar e desligar a opacidade do
- * documento por um quadro invalida a camada toda, e o apagamento passa a
- * acontecer antes do desenho.
- *
- * So `opacity`, e nao `transform` ou `filter`: as outras criam bloco de
- * conteudo para os elementos fixos e moveriam a barra e os paineis.
- */
-function forceRepaint(): void {
-  if (repaintPending) return;
-  repaintPending = true;
-
-  requestAnimationFrame(() => {
-    const root = document.documentElement;
-    root.style.opacity = "0.999";
-    requestAnimationFrame(() => {
-      root.style.opacity = "";
-      repaintPending = false;
-    });
-  });
-}
-
 function changeFontSize(size: number): void {
   // Um valor invalido aqui virava "NaNpx" no CSS: o navegador ignora e o texto
   // parece nao responder. Melhor ficar onde esta do que sumir sem explicacao.
@@ -374,8 +345,7 @@ function changeFontSize(size: number): void {
 
   settings.fontSize = applyFontSize(size);
   renderFontSize();
-  editor?.remeasure();
-  forceRepaint();
+  editor?.setTypography(settings.fontSize);
   // A folga do teleprompter depende da altura da linha, que acabou de mudar.
   if (prompter?.state().active) applyReadingPadding(true);
   void saveSettings(settings);
@@ -384,8 +354,9 @@ function changeFontSize(size: number): void {
 function changeFont(font: FontId): void {
   settings.font = font;
   void applyFont(font).then(() => {
-    editor?.remeasure();
-    forceRepaint();
+    // Mesmo tamanho, tema novo: o que mudou foi a familia, e o editor precisa
+    // medir a largura do caractere de novo.
+    editor?.setTypography(settings.fontSize);
     if (prompter?.state().active) applyReadingPadding(true);
   });
   void saveSettings(settings);
@@ -656,8 +627,6 @@ function scheduleTabsCollapse(): void {
   el.body.dataset.tabs = "open";
   tabsTimer = window.setTimeout(() => {
     el.body.dataset.tabs = "collapsed";
-    // As abas encolhem em 180ms; o rastro so aparece depois que elas param.
-    window.setTimeout(forceRepaint, 220);
   }, TABS_COLLAPSE_MS);
 }
 
@@ -1643,6 +1612,7 @@ async function boot(): Promise<void> {
   editor = createEditor({
     parent: el.editorHost,
     initialText,
+    fontSize: settings.fontSize,
     onChange: onTextChange,
     onAppKeydown: handleKeydown,
   });
