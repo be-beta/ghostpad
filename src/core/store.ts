@@ -1,5 +1,5 @@
 /**
- * Persistencia em %APPDATA%/com.ghostpad.app/.
+ * Persistencia em %APPDATA%/io.github.be-beta.harp/.
  *
  * Duas coisas separadas de proposito:
  *   - settings.json  preferencias, via plugin de store
@@ -117,7 +117,7 @@ let saveChain: Promise<void> = Promise.resolve();
  */
 export function saveNote(slot: number, text: string): Promise<void> {
   const next = saveChain.then(() => invoke<void>("save_note", { slot, text }));
-  saveChain = next.catch((error) => console.error("[ghostpad] falha ao salvar texto", error));
+  saveChain = next.catch((error) => console.error("[harp] falha ao salvar texto", error));
   return next;
 }
 

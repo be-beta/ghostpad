@@ -4,8 +4,9 @@ Documento de referência para qualquer pessoa (ou agente) que vá escrever sobre
 Harp: site, loja, README, texto de lançamento. Quem for construir o site deve ler
 este arquivo antes de escrever a primeira linha.
 
-O código ainda se chama GhostPad. Harp é o nome definido para o lançamento; a
-troca no código é uma tarefa em aberto (ver **Pendências**).
+O nome anterior do projeto era GhostPad. A troca para Harp já está feita em todo
+o código, e a pasta de dados de quem usou a versão antiga é migrada sozinha na
+primeira abertura.
 
 ---
 
@@ -183,11 +184,10 @@ dois.
 
 ## 12. Pendências
 
-- [ ] Renomear GhostPad → Harp no código: `productName`, `identifier`
-      (`com.ghostpad.app`), título da janela, pasta de dados, README, nome do
-      repositório. **Antes do primeiro release público** — depois disso o nome
-      vira endereço de atualização.
-- [ ] Escolher uma licença (ainda não existe arquivo `LICENSE`). Necessária para
-      distribuir e para o winget.
-- [ ] Decidir se o site fica em `/docs` do mesmo repositório ou em repositório
-      próprio.
+- [x] Renomear GhostPad → Harp no código. Identificador novo:
+      `io.github.be-beta.harp`.
+- [x] Licença MIT.
+- [ ] Completar o nome do autor na licença (está só "Bernardo").
+- [ ] Decidir se o site fica em pasta própria do mesmo repositório ou em
+      repositório separado.
+- [ ] Primeira versão publicada em Releases.

@@ -391,7 +391,7 @@ pub fn place_top_center(
 
 /// Traz a janela de volta ao alcance do usuario.
 ///
-/// Rede de seguranca para quando o GhostPad ficar em modo fantasma, oculto ou
+/// Rede de seguranca para quando o Harp ficar em modo fantasma, oculto ou
 /// fora da tela. Preserva a posicao escolhida pelo usuario: so recentraliza se a
 /// janela estiver de fato fora de qualquer monitor (ex.: monitor desconectado).
 #[tauri::command]
@@ -420,7 +420,7 @@ fn is_reachable(window: &WebviewWindow) -> bool {
     )
 }
 
-/// Invocacao global: chama o GhostPad de qualquer app, pronto para digitar.
+/// Invocacao global: chama o Harp de qualquer app, pronto para digitar.
 ///
 /// Alterna: se a janela ja esta em foco, minimiza e devolve a tela. Desliga o
 /// modo fantasma, porque invocar e sinal de que o usuario quer escrever agora.
@@ -440,5 +440,5 @@ pub fn toggle_summon(window: WebviewWindow) {
     let _ = window.show();
     let _ = window.unminimize();
     let _ = window.set_focus();
-    let _ = window.emit("ghostpad://summoned", ());
+    let _ = window.emit("harp://summoned", ());
 }

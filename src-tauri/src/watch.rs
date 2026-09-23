@@ -1,7 +1,7 @@
 //! Deteccao de softwares de gravacao e chamada em execucao.
 //!
 //! Serve a um unico proposito: o usuario esquecer de ligar o modo oculto e o
-//! GhostPad aparecer no video. O app avisa; a decisao continua sendo dele, e
+//! Harp aparecer no video. O app avisa; a decisao continua sendo dele, e
 //! nada e ativado sozinho.
 //!
 //! Isto olha apenas nomes de processos em execucao — nao inspeciona janelas,

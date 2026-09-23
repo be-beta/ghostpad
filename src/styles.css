@@ -1,4 +1,4 @@
-/* GhostPad - camada visual
+/* Harp - camada visual
  *
  * Regra que organiza todo este arquivo: o desfoque NAO esta aqui. Quando existe,
  * ele vem do DWM, aplicado no Rust. O CSS cuida apenas de escurecer, arredondar

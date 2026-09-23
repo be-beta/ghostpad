@@ -1,5 +1,5 @@
 /**
- * Editor do GhostPad sobre CodeMirror 6.
+ * Editor do Harp sobre CodeMirror 6.
  *
  * Isolado da orquestracao: main.ts so conhece a API exportada aqui (ler,
  * escrever, focar, limpar) e nunca toca no CodeMirror diretamente.
@@ -46,7 +46,7 @@ export interface EditorOptions {
 }
 
 /**
- * Atalhos padrao do CodeMirror que colidem com o GhostPad:
+ * Atalhos padrao do CodeMirror que colidem com o Harp:
  *   Mod-[ / Mod-]  indentacao    -> opacidade da janela
  *   Mod-/          comentar      -> painel de atalhos (e texto livre nao tem comentario)
  *   Mod-i          selecionar no -> italico
@@ -256,7 +256,7 @@ export interface GhostEditor {
 
 export function createEditor(options: EditorOptions): GhostEditor {
   const extensions: Extension[] = [
-    // Atalhos do app primeiro: uma tecla do GhostPad nunca chega ao editor.
+    // Atalhos do app primeiro: uma tecla do Harp nunca chega ao editor.
     editable.of(EditorView.editable.of(true)),
     typography.of(typographyTheme(options.fontSize)),
     Prec.highest(

@@ -1,5 +1,5 @@
 /**
- * GhostPad — orquestracao da janela principal.
+ * Harp — orquestracao da janela principal.
  *
  * Liga janela (bridge), persistencia (store), editor (CodeMirror) e interface.
  * Nenhum desses modulos conhece os outros; so este arquivo os conecta.
@@ -1039,7 +1039,7 @@ const RECORDER_POLL_MS = 25_000;
 const warnedRecorders = new Set<string>();
 
 /**
- * Avisa quando um gravador esta aberto e o GhostPad ainda apareceria no video.
+ * Avisa quando um gravador esta aberto e o Harp ainda apareceria no video.
  *
  * Nunca liga o modo oculto sozinho: sumir da tela sem o usuario pedir seria
  * pior que o problema. Um aviso por programa por sessao.
@@ -1317,7 +1317,7 @@ async function closeApp(): Promise<void> {
       persistWindowState(),
     ]);
   } catch (error) {
-    console.error("[ghostpad] falha ao salvar antes de fechar", error);
+    console.error("[harp] falha ao salvar antes de fechar", error);
   }
   await appWindow.destroy();
 }
@@ -1559,7 +1559,7 @@ function wireEvents(): void {
   window.addEventListener("focus", () => void checkRecorders());
 
   // Invocacao global: a janela ja veio para frente no Rust; aqui so o cursor.
-  void listen("ghostpad://summoned", () => {
+  void listen("harp://summoned", () => {
     shortcutsPanel.close();
     editor.focus();
   });
@@ -1664,9 +1664,9 @@ async function boot(): Promise<void> {
  * do que o app promete. Falhar visivelmente permite copiar o erro e seguir.
  */
 void boot().catch((error) => {
-  console.error("[ghostpad] falha ao iniciar", error);
+  console.error("[harp] falha ao iniciar", error);
   document.body.insertAdjacentHTML(
     "beforeend",
-    `<div class="gp-boot-error">GhostPad não conseguiu iniciar.<br /><code>${String(error)}</code></div>`,
+    `<div class="gp-boot-error">Harp não conseguiu iniciar.<br /><code>${String(error)}</code></div>`,
   );
 });

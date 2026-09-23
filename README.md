@@ -1,33 +1,42 @@
-﻿# GhostPad
+﻿# Harp
 
-Bloco de notas flutuante, translúcido e sem bordas para Windows.
+**Escrita centrada no contexto.** Um bloco de notas translúcido que fica por
+cima do que você está olhando, para que anotar não custe a tela.
 
-Fica sempre visível por cima de navegadores, editores e ferramentas de design,
-sem cobrir o que está embaixo — para escrever prompts, anotar enquanto analisa
-uma interface, ditar por voz ou ler um roteiro durante uma gravação sem que ele
-apareça no vídeo.
+Windows, gratuito, tudo local.
 
 > **Estado:** roteiro original concluído — janela, editor, métricas, histórico,
-> múltiplas notas e teleprompter.
-> Roteiro completo em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> múltiplas notas e teleprompter. Ainda sem versão publicada.
+> Arquitetura e decisões em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
+> conceito, manifesto e identidade em [docs/IDENTIDADE.md](docs/IDENTIDADE.md).
 >
-> **Nome:** o app se chamara **Harp** no lancamento. Conceito, manifesto,
-> tom de voz e briefing do site em [docs/IDENTIDADE.md](docs/IDENTIDADE.md).
+> O projeto se chamou **GhostPad** até aqui. Quem usou a versão antiga não perde
+> nada: a pasta de dados é migrada na primeira abertura.
 
 ## Manifesto
 
 **Escrever não pode custar o que você está olhando.**
+A tela deixou de ser uma página.
 
-Toda anotação feita durante um trabalho visual — analisar uma interface, redigir
-um prompt sobre um texto, seguir um roteiro numa gravação — obriga a uma escolha
-absurda: ou você vê, ou você escreve. O `Alt+Tab` não é um atalho, é um imposto
-cobrado a cada ideia. Bloco de notas cobre a tela. Janela comum rouba o foco. E
-toda ferramenta que promete ficar "fora do caminho" acaba pedindo um clique,
-um menu, uma barra de título.
+Hoje, enquanto escrevemos, também observamos, comparamos, testamos, editamos,
+apresentamos, ouvimos e decidimos. Existe informação acontecendo em toda parte,
+ainda assim, quando precisamos escrever, quase sempre abrimos uma página em
+branco.
 
-O GhostPad existe para que escrever seja a única coisa que você faz.
+Harp parte de outra ideia. A escrita pode existir junto do que estamos fazendo.
+O centro continua sendo aquilo que está diante dos nossos olhos.
 
-### Princípios
+Cada detalhe parte da mesma pergunta: como escrever sem precisar abandonar o que
+está acontecendo? Isso também muda o que esperamos de uma ferramenta de escrita.
+Ela precisa ser rápida o suficiente para acompanhar uma observação e previsível
+o suficiente para nunca exigir atenção quando ela não é necessária.
+
+_Uma nova relação entre escrita e tela._
+
+## Princípios de engenharia
+
+Estes explicam decisões de código, e não são texto de apresentação — esse está
+no manifesto acima.
 
 **1. O texto do usuário é sagrado.**
 Nada é mais grave do que perder o que a pessoa acabou de escrever. Por isso a
@@ -67,7 +76,7 @@ e o confiável, o app escolhe o confiável.
 Tudo vive na sua máquina, em arquivos que você pode abrir com qualquer editor.
 Sem conta, sem nuvem, sem telemetria, sem rede.
 
-### O que o GhostPad não é
+## O que o Harp não é
 
 Não é gerenciador de notas, não organiza sua vida, não sincroniza, não tem
 pastas nem etiquetas, não quer virar seu segundo cérebro. É uma superfície para
@@ -101,7 +110,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | Atalho | Ação |
 |---|---|
 | `Ctrl+/` | Painel com todos os atalhos |
-| `Ctrl+Alt+Space` | Chama ou esconde o GhostPad, de qualquer app |
+| `Ctrl+Alt+Space` | Chama ou esconde o Harp, de qualquer app |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+S` / `Ctrl+Shift+S` | Salvar / salvar como |
 | `Ctrl+O` | Abrir arquivo de texto |
@@ -123,7 +132,7 @@ escrever por cima do que você está fazendo — e sair da frente depois.
 | `Ctrl+Alt+G` | **Resgate** — desfaz todos os modos e traz a janela de volta |
 
 O resgate é global: funciona mesmo com a janela em modo fantasma, oculta ou
-fora da área visível. Se outro programa já usar `Ctrl+Alt+G`, o GhostPad passa
+fora da área visível. Se outro programa já usar `Ctrl+Alt+G`, o Harp passa
 para `Ctrl+Alt+Shift+G` e mostra o atalho ativo nos avisos.
 
 ## Requisitos de desenvolvimento
@@ -150,4 +159,4 @@ Gera instaladores NSIS e MSI em `src-tauri/target/release/bundle/`.
 
 ## Licença
 
-A definir.
+MIT — ver [LICENSE](LICENSE).

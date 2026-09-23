@@ -1,5 +1,5 @@
 /**
- * Painel de busca do GhostPad.
+ * Painel de busca do Harp.
  *
  * Substitui o painel embutido do CodeMirror, que vinha em ingles, com controles
  * pequenos e opcoes que um bloco de notas nao usa (expressao regular, palavra

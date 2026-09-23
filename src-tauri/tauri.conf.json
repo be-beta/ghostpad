@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "GhostPad",
+  "productName": "Harp",
   "version": "0.1.0",
-  "identifier": "com.ghostpad.app",
+  "identifier": "io.github.be-beta.harp",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "GhostPad",
+        "title": "Harp",
         "width": 520,
         "height": 640,
         "minWidth": 280,

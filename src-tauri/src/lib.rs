@@ -87,6 +87,10 @@ pub fn run() {
             window_fx::panic_recover,
         ])
         .setup(|app| {
+            // Antes de qualquer leitura: o app mudou de nome, e com ele a pasta
+            // de dados. Sem isto, quem ja usava abriria o Harp sem as anotacoes.
+            notes::migrate_identifier(app.handle());
+
             let window = app
                 .get_webview_window("main")
                 .expect("janela 'main' nao encontrada");
@@ -107,7 +111,7 @@ pub fn run() {
                 report.summon_shortcut = registry.label(shortcuts::Action::Summon);
             }
 
-            eprintln!("[ghostpad] efeitos: {report:?}");
+            eprintln!("[harp] efeitos: {report:?}");
 
             // Guardado como estado, nao emitido como evento: o setup roda antes de
             // o frontend montar, e um evento emitido aqui se perderia.
@@ -116,5 +120,5 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("erro ao iniciar o GhostPad");
+        .expect("erro ao iniciar o Harp");
 }

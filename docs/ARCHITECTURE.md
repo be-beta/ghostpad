@@ -1,4 +1,4 @@
-# GhostPad — Documento de Arquitetura
+# Harp — Documento de Arquitetura
 
 > Revisão 2 — incorpora as correções técnicas feitas sobre o rascunho inicial.
 > As decisões marcadas com **[D]** mudaram em relação à primeira versão e o
@@ -8,7 +8,7 @@
 
 ## 1. Visão geral
 
-GhostPad é um bloco de notas flutuante, translúcido e sem bordas para Windows.
+Harp é um bloco de notas flutuante, translúcido e sem bordas para Windows.
 O objetivo é eliminar o `Alt+Tab` durante criação de prompts, análise de
 interfaces, ditado por voz e gravação de tutoriais.
 
@@ -108,7 +108,7 @@ mantém o texto legível quando a opacidade está baixa sobre um fundo claro.
 `set_ignore_cursor_events(true)` faz o mouse atravessar a janela. Mas no
 instante em que o usuário clica no app de baixo, **o foco de teclado vai
 junto**. Como Wispr Flow e afins digitam na janela focada, o ditado cairia no
-navegador, não no GhostPad.
+navegador, não no Harp.
 
 Consequências arquiteturais:
 
@@ -167,7 +167,7 @@ telas com escala diferente de 100%.
 
 ### 5.2 Atalho de resgate com alternativas **[D]**
 
-Registrado **no backend**, globalmente. O GhostPad pode estar simultaneamente em
+Registrado **no backend**, globalmente. O Harp pode estar simultaneamente em
 modo fantasma, oculto de captura e fora da área visível; nesse estado o frontend
 está inalcançável.
 
@@ -225,7 +225,7 @@ Proteções, porque opacidade e posição salvas podem esconder o app:
 ## 5.4 Disco e varreduras fora da thread principal **[D]**
 
 *Encontrado por um sintoma pequeno:* o cursor do mouse piscava ao digitar, mas
-só quando o ponteiro estava sobre a janela do GhostPad.
+só quando o ponteiro estava sobre a janela do Harp.
 
 No Tauri, comando **síncrono** é resolvido na thread que processa a mensagem —
 a principal (`body_blocking` → `kind.block(...)` no `tauri-macros`). Comando
@@ -286,7 +286,7 @@ seção anterior e foi corrigido.
 
 ## 6. Persistência
 
-`%APPDATA%/com.ghostpad.app/`
+`%APPDATA%/io.github.be-beta.harp/`
 
 | Arquivo | Conteúdo | Quem grava |
 |---|---|---|
@@ -462,7 +462,7 @@ esconder, do menos para o mais importante:
 está sendo **substituído**, não o atual — o atual já está em `draft.txt`; o que
 não existe em lugar nenhum é o que acabou de ser sobrescrito. No máximo uma
 versão a cada 3 minutos de edição, 20 versões mantidas, em
-`%APPDATA%/com.ghostpad.app/snapshots/*.txt`.
+`%APPDATA%/io.github.be-beta.harp/snapshots/*.txt`.
 
 Restaurar entra como edição normal do editor, então `Ctrl+Z` desfaz a
 restauração. Um recurso de recuperação não pode ser ele próprio uma perda.
@@ -747,6 +747,19 @@ troca de verdade, e o próprio CodeMirror marca a tipografia como suja.
 
 A família continua vindo do CSS, que a carrega sob demanda, mas o tema é
 reconstruído junto — então trocar de fonte também dispara a remedição.
+
+### O nome mudou, a pasta de dados foi junto **[D]**
+
+O app nasceu GhostPad e virou Harp. O identificador (`io.github.be-beta.harp`)
+não é enfeite: ele nomeia a pasta em `%APPDATA%` e é por ele que o Windows, o
+winget e a Store reconhecem o programa. Trocá-lo depois de uma versão pública
+criaria um segundo app em vez de atualizar o primeiro — por isso a troca veio
+antes do primeiro release.
+
+Para quem já usava, `migrate_identifier` renomeia a pasta antiga na primeira
+abertura. Renomear, e não copiar: no mesmo volume é atômico, então uma queda no
+meio não deixa metade do texto em cada lugar. Se a pasta nova já tiver conteúdo,
+a migração não acontece — o que a pessoa escreveu agora vale mais que o passado.
 
 ### Falha de inicialização visível **[D]**
 

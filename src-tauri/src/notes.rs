@@ -10,7 +10,7 @@
 //! desatualizada podia sobrescrever o texto novo. Aqui cada gravacao vai ao
 //! disco na hora e nada e regravado implicitamente.
 //!
-//! Layout em %APPDATA%/com.ghostpad.app/:
+//! Layout em %APPDATA%/io.github.be-beta.harp/:
 //!   notes/note-1.txt        texto do espaco 1
 //!   notes/note-1.bak.txt    versao imediatamente anterior
 //!   snapshots/1/<ms>.txt    versoes anteriores do espaco 1
@@ -52,6 +52,42 @@ fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
+}
+
+/// Nome do app antes de virar Harp.
+///
+/// O identificador define a pasta de dados, entao troca-lo deixaria as
+/// anotacoes de quem ja usava o app para tras, num diretorio que nada mais le.
+const PASTA_ANTERIOR: &str = "com.ghostpad.app";
+
+/// Traz a pasta de dados do nome antigo, uma vez so.
+///
+/// Renomeia em vez de copiar: no mesmo volume e uma operacao atomica, entao nao
+/// existe estado pela metade se faltar energia no meio. So age quando a pasta
+/// nova ainda esta vazia — se ja ha texto nela, a pessoa ja usou o Harp, e o
+/// que vale e o que ela escreveu agora.
+pub fn migrate_identifier(app: &AppHandle) {
+    let Ok(nova) = app.path().app_data_dir() else {
+        return;
+    };
+    let Some(raiz) = nova.parent() else { return };
+
+    let antiga = raiz.join(PASTA_ANTERIOR);
+    if !antiga.is_dir() {
+        return;
+    }
+
+    let vazia = match fs::read_dir(&nova) {
+        Ok(mut itens) => itens.next().is_none(),
+        // Nao existe ainda, que e o caso comum na primeira abertura apos a troca.
+        Err(_) => !nova.exists(),
+    };
+    if !vazia {
+        return;
+    }
+
+    let _ = fs::remove_dir(&nova);
+    let _ = fs::rename(&antiga, &nova);
 }
 
 fn check_slot(slot: u8) -> Result<u8, String> {
@@ -239,7 +275,7 @@ pub async fn read_text_file(path: String) -> Result<String, String> {
 #[tauri::command]
 pub async fn write_text_file(path: String, text: String) -> Result<(), String> {
     let target = PathBuf::from(&path);
-    let tmp = target.with_extension("ghostpad.tmp");
+    let tmp = target.with_extension("harp.tmp");
 
     {
         let mut file =
