@@ -143,6 +143,8 @@ body {
 .gp-topbar__drag {
   position: relative;
   flex: 1 1 auto;
+  /* Sempre sobra onde segurar, mesmo com todas as abas abertas. */
+  min-width: 48px;
   align-self: stretch;
   cursor: grab;
 }
@@ -181,6 +183,9 @@ body {
   align-items: center;
   gap: 2px;
   min-width: 0;
+  /* Dez abas abertas numa janela estreita nao cabem; elas encolhem em vez de
+     empurrar a area de arraste para fora da janela. */
+  overflow: hidden;
 }
 
 .gp-tab {
@@ -286,6 +291,8 @@ body[data-tabs="collapsed"] .gp-tabs__add {
    que as abas recolhiam num corte seco e so a volta parecia suave. */
 .gp-tab {
   max-width: 160px;
+  min-width: 0;
+  flex-shrink: 1;
   overflow: hidden;
 }
 

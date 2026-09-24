@@ -45,7 +45,7 @@ function sections(effects: EffectsReport): Section[] {
     {
       title: t("shortcuts.section.text"),
       rows: [
-        { keys: "Ctrl+1…5", label: t("shortcuts.newTab") },
+        { keys: "Ctrl+1…9, 0", label: t("shortcuts.newTab") },
         { keys: "Ctrl+T / Ctrl+W", label: t("shortcuts.tabs") },
         { keys: "Ctrl+Shift+Enter", label: t("shortcuts.copyClear") },
         { keys: "Ctrl+Shift+C", label: t("shortcuts.copyAll") },
@@ -91,7 +91,7 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Ctrl+P", label: t("shortcuts.alwaysOnTop") },
         { keys: "Ctrl+Shift+G", label: t("shortcuts.ghost") },
         { keys: "Ctrl+Shift+H", label: t("shortcuts.stealth") },
-        { keys: "Ctrl+Shift+B", label: t("shortcuts.backdrop") },
+        { keys: "Ctrl+Shift+B", label: t("shortcuts.theme") },
         { keys: "Ctrl+Alt+1…5", label: t("shortcuts.corners") },
         { keys: "Ctrl+Alt+6…9", label: t("shortcuts.halves") },
         { keys: "Ctrl+Alt+0", label: t("shortcuts.full") },

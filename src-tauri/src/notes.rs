@@ -1,6 +1,6 @@
 //! Persistencia do texto do usuario.
 //!
-//! Cinco espacos fixos, numerados de 1 a 5. Nao ha criar, fechar, nomear nem
+//! Dez espacos fixos, numerados de 1 a 10. Nao ha criar, fechar, nomear nem
 //! reordenar: um espaco vazio ja e uma anotacao nova. E o modelo mais simples
 //! que atende "varias anotacoes ao mesmo tempo" sem virar gerenciador de
 //! arquivos.
@@ -31,8 +31,9 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 
 /// Quantos espacos de anotacao existem. Poucos de proposito: a proposta e
-/// anotar agora, nao arquivar.
-pub const SLOTS: u8 = 5;
+/// anotar agora, nao arquivar. Eram cinco; dez cobre um dia de trabalho com
+/// varias frentes abertas sem virar gerenciador de arquivos.
+pub const SLOTS: u8 = 10;
 
 /// Intervalo minimo entre versoes guardadas.
 ///

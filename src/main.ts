@@ -57,6 +57,7 @@ import { watchForUpdates, type UpdateWatcher } from "./core/updater";
 import {
   applyAccent,
   applyTheme,
+  effectiveTheme,
   watchSystemTheme,
   type AccentId,
   type Theme,
@@ -118,7 +119,7 @@ const el = {
 };
 
 /** Teto de anotacoes abertas. Poucas de proposito: anotar agora, nao arquivar. */
-const MAX_NOTES = 5;
+const MAX_NOTES = 10;
 
 let settings: Settings = { ...DEFAULT_SETTINGS };
 /** Anotacoes abertas, na ordem das abas. */
@@ -195,13 +196,7 @@ const settingsPanel = createSettingsPanel(el.settings, {
   onIdleFade: (value) => {
     if (value !== settings.idleFade) toggleIdleFade();
   },
-  onTheme: (theme: Theme) => {
-    settings.theme = theme;
-    applyTheme(theme);
-    // O tom do destaque depende do tema, entao acompanha a troca.
-    applyAccent(settings.accent, theme);
-    void saveSettings(settings);
-  },
+  onTheme: (theme: Theme) => changeTheme(theme),
   onAccent: (accent: AccentId) => {
     settings.accent = accent;
     applyAccent(accent, settings.theme);
@@ -522,6 +517,31 @@ async function applyBackdrop(kind: Backdrop, announce: boolean): Promise<void> {
   }
 }
 
+function changeTheme(theme: Theme): void {
+  settings.theme = theme;
+  applyTheme(theme);
+  // O tom do destaque depende do tema, entao acompanha a troca.
+  applyAccent(settings.accent, theme);
+  void saveSettings(settings);
+}
+
+/**
+ * Ctrl+Shift+B: claro e escuro, sem passar pelas configuracoes.
+ *
+ * O atalho era do fundo da janela, mas o desfoque nativo nao funciona na maior
+ * parte das maquinas, e ciclar entre um fundo que funciona e dois que nao
+ * funcionam nao ajudava ninguem. O fundo continua acessivel pela barra.
+ *
+ * Alterna a partir do tema *visivel*: em "sistema" com o Windows escuro, o
+ * atalho vai para o claro, e nao para um escuro explicito que nao muda nada.
+ */
+function toggleTheme(): void {
+  const next = effectiveTheme(settings.theme) === "light" ? "dark" : "light";
+  changeTheme(next);
+  settingsPanel.refresh();
+  toast(t(next === "light" ? "toast.theme.light" : "toast.theme.dark"));
+}
+
 function cycleBackdrop(): void {
   const next = BACKDROP_ORDER[(BACKDROP_ORDER.indexOf(settings.backdrop) + 1) % BACKDROP_ORDER.length];
   void applyBackdrop(next, true);
@@ -680,6 +700,11 @@ function scheduleTabsCollapse(): void {
   }, TABS_COLLAPSE_MS);
 }
 
+/** Tecla da aba pela posicao: 1 a 9, e a decima no 0, como nos navegadores. */
+function tabDigit(index: number): string {
+  return index === 9 ? "0" : String(index + 1);
+}
+
 function renderTabs(): void {
   el.tabs.textContent = "";
 
@@ -688,7 +713,7 @@ function renderTabs(): void {
     tab.className = "gp-tab";
     tab.dataset.note = String(slot);
     tab.dataset.active = String(slot === activeNote);
-    tab.title = `${t("history.tab", { n: index + 1 })} (Ctrl+${index + 1})`;
+    tab.title = `${t("history.tab", { n: index + 1 })} (Ctrl+${tabDigit(index)})`;
     tab.append(document.createTextNode(String(index + 1)));
 
     const close = document.createElement("span");
@@ -759,7 +784,9 @@ async function newNote(): Promise<void> {
     return;
   }
 
-  const free = [1, 2, 3, 4, 5].find((slot) => !openNotes.includes(slot));
+  const free = Array.from({ length: MAX_NOTES }, (_, i) => i + 1).find(
+    (slot) => !openNotes.includes(slot),
+  );
   if (!free) return;
 
   // Aba nova comeca sempre limpa. Um espaco reaproveitado podia trazer texto de
@@ -1278,10 +1305,12 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
-  // Ctrl+digito troca de aba pela posicao dela; com Alt, o mesmo digito move
-  // a janela.
-  if (!event.altKey && !event.shiftKey && /^[1-5]$/.test(event.key)) {
-    const slot = openNotes[Number(event.key) - 1];
+  // Ctrl+digito troca de aba pela posicao dela, com o 0 valendo a decima; com
+  // Alt, o mesmo digito move a janela. `event.code` e a posicao fisica: com
+  // Shift ou em outro layout, `event.key` pode nao ser o digito.
+  const digito = /^Digit(\d)$/.exec(event.code)?.[1];
+  if (!event.altKey && !event.shiftKey && digito !== undefined) {
+    const slot = openNotes[digito === "0" ? 9 : Number(digito) - 1];
     if (slot) void switchNote(slot);
     return consume(event);
   }
@@ -1315,7 +1344,7 @@ function handleKeydown(event: KeyboardEvent): boolean {
         void toggleStealth();
         return consume(event);
       case "b":
-        cycleBackdrop();
+        toggleTheme();
         return consume(event);
     }
     return false;
