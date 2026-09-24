@@ -287,6 +287,79 @@ body[data-tabs="collapsed"] .gp-tabs__add {
   display: none !important;
 }
 
+/* Icone da aba. Opcional: sem ele, o lugar so aparece na aba ativa ou sob o
+   mouse (como o X), para quem quiser escolher um; nas outras, nada muda. */
+.gp-tab__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.gp-tab__icon svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+.gp-tab__icon:hover {
+  color: var(--gp-text);
+}
+
+.gp-tab[data-active="true"] .gp-tab__icon:hover {
+  color: var(--gp-accent);
+  background: rgba(var(--gp-accent-rgb), 0.18);
+}
+
+/* Lugar vazio: um anel pequeno e apagado, que convida sem insistir. */
+.gp-tab__icon[data-empty="true"] {
+  display: none;
+}
+
+.gp-tab__icon[data-empty="true"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.2px currentColor;
+  opacity: 0.55;
+}
+
+.gp-tab[data-active="true"] .gp-tab__icon[data-empty="true"],
+.gp-tab:hover .gp-tab__icon[data-empty="true"] {
+  display: inline-grid;
+}
+
+/* Recolhidas, as abas com icone mostram so o icone, no lugar do ponto e quase
+   do mesmo tamanho dele (10 px contra 9): a barra nao cresce por causa disso. */
+body[data-tabs="collapsed"] .gp-tab__num,
+body[data-tabs="collapsed"] .gp-tab__icon[data-empty="true"] {
+  display: none !important;
+}
+
+body[data-tabs="collapsed"] .gp-tab[data-has-icon="true"] {
+  max-width: 10px;
+  min-width: 10px;
+  height: 10px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  overflow: visible;
+}
+
+body[data-tabs="collapsed"] .gp-tab[data-has-icon="true"][data-active="true"] {
+  background: transparent;
+  color: var(--gp-accent);
+}
+
+body[data-tabs="collapsed"] .gp-tab__icon,
+body[data-tabs="collapsed"] .gp-tab__icon svg {
+  width: 10px;
+  height: 10px;
+}
+
 /* `max-width` no lugar de `width`: largura automatica nao anima, e era por isso
    que as abas recolhiam num corte seco e so a volta parecia suave. */
 .gp-tab {
@@ -445,6 +518,39 @@ body[data-ghost="true"] .gp-resize {
   min-width: 0;
   min-height: 0;
   user-select: text;
+}
+
+/* Caixa de tarefa, desenhada no lugar do `[ ]`.
+ *
+ * Do tamanho de uma letra minuscula, para a linha nao pular quando vira tarefa.
+ * Aberta e so o contorno; feita, enche com a cor de destaque e o texto da linha
+ * recua para o segundo plano, sem riscar — riscar deixa ilegivel justamente o
+ * que alguem pode querer reler. */
+.cm-harp-task {
+  display: inline-block;
+  width: 0.78em;
+  height: 0.78em;
+  margin: 0 0.12em;
+  vertical-align: -0.08em;
+  border: 1.5px solid var(--gp-text-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 120ms var(--gp-ease), border-color 120ms var(--gp-ease);
+}
+
+.cm-harp-task:hover {
+  border-color: var(--gp-accent);
+}
+
+.cm-harp-task[data-done="true"] {
+  border-color: var(--gp-accent);
+  background:
+    no-repeat center / 76% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-5' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    var(--gp-accent);
+}
+
+.cm-harp-task-done {
+  color: var(--gp-text-dim);
 }
 
 /* Enderecos no texto.
@@ -890,6 +996,84 @@ body[data-narrow="true"] .gp-fontsize {
   background: var(--gp-panel);
   box-shadow: inset 0 0 0 1px var(--gp-border), 0 10px 26px rgba(0, 0, 0, 0.5);
   font-size: 12px;
+}
+
+/* Seletor de icone: preso a aba, e nao ao canto da barra como o menu. */
+.gp-picker {
+  right: auto;
+  bottom: auto;
+  width: 198px;
+  min-width: 0;
+  padding: 8px;
+  animation: gp-menu-in 140ms var(--gp-ease);
+}
+
+.gp-picker__group + .gp-picker__group {
+  margin-top: 8px;
+}
+
+.gp-picker__title {
+  display: block;
+  margin: 0 2px 4px;
+  color: var(--gp-text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gp-picker__row,
+.gp-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+}
+
+.gp-picker__icon {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  cursor: pointer;
+}
+
+.gp-picker__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.gp-picker__icon:hover,
+.gp-picker__icon:focus-visible {
+  background: var(--gp-surface);
+  color: var(--gp-text);
+  outline: none;
+}
+
+.gp-picker__icon[data-on="true"] {
+  background: rgba(var(--gp-accent-rgb), 0.18);
+  color: var(--gp-accent);
+}
+
+.gp-picker__none {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.gp-picker__none:hover {
+  background: var(--gp-surface);
+  color: var(--gp-text);
 }
 
 /* Titulo de grupo: separa contagens de controles sem precisar de linha. */

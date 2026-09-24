@@ -76,6 +76,9 @@ import {
 } from "./ui/metrics";
 import { createHistoryPanel } from "./ui/history";
 import { createSettingsPanel } from "./ui/settings";
+import { createIconPicker, iconLabel } from "./ui/icon-picker";
+import { iconSvg } from "./ui/tab-icons";
+import type { IconId } from "./ui/icon-catalog";
 import { createShortcutsPanel } from "./ui/shortcuts";
 
 const OPACITY_MIN = 0.2;
@@ -101,6 +104,7 @@ const el = {
   metrics: document.getElementById("metrics") as HTMLSpanElement,
   chipModules: document.getElementById("chip-modules") as HTMLButtonElement,
   modules: document.getElementById("modules") as HTMLDivElement,
+  iconPicker: document.getElementById("icon-picker") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
   settings: document.getElementById("settings") as HTMLDivElement,
@@ -204,6 +208,42 @@ const settingsPanel = createSettingsPanel(el.settings, {
   },
   onUpdate: () => void installUpdate(),
 });
+
+/** Os icones mais escolhidos, com o mais recente desempatando. */
+function recentIcons(): IconId[] {
+  return (Object.entries(settings.iconUsage) as [IconId, { count: number; last: number }][])
+    .sort((a, b) => b[1].count - a[1].count || b[1].last - a[1].last)
+    .map(([id]) => id);
+}
+
+const iconPicker = createIconPicker(el.iconPicker, {
+  textFor: async (slot) => {
+    if (slot === activeNote) return editor.getText();
+    const sessao = sessions.get(slot);
+    return sessao ? sessao.doc.toString() : loadNote(slot).catch(() => "");
+  },
+  current: (slot) => settings.tabIcons[String(slot)],
+  recents: recentIcons,
+  onPick: (slot, icon) => {
+    if (icon) {
+      settings.tabIcons[String(slot)] = icon;
+      const uso = settings.iconUsage[icon] ?? { count: 0, last: 0 };
+      settings.iconUsage[icon] = { count: uso.count + 1, last: Date.now() };
+    } else {
+      delete settings.tabIcons[String(slot)];
+    }
+    void saveSettings(settings);
+    renderTabs();
+  },
+  onClose: () => editor.focus(),
+});
+
+/** Aba limpa nao herda o icone da anotacao que ocupava o espaco antes. */
+function forgetTabIcon(slot: number): void {
+  if (!settings.tabIcons[String(slot)]) return;
+  delete settings.tabIcons[String(slot)];
+  void saveSettings(settings);
+}
 
 /**
  * Como a versao guardada aparece no historico.
@@ -696,6 +736,9 @@ function scheduleTabsCollapse(): void {
   if (tabsTimer) window.clearTimeout(tabsTimer);
   el.body.dataset.tabs = "open";
   tabsTimer = window.setTimeout(() => {
+    // Recolher com o seletor de icone aberto deixaria o popover apontando
+    // para uma aba que encolheu. Espera ele fechar.
+    if (iconPicker.isOpen()) return scheduleTabsCollapse();
     el.body.dataset.tabs = "collapsed";
   }, TABS_COLLAPSE_MS);
 }
@@ -714,7 +757,23 @@ function renderTabs(): void {
     tab.dataset.note = String(slot);
     tab.dataset.active = String(slot === activeNote);
     tab.title = `${t("history.tab", { n: index + 1 })} (Ctrl+${tabDigit(index)})`;
-    tab.append(document.createTextNode(String(index + 1)));
+
+    // O icone e opcional. Sem ele, o lugar existe mas so aparece na aba ativa
+    // ou sob o mouse, como o X — nao vale pedir atencao em todas as abas.
+    const icone = settings.tabIcons[String(slot)];
+    tab.dataset.hasIcon = String(Boolean(icone));
+    const pick = document.createElement("span");
+    pick.className = "gp-tab__icon";
+    pick.dataset.iconPick = String(slot);
+    pick.dataset.empty = String(!icone);
+    pick.title = icone ? `${iconLabel(icone)} — ${t("icons.choose")}` : t("icons.choose");
+    if (icone) pick.innerHTML = iconSvg(icone);
+    tab.append(pick);
+
+    const numero = document.createElement("span");
+    numero.className = "gp-tab__num";
+    numero.textContent = String(index + 1);
+    tab.append(numero);
 
     const close = document.createElement("span");
     close.className = "gp-tab__close";
@@ -796,6 +855,7 @@ async function newNote(): Promise<void> {
   await closeNote(free);
   sessions.delete(free);
   fileBySlot.delete(free);
+  forgetTabIcon(free);
 
   openNotes = [...openNotes, free];
   settings.openNotes = openNotes;
@@ -817,6 +877,8 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
   if (openNotes.length === 1) {
     await closeNote(slot);
     sessions.delete(slot);
+    forgetTabIcon(slot);
+    renderTabs();
     editor.newSession("");
     updateMetrics("");
     fileBySlot.delete(slot);
@@ -830,6 +892,7 @@ async function closeActiveNote(slot = activeNote): Promise<void> {
   await closeNote(slot);
   sessions.delete(slot);
   fileBySlot.delete(slot);
+  forgetTabIcon(slot);
 
   openNotes = openNotes.filter((item) => item !== slot);
   settings.openNotes = openNotes;
@@ -1602,6 +1665,19 @@ function wireEvents(): void {
     if (close) {
       event.stopPropagation();
       void closeActiveNote(Number(close.dataset.close));
+      return;
+    }
+
+    // O icone abre o seletor daquela aba sem trocar para ela: escolher o icone
+    // de outra aba nao precisa tirar a pessoa do texto em que esta.
+    const pick = target.closest<HTMLElement>("[data-icon-pick]");
+    if (pick) {
+      event.stopPropagation();
+      const slot = Number(pick.dataset.iconPick);
+      if (iconPicker.isOpenFor(slot)) iconPicker.close();
+      else void iconPicker.open(pick, slot);
+      // Com o seletor aberto, as abas nao podem se recolher debaixo dele.
+      scheduleTabsCollapse();
       return;
     }
 

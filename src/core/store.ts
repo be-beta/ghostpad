@@ -19,6 +19,7 @@ import { DEFAULT_FONT, DEFAULT_FONT_SIZE, type FontId } from "./fonts";
 import { detectLang, type Lang } from "./i18n";
 import { DEFAULT_ACCENT, DEFAULT_THEME, type AccentId, type Theme } from "./theme";
 import { DEFAULT_CONTROLS, DEFAULT_MODULES, type BarControls, type MetricModules } from "../ui/metrics";
+import { isIconId, type IconId } from "../ui/icon-catalog";
 
 export interface Settings {
   opacity: number;
@@ -42,6 +43,10 @@ export interface Settings {
   accent: AccentId;
   openNotes: number[];
   activeNote: number;
+  /** Icone de cada aba, pelo numero do espaco. Aba sem icone nao aparece. */
+  tabIcons: Record<string, IconId>;
+  /** Quantas vezes cada icone foi escolhido, e quando, para "Recentes". */
+  iconUsage: Partial<Record<IconId, { count: number; last: number }>>;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -69,6 +74,8 @@ export const DEFAULT_SETTINGS: Settings = {
   /** Anotacao aberta por ultimo. */
   activeNote: 1,
   shortcuts: {},
+  tabIcons: {},
+  iconUsage: {},
   statusBar: { ...DEFAULT_MODULES },
   barControls: { ...DEFAULT_CONTROLS },
 };
@@ -95,6 +102,13 @@ export async function loadSettings(): Promise<Settings> {
     // Uma aba precisa existir sempre: lista vazia deixaria o app sem texto.
     openNotes: saved?.openNotes?.length ? [...saved.openNotes] : [...DEFAULT_SETTINGS.openNotes],
     shortcuts: { ...(saved?.shortcuts ?? {}) },
+    // Um icone que saiu do catalogo numa versao futura nao pode quebrar a aba.
+    tabIcons: Object.fromEntries(
+      Object.entries(saved?.tabIcons ?? {}).filter(([, icon]) => isIconId(icon)),
+    ) as Record<string, IconId>,
+    iconUsage: Object.fromEntries(
+      Object.entries(saved?.iconUsage ?? {}).filter(([icon]) => isIconId(icon)),
+    ),
   };
 }
 

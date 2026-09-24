@@ -30,6 +30,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { t } from "../core/i18n";
 import { ghostSearchPanel } from "./search-panel";
 import { links } from "./links";
+import { tasks, toggleTask } from "./tasks";
 import { tags } from "@lezer/highlight";
 
 export interface EditorOptions {
@@ -100,6 +101,8 @@ function toggleWrap(marker: string) {
 const formattingKeymap: KeyBinding[] = [
   { key: "Mod-b", run: toggleWrap("**") },
   { key: "Mod-i", run: toggleWrap("_") },
+  // Antes do `defaultKeymap`, que usa Mod-Enter para inserir linha em branco.
+  { key: "Mod-Enter", run: toggleTask },
 ];
 
 /**
@@ -284,6 +287,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
     // tamanho sozinho. Titulos com "#" continuam funcionando.
     markdown({ extensions: [{ remove: ["SetextHeading"] }] }),
     links,
+    tasks,
     syntaxHighlighting(markdownHighlight),
     placeholder(t("editor.placeholder")),
     plainPaste,
