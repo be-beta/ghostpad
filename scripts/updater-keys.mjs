@@ -33,9 +33,13 @@ if (existsSync(chave)) {
 mkdirSync(pasta, { recursive: true });
 
 console.log(`Gerando o par de chaves em ${pasta}...`);
-execFileSync("npx", ["tauri", "signer", "generate", "-w", chave, "--password", ""], {
+
+// Chamado pelo caminho do arquivo .js, e nao por `npx`: no Windows, `npx` e um
+// .cmd e precisaria de shell, e o shell do Windows descarta um argumento vazio
+// -- o `--password ""` chegava sem valor nenhum e a CLI reclamava.
+const cli = join(raiz, "node_modules", "@tauri-apps", "cli", "tauri.js");
+execFileSync(process.execPath, [cli, "signer", "generate", "-w", chave, "--password", ""], {
   stdio: "inherit",
-  shell: process.platform === "win32",
 });
 
 const publica = readFileSync(`${chave}.pub`, "utf8").trim();

@@ -21,6 +21,17 @@ export interface SettingsValues {
   idleFade: boolean;
   theme: Theme;
   accent: AccentId;
+  update: UpdateSection;
+}
+
+/** O que a seção de atualização precisa saber para se desenhar. */
+export interface UpdateSection {
+  /** Versão em uso. */
+  current: string;
+  /** Versão encontrada, ou null enquanto não houver nenhuma. */
+  available: { version: string; notes?: string } | null;
+  /** Fração baixada (0 a 1) enquanto a instalação acontece. */
+  progress: number | null;
 }
 
 export interface SettingsPanel {
@@ -30,6 +41,8 @@ export interface SettingsPanel {
   toggle(): void;
   /** Redesenha com valores novos (usado quando o idioma muda). */
   refresh(): void;
+  /** Redesenha só a seção de atualização, sem tocar no resto do painel. */
+  refreshUpdate(): void;
 }
 
 export interface SettingsHandlers {
@@ -40,11 +53,51 @@ export interface SettingsHandlers {
   onIdleFade: (value: boolean) => void;
   onTheme: (theme: Theme) => void;
   onAccent: (accent: AccentId) => void;
+  onUpdate: () => void;
+}
+
+/**
+ * Conteúdo da seção de atualização.
+ *
+ * Fica separado do resto porque é a única parte do painel que muda sozinha: o
+ * download avança sem ninguém clicar, e redesenhar o painel inteiro a cada
+ * porcentagem faria a janela piscar.
+ */
+function updateBox(update: UpdateSection): string {
+  if (update.progress !== null) {
+    return `<p class="gp-sheet__note">${t("update.installing", {
+      n: Math.round(update.progress * 100),
+    })}</p>`;
+  }
+
+  if (!update.available) {
+    return `
+      <p class="gp-sheet__note">${t("update.current", { v: update.current })}</p>
+      <p class="gp-sheet__note gp-sheet__note--faint">${t("update.none")}</p>`;
+  }
+
+  // O aviso do reinício vem ANTES do botão, e não depois de clicar: quem está
+  // no meio de uma anotação precisa saber o que vai acontecer para escolher a
+  // hora, e não ser informado quando já não dá para voltar atrás.
+  return `
+    <p class="gp-sheet__note">${t("update.available", { v: update.available.version })}</p>
+    ${update.available.notes ? `<p class="gp-sheet__note gp-sheet__note--faint">${escape(update.available.notes)}</p>` : ""}
+    <p class="gp-sheet__note gp-sheet__note--faint">${t("update.restart")}</p>
+    <div class="gp-options">
+      <button class="gp-option gp-option--accent" data-update>${t("update.action")}</button>
+    </div>`;
+}
+
+/** As notas de versão vêm de fora do app; nunca entram como HTML. */
+function escape(text: string): string {
+  const node = document.createElement("div");
+  node.textContent = text;
+  return node.innerHTML;
 }
 
 export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandlers): SettingsPanel {
   const render = () => {
-    const { lang, font, fontSize, idleFade, theme, accent } = handlers.values();
+    const { lang, font, fontSize, idleFade, theme, accent, update } = handlers.values();
 
     const idiomas = LANGUAGES.map(
       (item) => `
@@ -130,6 +183,11 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
         </section>
 
         <section class="gp-sheet__section">
+          <h2>${t("settings.update")}</h2>
+          <div data-update-box>${updateBox(update)}</div>
+        </section>
+
+        <section class="gp-sheet__section">
           <h2>${t("settings.idleFade")}</h2>
           <div class="gp-options">
             <button class="gp-option" data-idle="on" data-on="${idleFade}">${t("settings.on")}</button>
@@ -196,6 +254,10 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     refresh() {
       if (panel.isOpen()) render();
     },
+    refreshUpdate() {
+      const caixa = host.querySelector<HTMLElement>("[data-update-box]");
+      if (caixa) caixa.innerHTML = updateBox(handlers.values().update);
+    },
   };
 
   host.addEventListener("click", (event) => {
@@ -233,6 +295,11 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     if (cor) {
       handlers.onAccent(cor as AccentId);
       syncState();
+      return;
+    }
+
+    if (target.closest("[data-update]")) {
+      handlers.onUpdate();
       return;
     }
 

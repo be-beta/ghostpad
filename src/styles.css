@@ -677,21 +677,22 @@ body[data-narrow="true"] .gp-fontsize {
 
 /* Aviso de versao nova.
  *
- * Usa a cor de destaque porque precisa ser notado, e nada alem disso: nem
- * janela, nem som, nem pergunta. A barra inteira fica a 35% ate o mouse chegar,
- * e o aviso acompanha — ele pode esperar o tempo que a pessoa quiser. */
-.gp-chip--update {
-  color: var(--gp-accent);
-  background: rgba(var(--gp-accent-rgb), 0.16);
+ * Um ponto na engrenagem, e nada mais: nem janela, nem som, nem pergunta. Quem
+ * quiser saber o que mudou abre as configuracoes; quem estiver escrevendo pode
+ * ignora-lo por dias sem que ele cresca ou insista. */
+.gp-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gp-accent);
   animation: gp-rise 220ms var(--gp-ease) both;
 }
 
-.gp-chip--update .gp-chip__dot {
-  background: var(--gp-accent);
-}
-
-.gp-chip--update:hover {
-  background: rgba(var(--gp-accent-rgb), 0.26);
+#chip-settings {
+  position: relative;
 }
 
 .gp-chip--icon {
@@ -1252,6 +1253,24 @@ body[data-notch="true"] .gp-focusline {
   margin: 12px 0 4px;
   color: var(--gp-text-dim);
   font-size: 11px;
+}
+
+/* Segunda linha de uma nota: o que muda de versao, o aviso do reinicio. Mais
+   apagado que a primeira porque explica, nao anuncia. */
+.gp-sheet__note--faint {
+  margin-top: 2px;
+  color: var(--gp-text-faint);
+  white-space: pre-line;
+}
+
+/* Unico botao do painel que age em vez de escolher. */
+.gp-option--accent {
+  background: rgba(var(--gp-accent-rgb), 0.18);
+  color: var(--gp-accent);
+}
+
+.gp-option--accent:hover {
+  background: rgba(var(--gp-accent-rgb), 0.28);
 }
 
 /* --- Toast ----------------------------------------------------------------- */

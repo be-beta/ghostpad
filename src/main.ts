@@ -6,6 +6,7 @@
  */
 
 import { listen } from "@tauri-apps/api/event";
+import { getVersion } from "@tauri-apps/api/app";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
 
@@ -94,7 +95,7 @@ const el = {
   chipGhost: document.getElementById("chip-ghost") as HTMLButtonElement,
   chipStealth: document.getElementById("chip-stealth") as HTMLButtonElement,
   chipBackdrop: document.getElementById("chip-backdrop") as HTMLButtonElement,
-  chipUpdate: document.getElementById("chip-update") as HTMLButtonElement,
+  updateDot: document.getElementById("update-dot") as HTMLSpanElement,
   chipHelp: document.getElementById("chip-help") as HTMLButtonElement,
   metrics: document.getElementById("metrics") as HTMLSpanElement,
   chipModules: document.getElementById("chip-modules") as HTMLButtonElement,
@@ -180,6 +181,11 @@ const settingsPanel = createSettingsPanel(el.settings, {
     idleFade: settings.idleFade,
     theme: settings.theme,
     accent: settings.accent,
+    update: {
+      current: appVersion,
+      available: updates?.pending() ?? null,
+      progress: updateProgress,
+    },
   }),
   onLang: changeLang,
   onFont: changeFont,
@@ -201,6 +207,7 @@ const settingsPanel = createSettingsPanel(el.settings, {
     applyAccent(accent, settings.theme);
     void saveSettings(settings);
   },
+  onUpdate: () => void installUpdate(),
 });
 
 /**
@@ -338,35 +345,42 @@ function renderFontSize(): void {
 }
 
 let updates: UpdateWatcher | undefined;
+let updateProgress: number | null = null;
+let appVersion = "";
 
 /**
- * Mostra o aviso de versao nova.
+ * Mostra que existe versao nova.
  *
- * Um chip, e nada mais. Nao existe janela perguntando, nem instalacao sozinha:
- * atualizar no meio de uma anotacao fecha o app, e fechar o app sem a pessoa
- * mandar e exatamente o que este projeto nao faz.
+ * Um ponto na engrenagem, e nada mais. O que mudou, o botao e o aviso do
+ * reinicio ficam dentro das configuracoes: quem esta escrevendo nao precisa
+ * decidir nada agora, e nada aqui insiste.
  */
 function renderUpdate(): void {
   const nova = updates?.pending();
-  el.chipUpdate.hidden = !nova;
-  if (nova) el.chipUpdate.title = t("update.title", { v: nova.version });
+  el.updateDot.hidden = !nova;
+  el.chipSettings.title = nova
+    ? t("update.title", { v: nova.version })
+    : t("chip.settings.title");
+  settingsPanel.refreshUpdate();
 }
 
 /** Baixa e instala. O app reinicia sozinho no fim; daqui so volta se falhar. */
 async function installUpdate(): Promise<void> {
-  const rotulo = el.chipUpdate.querySelector<HTMLElement>(".gp-chip__label");
-  if (!rotulo || el.chipUpdate.disabled) return;
+  if (updateProgress !== null) return;
 
-  el.chipUpdate.disabled = true;
+  updateProgress = 0;
+  settingsPanel.refreshUpdate();
+
   try {
     await updates?.install((fracao) => {
-      rotulo.textContent = t("update.installing", { n: Math.round(fracao * 100) });
+      updateProgress = fracao;
+      settingsPanel.refreshUpdate();
     });
   } catch (error) {
     console.error("[harp] falha ao instalar atualizacao", error);
     toast(t("update.failed"));
-    rotulo.textContent = t("update.label");
-    el.chipUpdate.disabled = false;
+    updateProgress = null;
+    settingsPanel.refreshUpdate();
   }
 }
 
@@ -1487,7 +1501,6 @@ function wireEvents(): void {
   el.chipGhost.addEventListener("click", () => void toggleGhost());
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
-  el.chipUpdate.addEventListener("click", () => void installUpdate());
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
   el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
   el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
@@ -1693,6 +1706,7 @@ async function boot(): Promise<void> {
 
   wireEvents();
   void checkRecorders();
+  appVersion = await getVersion().catch(() => "");
   updates = watchForUpdates(renderUpdate);
   editor.focus();
 }

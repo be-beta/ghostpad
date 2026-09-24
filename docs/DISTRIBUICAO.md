@@ -141,8 +141,12 @@ segundos depois de abrir e a cada seis horas.
 Três decisões, todas pelo mesmo motivo — um app que promete não interromper não
 pode interromper nem para se atualizar:
 
-- **Nenhuma janela.** Aparece um chip na cor de destaque na barra de baixo, e
-  nada mais. Sem som, sem pergunta, sem modal.
+- **Nenhuma janela.** Aparece um ponto na cor de destaque sobre a engrenagem, e
+  nada mais. Sem som, sem pergunta, sem modal. O que mudou, o botão e o aviso do
+  reinício ficam dentro das configurações, para quem quiser olhar.
+- **O aviso do reinício vem antes do clique.** Quem está no meio de uma anotação
+  precisa saber que o app vai fechar e abrir de novo para escolher a hora — não
+  ser informado quando já não dá para voltar atrás.
 - **Nunca instala sozinho.** Atualizar fecha o app, e fechar o app sem a pessoa
   mandar é exatamente o que este projeto não faz.
 - **Falha calada.** Sem rede, GitHub fora do ar ou manifesto malformado não

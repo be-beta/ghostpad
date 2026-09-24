@@ -38,7 +38,7 @@
   "plugins": {
     "updater": {
       "endpoints": ["https://github.com/be-beta/harp/releases/latest/download/latest.json"],
-      "pubkey": "COLE_AQUI_A_CHAVE_PUBLICA"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhFQkZDOTI5NTg2MjMxREEKUldUYU1XSllLY20vanA2akJEdEFCb0lYUnFkNVdZOFhhQzFVdlhtbG9uYUo0aUQrTjRzUVkvZmEK"
     }
   },
   "bundle": {

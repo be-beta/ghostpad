@@ -177,8 +177,10 @@ Fatos verificáveis, para o site não prometer o que não existe:
 - Três idiomas, sete fontes, tema claro/escuro/sistema, cor de destaque.
 - Tudo local. Nenhuma conta, nenhum cadastro. A única conexão que o app faz é
   procurar versão nova, e ela não envia nada sobre quem usa.
-- **Atualização dentro do app:** um chip discreto na barra quando há versão
-  nova; instala quando a pessoa clica, nunca sozinho.
+- **Atualização dentro do app:** um ponto discreto sobre a engrenagem quando há
+  versão nova; instala quando a pessoa clica, nunca sozinho.
+- **Download livre.** Não é preciso conta no GitHub, nem conta nenhuma, para
+  baixar ou para receber atualizações.
 - **Windows.** Requer WebView2, já incluso no Windows 11.
 
 Os sete princípios de engenharia que estão no README são **internos** — explicam
