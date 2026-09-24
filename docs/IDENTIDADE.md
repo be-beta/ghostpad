@@ -173,6 +173,10 @@ Fatos verificáveis, para o site não prometer o que não existe:
 - **Teleprompter** com rolagem contínua, modo faixa no topo da tela e modo tela
   cheia.
 - Abrir e salvar `.txt` e `.md`.
+- **Markdown onde ele ajuda:** listas continuam sozinhas no Enter, negrito e
+  itálico por atalho. Não é texto formatado — o arquivo continua sendo texto.
+- **Endereços no texto viram links:** `Ctrl+clique` abre no navegador. Não há
+  inserir link nem esconder o endereço atrás de um rótulo.
 - Posições rápidas: cantos, metades, tela inteira.
 - Três idiomas, sete fontes, tema claro/escuro/sistema, cor de destaque.
 - Tudo local. Nenhuma conta, nenhum cadastro. A única conexão que o app faz é

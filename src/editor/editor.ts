@@ -29,6 +29,7 @@ import { HighlightStyle, indentUnit, syntaxHighlighting } from "@codemirror/lang
 import { markdown } from "@codemirror/lang-markdown";
 import { t } from "../core/i18n";
 import { ghostSearchPanel } from "./search-panel";
+import { links } from "./links";
 import { tags } from "@lezer/highlight";
 
 export interface EditorOptions {
@@ -282,6 +283,7 @@ export function createEditor(options: EditorOptions): GhostEditor {
     // com "-" vira titulo. Ao comecar uma lista, o paragrafo de cima mudava de
     // tamanho sozinho. Titulos com "#" continuam funcionando.
     markdown({ extensions: [{ remove: ["SetextHeading"] }] }),
+    links,
     syntaxHighlighting(markdownHighlight),
     placeholder(t("editor.placeholder")),
     plainPaste,

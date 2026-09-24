@@ -440,6 +440,22 @@ body[data-ghost="true"] .gp-resize {
   user-select: text;
 }
 
+/* Enderecos no texto.
+ *
+ * Sublinhado discreto o tempo todo, para nao transformar a anotacao num mar de
+ * azul; a cor de destaque e a mao so aparecem com Ctrl pressionado, que e
+ * quando o clique de fato abre. */
+.cm-harp-link {
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--gp-accent-rgb), 0.45);
+  text-underline-offset: 3px;
+}
+
+.cm-harp-ready .cm-harp-link {
+  text-decoration-color: var(--gp-accent);
+  cursor: pointer;
+}
+
 .gp-editor .cm-scroller::-webkit-scrollbar {
   width: 8px;
 }

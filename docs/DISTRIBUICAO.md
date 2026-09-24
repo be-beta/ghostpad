@@ -30,9 +30,10 @@ aviso do SmartScreen continua existindo.
 
 ## Como publicar uma versão
 
-1. Subir o número da versão em **dois** arquivos — eles precisam bater:
-   - `src-tauri/tauri.conf.json` → `version`
+1. Subir o número da versão em **três** arquivos — eles precisam bater:
+   - `src-tauri/tauri.conf.json` → `version` (é o que vale para o instalador)
    - `package.json` → `version`
+   - `src-tauri/Cargo.toml` → `version`
 2. Commitar.
 3. Marcar e empurrar a tag:
 

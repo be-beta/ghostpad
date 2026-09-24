@@ -65,6 +65,7 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Shift+Alt+↑ / ↓", label: t("shortcuts.copyLine") },
         { keys: "Ctrl+D", label: t("shortcuts.selectNext") },
         { keys: "Alt+Clique", label: t("shortcuts.addCursor") },
+        { keys: "Ctrl+Clique", label: t("shortcuts.openLink") },
         { keys: "Tab / Shift+Tab", label: t("shortcuts.indent") },
       ],
     },

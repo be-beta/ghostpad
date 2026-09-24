@@ -748,6 +748,22 @@ troca de verdade, e o próprio CodeMirror marca a tipografia como suja.
 A família continua vindo do CSS, que a carrega sob demanda, mas o tema é
 reconstruído junto — então trocar de fonte também dispara a remedição.
 
+### Link é para abrir, não para inserir **[D]**
+
+Anotação sobre tela quase sempre é "endereço + observação": de onde a coisa
+estava, e o que você pensou sobre ela. Num bloco de notas comum esse endereço é
+texto morto.
+
+Então `Ctrl+clique` abre, e nada além disso: não existe inserir link, nem
+esconder o endereço atrás de um rótulo. Isso seria texto formatado, que o Harp
+não é — o que está escrito continua sendo exatamente o que foi digitado.
+
+Só `http` e `https`, mesmo que o texto tenha vindo colado de qualquer lugar: um
+clique não pode virar a execução de outro esquema. O sublinhado fica discreto o
+tempo todo, e a cor de destaque e o cursor de mão só aparecem com `Ctrl`
+pressionado — sem isso ninguém descobriria que dá para clicar, porque o cursor
+de texto diz ativamente que não dá.
+
 ### O nome mudou, a pasta de dados foi junto **[D]**
 
 O app nasceu GhostPad e virou Harp. O identificador (`io.github.be-beta.harp`)

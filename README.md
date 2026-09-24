@@ -8,9 +8,7 @@ Windows, gratuito, tudo local.
 > **Estado:** primeira versão pública — `v0.1.0`, em beta.
 > Janela, editor, métricas, histórico, múltiplas notas, teleprompter e
 > atualização dentro do app.
-> Arquitetura e decisões em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
-> conceito, manifesto e identidade em [docs/IDENTIDADE.md](docs/IDENTIDADE.md);
-> como publicar em [docs/DISTRIBUICAO.md](docs/DISTRIBUICAO.md).
+> Documentação em [docs/](docs/README.md): arquitetura, identidade e distribuição.
 >
 > O projeto se chamou **GhostPad** até aqui. Quem usou a versão antiga não perde
 > nada: a pasta de dados é migrada na primeira abertura.
@@ -108,6 +106,7 @@ envia um binário feito na própria máquina.
 - **Modo fantasma** — o mouse atravessa a janela
 - **Invisível em gravações** — OBS, Zoom, Teams e Meet não capturam a janela
 - **Snap de cantos** consciente de multi-monitor e escala de tela
+- **Endereços viram links** — `Ctrl+clique` abre no navegador
 - **Atualização dentro do app**, sem loja e sem instalar nada por conta própria
 - **Chamada instantânea** de qualquer app com `Ctrl+Alt+Space`
 - **Editor com atalhos do VS Code**: mover e duplicar linhas, multi-cursor
@@ -136,6 +135,9 @@ envia um binário feito na própria máquina.
 | `Ctrl+1` … `Ctrl+5` | Troca de aba |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba |
 | `Ctrl+Alt+P` / `Ctrl+Alt+N` | Teleprompter / modo faixa |
+| `Ctrl+Alt+F` | Teleprompter em tela cheia |
+| `Ctrl+clique` | Abre o endereço sob o cursor |
+| `Ctrl+=` / `Ctrl+−` | Aumenta / diminui o tamanho do texto |
 | `Ctrl+,` | Configurações: idioma, fonte e tamanho |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
