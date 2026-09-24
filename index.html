@@ -60,6 +60,10 @@
         </div>
 
         <div class="gp-status__group gp-status__group--right">
+          <!-- So aparece quando existe versao nova. Sem janela, sem pergunta. -->
+          <button class="gp-chip gp-chip--update" id="chip-update" hidden>
+            <span class="gp-chip__dot"></span><span class="gp-chip__label" data-i18n="update.label"></span>
+          </button>
           <button class="gp-chip" id="chip-backdrop" data-i18n-title="chip.backdrop.title"></button>
           <span class="gp-metrics" id="metrics"></span>
           <button class="gp-metric gp-metric--dim" id="metric-opacity" data-i18n-title="chip.opacity.title">90%</button>

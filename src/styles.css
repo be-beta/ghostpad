@@ -675,6 +675,25 @@ body[data-narrow="true"] .gp-fontsize {
   display: none;
 }
 
+/* Aviso de versao nova.
+ *
+ * Usa a cor de destaque porque precisa ser notado, e nada alem disso: nem
+ * janela, nem som, nem pergunta. A barra inteira fica a 35% ate o mouse chegar,
+ * e o aviso acompanha — ele pode esperar o tempo que a pessoa quiser. */
+.gp-chip--update {
+  color: var(--gp-accent);
+  background: rgba(var(--gp-accent-rgb), 0.16);
+  animation: gp-rise 220ms var(--gp-ease) both;
+}
+
+.gp-chip--update .gp-chip__dot {
+  background: var(--gp-accent);
+}
+
+.gp-chip--update:hover {
+  background: rgba(var(--gp-accent-rgb), 0.26);
+}
+
 .gp-chip--icon {
   width: 20px;
   height: 20px;
@@ -1331,6 +1350,15 @@ body[data-ghost="true"] .gp-shell {
   from {
     opacity: 0;
     transform: translateY(6px) scale(0.97);
+  }
+}
+
+/* Entrada do aviso de versao nova: ele nasce no meio de uma barra que ja estava
+   na tela, e aparecer do nada assusta mais do que crescer. */
+@keyframes gp-rise {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
   }
 }
 

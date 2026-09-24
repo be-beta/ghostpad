@@ -107,6 +107,7 @@ envia um binário feito na própria máquina.
 - **Modo fantasma** — o mouse atravessa a janela
 - **Invisível em gravações** — OBS, Zoom, Teams e Meet não capturam a janela
 - **Snap de cantos** consciente de multi-monitor e escala de tela
+- **Atualização dentro do app**, sem loja e sem instalar nada por conta própria
 - **Chamada instantânea** de qualquer app com `Ctrl+Alt+Space`
 - **Editor com atalhos do VS Code**: mover e duplicar linhas, multi-cursor
 - **Copiar tudo e limpar** para o ciclo de escrever prompts

@@ -1,15 +1,22 @@
 # Publica uma versão do Harp.
 #
 # Dispara ao marcar uma tag `v*` (`git tag v0.1.0 && git push origin v0.1.0`).
-# O instalador é enviado com nome fixo, `Harp-Setup.exe`, para que o botão de
-# download do site possa apontar sempre para o mesmo endereço:
+# Sem tag, o disparo manual só compila e guarda o instalador como artefato —
+# serve para saber se o build ainda passa.
 #
-#   https://github.com/be-beta/harp/releases/latest/download/Harp-Setup.exe
+# Três arquivos vão para o release:
 #
-# O instalador não é assinado. Na primeira execução o Windows mostra o aviso do
-# SmartScreen; um certificado custa caro e a Store cobra conta de desenvolvedor,
-# então por enquanto o aviso é o preço de distribuir de graça. O README explica
-# como passar por ele.
+#   Harp-Setup.exe          instalador, com nome fixo
+#   Harp-Setup.exe.sha256   soma de verificação
+#   latest.json             o que o app instalado lê para saber de versões novas
+#
+# O nome fixo é o que permite ao site ter um botão que nunca precisa ser
+# editado: https://github.com/be-beta/harp/releases/latest/download/Harp-Setup.exe
+#
+# O instalador não é assinado com certificado (isso custa por ano), então o
+# Windows mostra o aviso do SmartScreen na primeira execução. A assinatura que
+# existe aqui é outra: a do atualizador, que garante ao app já instalado que o
+# arquivo baixado saiu deste workflow e não de outro lugar.
 
 name: Release
 
@@ -27,6 +34,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Conferir a chave do atualizador
+        shell: pwsh
+        run: |
+          $pub = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).plugins.updater.pubkey
+          if (-not $pub -or $pub -match "COLE_AQUI") {
+            throw "Chave publica do atualizador ausente. Rode 'npm run updater:keys' e commite src-tauri/tauri.conf.json."
+          }
+          if (-not "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}") {
+            throw "Secret TAURI_SIGNING_PRIVATE_KEY ausente no repositorio."
+          }
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -41,17 +59,42 @@ jobs:
       - run: npm ci
 
       - name: Build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build
 
-      - name: Nome fixo para o instalador
+      - name: Preparar os arquivos do release
         shell: pwsh
         run: |
-          $nsis = Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe | Select-Object -First 1
+          $nsis = Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *-setup.exe | Select-Object -First 1
           if (-not $nsis) { throw "instalador NSIS nao encontrado" }
           Copy-Item $nsis.FullName Harp-Setup.exe
-          # A soma vai junto: e o que o winget pede, e o que permite a quem
-          # baixa conferir que o arquivo e o mesmo que saiu daqui.
+
+          # A soma e o que o winget pede, e o que permite a quem baixa conferir
+          # que o arquivo e o mesmo que saiu daqui.
           (Get-FileHash Harp-Setup.exe -Algorithm SHA256).Hash | Out-File -Encoding ascii Harp-Setup.exe.sha256
+
+          # `latest.json` e o que o app instalado le. A assinatura vale para o
+          # conteudo do arquivo, entao continua valida na copia renomeada.
+          $sig = Get-Content "$($nsis.FullName).sig" -Raw
+          $versao = "${{ github.ref_name }}" -replace "^v", ""
+          if (-not $versao -or "${{ github.ref_type }}" -ne "tag") { $versao = "0.0.0" }
+
+          $manifesto = @{
+            version   = $versao
+            pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = $sig.Trim()
+                # Endereco da tag, e nao de "latest": assim a assinatura e o
+                # arquivo sempre pertencem a mesma versao, mesmo que outra seja
+                # publicada durante o download.
+                url = "https://github.com/be-beta/harp/releases/download/${{ github.ref_name }}/Harp-Setup.exe"
+              }
+            }
+          }
+          $manifesto | ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 latest.json
 
       # Sem tag, o disparo manual serve só para saber se o build ainda passa.
       - name: Guardar o instalador
@@ -59,7 +102,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Harp-Setup
-          path: Harp-Setup.exe
+          path: |
+            Harp-Setup.exe
+            latest.json
 
       - name: Publicar
         if: startsWith(github.ref, 'refs/tags/')
@@ -68,6 +113,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ github.ref_name }}" `
-            Harp-Setup.exe Harp-Setup.exe.sha256 `
+            Harp-Setup.exe Harp-Setup.exe.sha256 latest.json `
             --title "Harp ${{ github.ref_name }}" `
             --generate-notes

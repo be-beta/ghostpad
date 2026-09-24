@@ -52,6 +52,7 @@ import {
   type FontId,
 } from "./core/fonts";
 import { applyStaticTranslations, setLang, t, type Lang } from "./core/i18n";
+import { watchForUpdates, type UpdateWatcher } from "./core/updater";
 import {
   applyAccent,
   applyTheme,
@@ -93,6 +94,7 @@ const el = {
   chipGhost: document.getElementById("chip-ghost") as HTMLButtonElement,
   chipStealth: document.getElementById("chip-stealth") as HTMLButtonElement,
   chipBackdrop: document.getElementById("chip-backdrop") as HTMLButtonElement,
+  chipUpdate: document.getElementById("chip-update") as HTMLButtonElement,
   chipHelp: document.getElementById("chip-help") as HTMLButtonElement,
   metrics: document.getElementById("metrics") as HTMLSpanElement,
   chipModules: document.getElementById("chip-modules") as HTMLButtonElement,
@@ -335,6 +337,39 @@ function renderFontSize(): void {
   el.fontBigger.disabled = settings.fontSize >= FONT_SIZE_MAX;
 }
 
+let updates: UpdateWatcher | undefined;
+
+/**
+ * Mostra o aviso de versao nova.
+ *
+ * Um chip, e nada mais. Nao existe janela perguntando, nem instalacao sozinha:
+ * atualizar no meio de uma anotacao fecha o app, e fechar o app sem a pessoa
+ * mandar e exatamente o que este projeto nao faz.
+ */
+function renderUpdate(): void {
+  const nova = updates?.pending();
+  el.chipUpdate.hidden = !nova;
+  if (nova) el.chipUpdate.title = t("update.title", { v: nova.version });
+}
+
+/** Baixa e instala. O app reinicia sozinho no fim; daqui so volta se falhar. */
+async function installUpdate(): Promise<void> {
+  const rotulo = el.chipUpdate.querySelector<HTMLElement>(".gp-chip__label");
+  if (!rotulo || el.chipUpdate.disabled) return;
+
+  el.chipUpdate.disabled = true;
+  try {
+    await updates?.install((fracao) => {
+      rotulo.textContent = t("update.installing", { n: Math.round(fracao * 100) });
+    });
+  } catch (error) {
+    console.error("[harp] falha ao instalar atualizacao", error);
+    toast(t("update.failed"));
+    rotulo.textContent = t("update.label");
+    el.chipUpdate.disabled = false;
+  }
+}
+
 function changeFontSize(size: number): void {
   // Um valor invalido aqui virava "NaNpx" no CSS: o navegador ignora e o texto
   // parece nao responder. Melhor ficar onde esta do que sumir sem explicacao.
@@ -381,6 +416,7 @@ function changeLang(lang: Lang): void {
 
   updateMetrics(editor.getText());
   renderTabs();
+  renderUpdate();
   if (!el.modules.hidden) renderModulesMenu();
   settingsPanel.refresh();
 
@@ -1451,6 +1487,7 @@ function wireEvents(): void {
   el.chipGhost.addEventListener("click", () => void toggleGhost());
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
+  el.chipUpdate.addEventListener("click", () => void installUpdate());
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
   el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
   el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
@@ -1656,6 +1693,7 @@ async function boot(): Promise<void> {
 
   wireEvents();
   void checkRecorders();
+  updates = watchForUpdates(renderUpdate);
   editor.focus();
 }
 
