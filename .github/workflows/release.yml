@@ -34,14 +34,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # A chave privada vai por variavel de ambiente, e nao interpolada no
+      # script: ela tem mais de uma linha, e colada dentro de uma string quebra
+      # a sintaxe do PowerShell antes de qualquer verificacao acontecer.
       - name: Conferir a chave do atualizador
         shell: pwsh
+        env:
+          PRIVADA: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           $pub = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).plugins.updater.pubkey
           if (-not $pub -or $pub -match "COLE_AQUI") {
-            throw "Chave publica do atualizador ausente. Rode 'npm run updater:keys' e commite src-tauri/tauri.conf.json."
+            throw "Chave publica ausente. Rode 'npm run updater:keys' e commite src-tauri/tauri.conf.json."
           }
-          if (-not "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}") {
+          if (-not $env:PRIVADA) {
             throw "Secret TAURI_SIGNING_PRIVATE_KEY ausente no repositorio."
           }
 
