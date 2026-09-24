@@ -5,8 +5,9 @@ cima do que você está olhando, para que anotar não custe a tela.
 
 Windows, gratuito, tudo local.
 
-> **Estado:** roteiro original concluído — janela, editor, métricas, histórico,
-> múltiplas notas e teleprompter. Ainda sem versão publicada.
+> **Estado:** primeira versão pública — `v0.1.0`, em beta.
+> Janela, editor, métricas, histórico, múltiplas notas, teleprompter e
+> atualização dentro do app.
 > Arquitetura e decisões em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md);
 > conceito, manifesto e identidade em [docs/IDENTIDADE.md](docs/IDENTIDADE.md);
 > como publicar em [docs/DISTRIBUICAO.md](docs/DISTRIBUICAO.md).

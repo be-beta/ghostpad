@@ -18,6 +18,12 @@ os segredos do repositório. **Guarde uma cópia da chave privada.** Sem ela,
 nenhuma instalação existente aceita atualização, e todo mundo teria de
 reinstalar na mão.
 
+**Os dois comandos precisam rodar num terminal que passe um argumento vazio de
+verdade.** O `--body ""` do segredo da senha vira literalmente `""` em alguns
+terminais do Windows, e aí o build falha no fim com *"Wrong password for that
+key"* — depois de cinco minutos compilando, no último passo. Se acontecer, basta
+regravar os dois segredos; a chave não precisa ser gerada de novo.
+
 Essa assinatura não tem relação com o certificado do Windows. Ela serve para o
 app já instalado saber que o arquivo baixado saiu do workflow de release; o
 aviso do SmartScreen continua existindo.
