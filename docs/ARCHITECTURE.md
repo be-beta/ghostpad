@@ -69,18 +69,20 @@ A causa exata na máquina não foi isolada — e isso já é a conclusão de pro
   está clicando no app de baixo.
 
 Decisão: **transparência real é o padrão**, porque é o único modo que funciona
-em qualquer máquina e com a janela sem foco. Desfoque (`blur`) e `acrylic` ficam
-disponíveis como escolha explícita (`Ctrl+Shift+B`), e o acrylic avisa ao ser
-ativado que some sem foco.
+em qualquer máquina e com a janela sem foco. Desfoque (`blur`) e `acrylic`
+ficaram um tempo como escolha explícita e depois **saíram do app**, junto com a
+dependência `window-vibrancy`: opacidade e tema já decidem quanto do que está
+atrás aparece, e um seletor com duas opções que falham na maioria das máquinas
+não ajudava ninguém.
 
 Desfoque confiável e independente do foco fica registrado como pesquisa futura
 (por exemplo, capturar a região atrás da janela e desfocar no próprio app).
 
 ### 3.2 Opacidade é CSS, nunca o efeito nativo
 
-O efeito nativo, quando ligado, usa tint quase transparente `(18, 18, 18, 10)`.
-O controle de opacidade mexe numa camada CSS por cima (`.gp-backdrop`), que
-anima a 60fps sem piscar. Reaplicar o efeito do DWM a cada `Ctrl+]` piscaria.
+O controle de opacidade mexe numa camada CSS por baixo do texto
+(`.gp-backdrop`), que anima a 60fps sem piscar. Nenhuma chamada ao DWM é
+refeita a cada `Ctrl+]`.
 
 ### 3.3 Cantos arredondados são nativos
 
@@ -145,7 +147,7 @@ na gravação.
 ```
 src-tauri/src/
   lib.rs         setup, plugins, registro de comandos, atalho de resgate
-  window_fx.rs   tudo que é Win32: acrylic, cantos, display affinity, snap
+  window_fx.rs   tudo que é Win32: cantos, display affinity, snap
 ```
 
 ### Comandos expostos
@@ -719,13 +721,11 @@ olhar, então ele não precisa ocupar espaço permanente.
 
 ### A barra inteira é opcional **[D]**
 
-O menu `⋯` passou a controlar dois grupos: **contagens** (palavras, caracteres,
-linhas, tokens, páginas) e **controles** (tamanho do texto, opacidade, fundo da
-janela). Cada um liga e desliga em separado, então a barra pode ficar com uma
-única informação — ou com nenhuma.
-
-O seletor de fundo vem **desligado por padrão**: o desfoque nativo falha em
-parte das máquinas, então ele só interessa a quem for testá-lo.
+O menu `⋯` passou a controlar três grupos: **contagens** (palavras, caracteres,
+linhas, tokens, páginas), **controles** (tamanho do texto, opacidade,
+teleprompter) e **modos da janela** (topo, fantasma, oculto). Cada um liga e
+desliga em separado, então a barra pode ficar com uma única informação — ou com
+nenhuma.
 
 Esconder a opacidade criava uma armadilha: o único jeito de ligar o
 esmaecimento automático era clicar nela. Por isso o esmaecimento passou também
@@ -797,8 +797,8 @@ ganhou nenhum botão fixo.
 O atalho ciclava o fundo da janela, mas o desfoque nativo não funciona na maior
 parte das máquinas: ciclar entre um fundo que funciona e dois que não funcionam
 não ajudava ninguém. Agora alterna claro e escuro, a partir do tema *visível* —
-em "sistema" com o Windows escuro, ele vai para o claro. O fundo continua no
-chip da barra.
+em "sistema" com o Windows escuro, ele vai para o claro. O seletor de fundo saiu
+do app (seção 3.1).
 
 ### Dez abas, e o `0` é a décima **[D]**
 
@@ -816,9 +816,19 @@ existe na aba.
 
 A lupa decidiu: abaixo de 1 px de traço, ícone de contorno vira borrão cinza, e
 a silhueta preenchida sobrevive. Ficou **Heroicons 16/solid ("micro")**, que
-ainda continua a linguagem do ponto preenchido que a aba recolhida já usava. O
-ícone recolhido tem 10 px contra os 9 do ponto: a barra não cresceu por causa
-dele.
+ainda continua a linguagem do ponto preenchido que a aba recolhida já usava.
+
+### A aba não encolhe, ela se cala **[D]**
+
+A primeira versão desenhava o ícone em 12 px com a aba aberta e em 10 px
+recolhida. No uso, o tamanho da aba aberta se mostrou bom para as duas, e a
+barra de 26 px tinha folga: agora o glifo tem **14 px** sempre. Recolher só
+esconde o número e o X. Sem ícone, o glifo é o ponto que as abas sempre
+tiveram, no mesmo lugar.
+
+O número deixou de ser rótulo. Ele existe para lembrar qual tecla chama a aba
+(`Ctrl+número`), então aparece como dica de tecla: pequeno, apagado, um pouco
+abaixo da linha — e mostra `0` na décima, que é o que se aperta.
 
 Só os 25 ícones entram no app, importados um a um (`src/ui/tab-icons.ts`). As
 três bibliotecas ficam como dependências de desenvolvimento, para a comparação
@@ -841,8 +851,12 @@ sair de tarefa é apagar o `[ ]`, gesto que já existe. Continuar no `Enter`,
 encerrar numa tarefa vazia e aninhar com `Tab` já vinham do suporte a Markdown
 do editor, que reconhece o marcador de tarefa; nada disso foi reimplementado.
 
+Na tela, o `- ` some junto com o `[ ]` e fica só a caixa: o traço antes dela
+não dizia nada que a caixa não dissesse. Em lista numerada o número fica,
+porque ali ele diz a ordem.
+
 A caixa é um intervalo atômico: o cursor pula por cima dela e o Backspace apaga
-o `[ ]` inteiro, nunca metade.
+o `- [ ]` inteiro, nunca metade.
 
 ### Rascunhos: memória curta, por construção **[D]**
 
@@ -857,6 +871,12 @@ está nele, então a ordem importa: esconder, e logo em seguida devolver.
 
 Na janela principal, o acesso é `Ctrl+J` e um chip com a contagem que só existe
 quando há rascunho.
+
+A janela tem fundo a 80% e duas linhas de altura. Quando o texto passa disso —
+por quebra de linha ou por parágrafo longo — ela cresce **para cima**, até oito
+linhas, com o canto de baixo parado onde estava (`jot_fit`). Enter guarda na
+mesma ordem do Vidro: primeiro sai da frente e devolve o foco, depois guarda e
+copia.
 
 ### Janelas passageiras não têm lugar guardado **[D]**
 
@@ -877,7 +897,39 @@ duas camadas as contém. E o que se vê enquanto se anota é exatamente o que se
 copia, porque a tela e a imagem usam a mesma função de desenho (`render.ts`).
 
 A janela principal sai de cena enquanto o Vidro está aberto e volta no fim, se
-estava lá.
+estava lá — sem ser ativada, para não roubar o foco de quem estava sendo
+anotado.
+
+### Vidro: o foco volta antes do trabalho pesado **[D]**
+
+Na primeira versão, o foco só voltava ao aplicativo de antes no fim de tudo. Só
+que gravar a imagem no clipboard codifica um PNG do tamanho do monitor, e isso
+leva perto de um segundo: quem já tinha trocado de janela era puxado de volta
+para o aplicativo de baixo.
+
+Agora só o que precisa da tela acontece antes de devolver o foco — esconder,
+esperar o compositor, fotografar, dezenas de milissegundos. Juntar as camadas,
+arredondar os cantos e gravar no clipboard vão para outra thread. Se algo
+falhar ali, a janela principal avisa.
+
+### Vidro: cantos arredondados **[D]**
+
+A moldura do Vidro tem o canto arredondado das janelas do Harp, e a imagem
+copiada sai com os quatro cantos recortados em arco (12 px lógicos, com borda
+suave). Os cantos ficam transparentes: o clipboard recebe PNG, que preserva
+isso, e um bitmap para aplicativos antigos, que podem pintar esses cantos de
+preto ou branco.
+
+### Vidro: as três cores à vista **[D]**
+
+As bolinhas de cor não funcionavam. O `<body>` marcava a ferramenta ativa com
+`data-tool`, o mesmo atributo dos botões; o clique subia até ele e era lido
+como "escolher a ferramenta atual", antes de chegar à cor. O atributo do
+`<body>` virou `data-cursor`, e o clique só considera botões da própria barra.
+
+De quebra, as três cores passaram a ficar à vista, em vez de um botão que
+alterna: numa bolinha que troca para outra cor, o clique parece não ter feito
+nada. A tecla `5` continua alternando.
 
 ### Vidro: três cores, e texto sempre legível **[D]**
 
@@ -929,7 +981,7 @@ nela. Nenhuma das duas vai para o instalador.
 | `Ctrl+Shift+H` | Ocultar de gravações | local | 0 |
 | `Ctrl+Alt+1..5` | Snap de canto | local | 0 |
 | `Ctrl+Q` | Fechar | local | 0 |
-| `Ctrl+Shift+B` | Alterna o fundo (transparente, desfoque, acrylic) | local | 0 |
+| `Ctrl+Shift+B` | Tema claro / escuro | local | 0 |
 | **`Ctrl+Alt+G`** ¹ | **Resgate** | **global** | 0 |
 | `Ctrl+Alt+Space` ² | Chamar / esconder | global | 1 |
 | `Ctrl+Shift+C` | Copiar tudo | local | 1 |

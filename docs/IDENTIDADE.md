@@ -145,10 +145,24 @@ com o app instalado ou com a ideia na cabeça — nessa ordem de importância.
    uma demonstração visual do Harp sobre uma tela de trabalho real. Um botão de
    download, sem formulário.
 2. **A tese** — o manifesto, respirado, não como bloco único.
-3. **Os momentos** — três ou quatro situações concretas (prompt diante do
-   resultado, roteiro numa gravação, anotação sobre uma interface, transcrição
-   de reunião). Imagem ou vídeo curto em cada.
+3. **Os momentos** — três ou quatro situações concretas. Imagem ou vídeo curto
+   em cada. Os mais fortes, porque só o Harp faz:
+   - **escrever sobre a própria tela** — o Vidro: circular um botão num site,
+     escrever "aumentar isto" do lado, `Ctrl+Shift+Enter`, colar no chat da
+     equipe. É a tese do manifesto em uma cena;
+   - **anotar sem sair do lugar** — `Win+J` no meio de uma reunião, uma frase,
+     `Enter`, e a pessoa nem saiu do aplicativo em que estava;
+   - **prompt diante do resultado** — o Harp translúcido sobre a resposta que
+     está sendo avaliada;
+   - **roteiro numa gravação** — o teleprompter, invisível para a câmera e para
+     o compartilhamento de tela.
 4. **O que ele faz** — aí sim os recursos, secos (ver seção 11).
+
+**Hierarquia dos recursos.** Nem tudo pesa igual na história. A escrita sobre o
+contexto vem primeiro (a janela translúcida, o Vidro, os Rascunhos); depois o
+que protege quem escreve (invisível em gravações, histórico, nada vai para a
+rede); por último os confortos (abas com ícone, tarefas, temas, atalhos).
+Um site que abre listando atalhos conta a história do avesso.
 5. **Download** — Windows, gratuito, link para a versão mais recente.
 
 **Restrições:**
@@ -173,27 +187,33 @@ Fatos verificáveis, para o site não prometer o que não existe:
 - **Invocação global:** aparece e some com um atalho, de qualquer aplicativo.
 - Até dez notas em abas, com histórico de versões local. Cada aba pode ter um
   ícone, entre 25 categorias fixas; o app sugere alguns a partir do texto, na
-  hora de escolher, sem IA e sem rede.
+  hora de escolher, sem IA e sem rede. Recolhidas, as abas mostram só os
+  ícones.
+- **Aparência:** tema claro, escuro ou do sistema (`Ctrl+Shift+B` alterna),
+  cor de destaque à escolha e opacidade de 20% a 100%. A transparência é real;
+  não há desfoque.
 - **Teleprompter** com rolagem contínua, modo faixa no topo da tela e modo tela
   cheia.
 - Abrir e salvar `.txt` e `.md`.
 - **Markdown onde ele ajuda:** listas continuam sozinhas no Enter, negrito e
   itálico por atalho, e tarefas (`- [ ]`) criadas e marcadas com `Ctrl+Enter`
-  ou com um clique na caixa. Não é texto formatado — o arquivo continua sendo
-  texto.
-- **Rascunhos:** `Win+J` abre um campo pequeno sobre qualquer aplicativo;
-  `Enter` guarda, copia e devolve o foco a quem estava antes. Os dez últimos
+  ou com um clique na caixa, que aparece sozinha na tela. Não é texto
+  formatado — o arquivo continua sendo texto.
+- **Rascunhos:** `Win+J` abre um campo pequeno e translúcido sobre qualquer
+  aplicativo; `Enter` guarda, copia e devolve o foco a quem estava antes. Os dez últimos
   ficam acessíveis na janela principal e **somem ao encerrar o Harp** — são
   memória curta de propósito, nunca vão para o disco.
 - **Vidro:** `Win+Alt+V` cobre a tela com uma camada transparente para
   escrever, apontar e circular sobre o que está nela — texto, seta, retângulo e
-  círculo. `Ctrl+Shift+Enter` copia tela e anotações numa imagem só, pronta
-  para colar. Não salva arquivo, não guarda histórico, não é editor de imagem:
+  círculo, em três cores (o destaque do Harp, branco e preto). O texto vira
+  uma etiqueta legível sobre qualquer fundo. `Ctrl+Shift+Enter` copia tela e
+  anotações numa imagem só, com os cantos arredondados, pronta para colar — e
+  devolve você ao aplicativo onde estava. Não salva arquivo, não guarda histórico, não é editor de imagem:
   anotar, copiar, sair.
 - **Endereços no texto viram links:** `Ctrl+clique` abre no navegador. Não há
   inserir link nem esconder o endereço atrás de um rótulo.
 - Posições rápidas: cantos, metades, tela inteira.
-- Três idiomas, sete fontes, tema claro/escuro/sistema, cor de destaque.
+- Três idiomas e sete fontes embutidas.
 - Tudo local. Nenhuma conta, nenhum cadastro. A única conexão que o app faz é
   procurar versão nova, e ela não envia nada sobre quem usa.
 - **Atualização dentro do app:** um ponto discreto sobre a engrenagem quando há

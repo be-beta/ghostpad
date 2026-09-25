@@ -68,9 +68,9 @@ fica a 35% até você olhar para ela. Discrição é funcionalidade.
 
 **6. Promessa cumprida vale mais que efeito bonito.**
 O desfoque do Windows falhou silenciosamente numa máquina real de teste — a API
-respondia "sucesso" e pintava um fundo sólido. Ele virou opção; a transparência
-real, que funciona em qualquer computador, virou o padrão. Entre o impressionante
-e o confiável, o app escolhe o confiável.
+respondia "sucesso" e pintava um fundo sólido. Ele virou opção, e depois saiu do
+app: a transparência real, que funciona em qualquer computador, é o único fundo.
+Entre o impressionante e o confiável, o app escolhe o confiável.
 
 **7. Seu texto é seu.**
 Tudo vive na sua máquina, em arquivos que você pode abrir com qualquer editor.
@@ -101,7 +101,7 @@ envia um binário feito na própria máquina.
 ## Recursos
 
 - **Sempre no topo**, sem barra de título nem bordas
-- **Transparência real** sobre o app de baixo, com desfoque opcional
+- **Transparência real** sobre o app de baixo, na opacidade que você escolher
 - **Opacidade ajustável** por teclado, em tempo real
 - **Modo fantasma** — o mouse atravessa a janela
 - **Invisível em gravações** — OBS, Zoom, Teams e Meet não capturam a janela
@@ -116,12 +116,15 @@ envia um binário feito na própria máquina.
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Abrir e salvar arquivos** `.txt` e `.md`, sem depender de outro editor
 - **Até dez anotações** em abas discretas no topo, cada uma com seu desfazer e,
-  se quiser, um ícone — sugerido pelo próprio texto, sem rede
-- **Tarefas em Markdown**: `Ctrl+Enter` cria e marca `- [ ]`, e a caixa aceita clique
+  se quiser, um ícone — sugerido pelo próprio texto, sem rede. Recolhidas, as
+  abas mostram só o ícone
+- **Tarefas em Markdown**: `Ctrl+Enter` cria e marca `- [ ]`; na tela aparece só a
+  caixa, que aceita clique
 - **Rascunhos**: `Win+J` abre um campo sobre qualquer app; `Enter` guarda, copia e
   devolve o foco. Os dez últimos ficam em `Ctrl+J`, e somem ao encerrar o Harp
 - **Vidro**: `Win+Alt+V` cobre a tela para anotar com texto, seta, retângulo e
-  círculo; `Ctrl+Shift+Enter` copia tela e anotações numa imagem só
+  círculo, em destaque, branco ou preto; `Ctrl+Shift+Enter` copia tela e
+  anotações numa imagem só, com os cantos arredondados
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Teleprompter** com rolagem automática e modo faixa para gravações
