@@ -9,16 +9,18 @@
  * inteiras, e por isso desfazer e sempre exato.
  */
 
+import { ACCENTS, type AccentId } from "../core/theme";
+
 export type Kind = "text" | "arrow" | "rect" | "circle";
 export type Tool = Kind;
 
 /**
- * Tres cores, e nao uma paleta: o destaque do Harp, branco e preto. Para o
- * texto, a cor e a da caixa; a letra e sempre preta ou branca, a que tiver mais
- * contraste com ela.
+ * As mesmas cores de destaque do app, e so elas: quem anota com o Harp anota
+ * com a paleta do Harp. Para o texto, a cor e a da caixa; a letra e preta ou
+ * branca, a que tiver mais contraste com ela.
  */
-export type Color = "accent" | "white" | "black";
-export const COLORS: Color[] = ["accent", "white", "black"];
+export type Color = AccentId;
+export const COLORS: Color[] = ACCENTS.map((accent) => accent.id);
 
 interface Base {
   id: number;

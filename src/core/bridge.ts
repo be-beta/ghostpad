@@ -124,3 +124,15 @@ export const listDrafts = () => invoke<Draft[]>("jot_list");
 export const copyDraft = (id: number) => invoke<void>("jot_copy", { id });
 export const deleteDraft = (id: number) => invoke<void>("jot_delete", { id });
 export const clearDrafts = () => invoke<void>("jot_clear");
+
+// --- Bandeja ---------------------------------------------------------------
+
+export interface TrayLabels {
+  show: string;
+  jot: string;
+  vidro: string;
+  quit: string;
+}
+
+/** Textos do menu da bandeja, no idioma escolhido. */
+export const setTrayLabels = (labels: TrayLabels) => invoke<void>("set_tray_labels", { labels });

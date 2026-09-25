@@ -6,7 +6,7 @@
  * silhueta preenchida sobrevive, e ainda continua a linguagem do ponto
  * preenchido que a aba recolhida ja usava.
  *
- * Importados um a um, e nao por glob: so os 25 entram no app.
+ * Importados um a um, e nao por glob: so os 30 entram no app.
  */
 
 import type { IconId } from "./icon-catalog";
@@ -35,6 +35,11 @@ import i_project from "heroicons/16/solid/folder.svg?raw";
 import i_research from "heroicons/16/solid/magnifying-glass.svg?raw";
 import i_generic from "heroicons/16/solid/hashtag.svg?raw";
 import i_ai from "heroicons/16/solid/sparkles.svg?raw";
+import i_fire from "heroicons/16/solid/fire.svg?raw";
+import i_bolt from "heroicons/16/solid/bolt.svg?raw";
+import i_beaker from "heroicons/16/solid/beaker.svg?raw";
+import i_bug from "heroicons/16/solid/bug-ant.svg?raw";
+import i_heart from "heroicons/16/solid/heart.svg?raw";
 
 const SVG: Record<IconId, string> = {
   image: i_image,
@@ -62,6 +67,11 @@ const SVG: Record<IconId, string> = {
   research: i_research,
   generic: i_generic,
   ai: i_ai,
+  fire: i_fire,
+  bolt: i_bolt,
+  beaker: i_beaker,
+  bug: i_bug,
+  heart: i_heart,
 };
 
 /** SVG pronto para o DOM: tamanho pelo CSS, cor pelo `currentColor`. */

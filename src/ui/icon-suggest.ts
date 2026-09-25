@@ -39,7 +39,12 @@ const PALAVRAS: Partial<Record<IconId, string[]>> = {
   work: ["trabalho", "work", "escritorio", "office", "empresa", "company", "chefe", "boss", "equipe", "team", "trabajo", "oficina"],
   home: ["casa", "home", "mercado", "compras", "groceries", "familia", "family", "aluguel", "rent", "limpeza", "receita", "recipe"],
   project: ["projeto", "projetos", "project", "sprint", "roadmap", "fase", "milestone", "entrega", "entregas", "escopo", "scope", "proyecto"],
-  code: ["function", "const", "return", "import", "class", "def", "var", "let", "async", "await", "null", "undefined", "bug", "api", "deploy", "commit"],
+  code: ["function", "const", "return", "import", "class", "def", "var", "let", "async", "await", "null", "undefined", "api", "deploy", "commit"],
+  fire: ["urgente", "urgent", "urgencia", "prioridade", "priority", "critico", "critical", "asap", "emergencia", "incendio", "agora"],
+  bolt: ["rapido", "rapida", "quick", "fast", "atalho", "atalhos", "shortcut", "energia", "energy", "performance", "otimizar", "optimize", "velocidade"],
+  beaker: ["teste", "testes", "test", "tests", "testing", "experimento", "experimentos", "experiment", "laboratorio", "lab", "prova", "prueba", "ensayo"],
+  bug: ["bug", "bugs", "erro", "erros", "error", "errors", "falha", "falhas", "crash", "exception", "excecao", "defeito", "debug", "stacktrace"],
+  heart: ["amor", "love", "gratidao", "gratitude", "carinho", "saudade", "casamento", "wedding", "presente", "gift", "querido", "querida"],
   document: ["capitulo", "chapter", "paragrafo", "rascunho", "draft", "texto", "artigo", "article", "ensaio", "essay", "documento", "document"],
 };
 

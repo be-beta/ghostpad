@@ -2,6 +2,7 @@ mod focus;
 mod jot;
 mod notes;
 mod shortcuts;
+mod tray;
 mod vidro;
 mod watch;
 mod window_fx;
@@ -11,6 +12,9 @@ use tauri::Manager;
 
 #[cfg(desktop)]
 use tauri_plugin_global_shortcut::ShortcutState;
+
+/// Argumento com que o Windows abre o Harp ao iniciar a sessao.
+const START_HIDDEN: &str = "--hidden";
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -36,6 +40,12 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        // Iniciar com o Windows passa `--hidden`: o Harp sobe escondido, so na
+        // bandeja, com os atalhos globais ja valendo.
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![START_HIDDEN]),
+        ))
         .plugin(tauri_plugin_updater::Builder::new().build());
 
     #[cfg(desktop)]
@@ -71,7 +81,15 @@ pub fn run() {
         .manage(vidro::Vidro::default())
         .manage(shortcuts::Registry::default())
         .manage(window_state::WindowState::default())
-        .on_window_event(window_state::track)
+        .on_window_event(|window, event| {
+            window_state::track(window, event);
+            // Rascunho e Vidro sao janelas escondidas que vivem o tempo todo.
+            // Sem isto, fechar a principal deixava o processo rodando invisivel,
+            // com os atalhos globais ainda ativos.
+            if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
+                window.app_handle().exit(0);
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             notes::load_note,
             notes::save_note,
@@ -89,6 +107,7 @@ pub fn run() {
             jot::jot_clear,
             vidro::vidro_cancel,
             vidro::vidro_finish,
+            tray::set_tray_labels,
             watch::detect_recorders,
             window_state::persist_window_state,
             shortcuts::set_global_shortcut,
@@ -115,7 +134,16 @@ pub fn run() {
             // A janela nasce invisivel (tauri.conf.json) e so aparece depois de ir
             // para o lugar salvo — sem o salto de abrir no centro e pular.
             window_state::restore(&window.as_ref().window());
-            let _ = window.show();
+            // Iniciado com o Windows, fica escondido: quem liga o computador nao
+            // pediu uma janela, pediu os atalhos prontos.
+            if !std::env::args().any(|arg| arg == START_HIDDEN) {
+                let _ = window.show();
+            }
+
+            #[cfg(desktop)]
+            if let Err(error) = tray::build(app.handle()) {
+                eprintln!("[harp] bandeja indisponivel: {error}");
+            }
 
             #[allow(unused_mut)]
             let mut report = window_fx::apply_startup_effects(&window);

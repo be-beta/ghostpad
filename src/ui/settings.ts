@@ -21,6 +21,8 @@ export interface SettingsValues {
   idleFade: boolean;
   theme: Theme;
   accent: AccentId;
+  /** Abre com o Windows, escondido na bandeja. Vem do proprio Windows. */
+  autostart: boolean;
   update: UpdateSection;
 }
 
@@ -43,6 +45,8 @@ export interface SettingsPanel {
   refresh(): void;
   /** Redesenha só a seção de atualização, sem tocar no resto do painel. */
   refreshUpdate(): void;
+  /** Atualiza so os marcadores de selecao, sem redesenhar o painel. */
+  sync(): void;
 }
 
 export interface SettingsHandlers {
@@ -53,6 +57,7 @@ export interface SettingsHandlers {
   onIdleFade: (value: boolean) => void;
   onTheme: (theme: Theme) => void;
   onAccent: (accent: AccentId) => void;
+  onAutostart: (value: boolean) => void;
   onUpdate: () => void;
 }
 
@@ -97,7 +102,7 @@ function escape(text: string): string {
 
 export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandlers): SettingsPanel {
   const render = () => {
-    const { lang, font, fontSize, idleFade, theme, accent, update } = handlers.values();
+    const { lang, font, fontSize, idleFade, theme, accent, autostart, update } = handlers.values();
 
     const idiomas = LANGUAGES.map(
       (item) => `
@@ -190,6 +195,15 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
           </div>
         </section>
 
+        <section class="gp-sheet__section">
+          <h2>${t("settings.autostart")}</h2>
+          <div class="gp-options">
+            <button class="gp-option" data-autostart="on" data-on="${autostart}">${t("settings.on")}</button>
+            <button class="gp-option" data-autostart="off" data-on="${!autostart}">${t("settings.off")}</button>
+          </div>
+          <p class="gp-sheet__note gp-sheet__note--faint">${t("settings.autostart.hint")}</p>
+        </section>
+
         <!-- Por ultimo: e a unica secao que nao muda a experiencia de escrever. -->
         <section class="gp-sheet__section">
           <h2>${t("settings.update")}</h2>
@@ -206,7 +220,7 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
    * que aparecia como uma piscada a cada escolha.
    */
   const syncState = () => {
-    const { lang, font, fontSize, idleFade, theme, accent } = handlers.values();
+    const { lang, font, fontSize, idleFade, theme, accent, autostart } = handlers.values();
 
     // A chave vai explicita: a ordem dos atributos de um elemento nao e
     // garantida, entao ler "o primeiro" daria certo por acaso.
@@ -223,6 +237,9 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
 
     for (const node of host.querySelectorAll<HTMLElement>("[data-idle]")) {
       node.dataset.on = String((node.dataset.idle === "on") === idleFade);
+    }
+    for (const node of host.querySelectorAll<HTMLElement>("[data-autostart]")) {
+      node.dataset.on = String((node.dataset.autostart === "on") === autostart);
     }
 
     const valor = host.querySelector<HTMLElement>(".gp-options__value");
@@ -254,6 +271,9 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
     },
     refresh() {
       if (panel.isOpen()) render();
+    },
+    sync() {
+      if (panel.isOpen()) syncState();
     },
     refreshUpdate() {
       const caixa = host.querySelector<HTMLElement>("[data-update-box]");
@@ -301,6 +321,12 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
 
     if (target.closest("[data-update]")) {
       handlers.onUpdate();
+      return;
+    }
+
+    const inicio = target.closest<HTMLElement>("[data-autostart]")?.dataset.autostart;
+    if (inicio) {
+      handlers.onAutostart(inicio === "on");
       return;
     }
 

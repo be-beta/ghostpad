@@ -27,16 +27,14 @@
         <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="5" ry="4.5" /></svg>
       </button>
       <span class="vidro__sep"></span>
-      <!-- As tres cores a vista, e nao um botao que alterna: um clique numa
-           bolinha que mudava para outra cor parecia nao fazer nada. -->
-      <button class="vidro__color" data-color="accent" data-i18n-title="vidro.color.accent"><span class="vidro__swatch"></span></button>
-      <button class="vidro__color" data-color="white" data-i18n-title="vidro.color.white"><span class="vidro__swatch"></span></button>
-      <button class="vidro__color" data-color="black" data-i18n-title="vidro.color.black"><span class="vidro__swatch"></span></button>
+      <!-- A bolinha mostra a cor em uso; clicar abre as cores de destaque do app. -->
+      <button class="vidro__color" id="color" data-i18n-title="vidro.color"><span class="vidro__swatch" id="swatch"></span></button>
       <span class="vidro__sep"></span>
       <button class="vidro__finish" id="finish" data-i18n-title="vidro.finish.title">
         <span data-i18n="vidro.finish"></span><kbd>Ctrl+Shift+Enter</kbd>
       </button>
       <button class="vidro__close" id="close" data-i18n-title="vidro.cancel">✕</button>
+      <div class="vidro__palette" id="palette" role="menu" hidden></div>
     </div>
   </body>
 </html>

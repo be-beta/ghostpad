@@ -1,10 +1,14 @@
 /**
- * As 25 categorias de icone das abas.
+ * As 30 categorias de icone das abas.
  *
  * Um conjunto fechado de proposito: com uma lista aberta, escolher um icone
  * vira procurar um icone, e a ideia e identificar uma aba num relance — nao
  * decorar. Nada de logos ou marcas: "codigo" serve a qualquer editor, e um logo
  * envelheceria com o produto que ele representa.
+ *
+ * Eram 25, todas do trabalho serio. As cinco ultimas — fogo, raio, frasco,
+ * inseto e coracao — existem porque anotacao tambem e urgencia, experimento,
+ * bug e coisa de que se gosta.
  *
  * `names` guarda o nome de cada conceito nas tres familias comparadas em
  * `dev/icons.html`. So a familia escolhida entra no app (ver `tab-icons.ts`).
@@ -36,6 +40,11 @@ export const ICON_IDS = [
   "research",
   "generic",
   "ai",
+  "fire",
+  "bolt",
+  "beaker",
+  "bug",
+  "heart",
 ] as const;
 
 export type IconId = (typeof ICON_IDS)[number];
@@ -71,4 +80,9 @@ export const FAMILY_NAMES: Record<IconId, { heroicons: string; phosphor: string;
   research: { heroicons: "magnifying-glass", phosphor: "magnifying-glass", tabler: "search" },
   generic: { heroicons: "hashtag", phosphor: "asterisk", tabler: "asterisk" },
   ai: { heroicons: "sparkles", phosphor: "sparkle", tabler: "sparkles" },
+  fire: { heroicons: "fire", phosphor: "fire", tabler: "flame" },
+  bolt: { heroicons: "bolt", phosphor: "lightning", tabler: "bolt" },
+  beaker: { heroicons: "beaker", phosphor: "flask", tabler: "flask" },
+  bug: { heroicons: "bug-ant", phosphor: "bug", tabler: "bug" },
+  heart: { heroicons: "heart", phosphor: "heart", tabler: "heart" },
 };

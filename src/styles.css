@@ -239,11 +239,8 @@ body {
   display: block;
 }
 
-.gp-tab__icon:hover {
-  color: var(--gp-text);
-  background: var(--gp-surface);
-}
-
+/* So a aba ativa troca de icone; nas outras, o glifo e parte do clique que
+   seleciona a aba, e nao sinaliza nada a parte. */
 .gp-tab[data-active="true"] .gp-tab__icon:hover {
   color: var(--gp-accent);
   background: rgba(var(--gp-accent-rgb), 0.18);
@@ -1112,12 +1109,32 @@ body[data-narrow="true"] .gp-fontsize {
   color: var(--gp-accent);
 }
 
-.gp-picker__none {
-  width: 100%;
+/* Rodape: o nome do icone sob o mouse, e o "Sem icone" quando ha um. */
+.gp-picker__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 26px;
   margin-top: 8px;
-  padding: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--gp-line);
+}
+
+.gp-picker__caption {
+  overflow: hidden;
+  padding-left: 2px;
+  color: var(--gp-text);
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gp-picker__none {
+  flex: 0 0 auto;
+  padding: 4px 6px;
   border: none;
-  border-radius: 7px;
+  border-radius: 6px;
   background: transparent;
   color: var(--gp-text-dim);
   font-family: inherit;

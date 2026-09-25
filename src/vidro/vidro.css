@@ -85,9 +85,11 @@ body.vidro[data-hover="true"] {
   user-select: none;
 }
 
+/* Alca: duas colunas de quatro pontos. A altura e multipla do passo (5 px):
+   com 22 px, a ultima fileira saia cortada ao meio. */
 .vidro__grip {
   width: 10px;
-  height: 22px;
+  height: 20px;
   margin: 0 2px;
   border-radius: 3px;
   background:
@@ -166,10 +168,26 @@ body.vidro[data-hover="true"] {
   transition: box-shadow 120ms var(--gp-ease), transform 120ms var(--gp-ease);
 }
 
-/* A cor em uso ganha um anel na cor de destaque. */
-.vidro__color[data-on="true"] .vidro__swatch {
-  box-shadow: 0 0 0 2px var(--gp-panel), 0 0 0 3.5px var(--gp-accent);
+/* A cor em uso ganha um anel claro, e nao do destaque: o destaque agora e
+   uma das opcoes, e o anel dele se confundiria com a propria bolinha. */
+.vidro__palette .vidro__color[data-on="true"] .vidro__swatch {
+  box-shadow: 0 0 0 2px var(--gp-panel), 0 0 0 3.5px var(--gp-text);
   transform: scale(1.05);
+}
+
+/* Paleta: uma fileira sob a barra, alinhada a bolinha. */
+.vidro__palette {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border), 0 8px 24px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+  animation: gp-menu-in 140ms var(--gp-ease);
 }
 
 .vidro__sep {

@@ -17,8 +17,8 @@ import "./vidro.css";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { load } from "@tauri-apps/plugin-store";
-import { applyAccent, applyTheme, DEFAULT_ACCENT, DEFAULT_THEME } from "../core/theme";
-import { applyStaticTranslations, detectLang, setLang } from "../core/i18n";
+import { applyAccent, applyTheme, effectiveTheme, DEFAULT_ACCENT, DEFAULT_THEME } from "../core/theme";
+import { applyStaticTranslations, detectLang, setLang, t } from "../core/i18n";
 import type { Settings } from "../core/store";
 import {
   COLORS,
@@ -34,7 +34,17 @@ import {
   type Obj,
   type Tool,
 } from "./model";
-import { FONTE, TEXT_PADDING, drawObject, drawSelection, inkOn, measureText, paint, renderPng } from "./render";
+import {
+  FONTE,
+  TEXT_PADDING,
+  drawObject,
+  drawSelection,
+  inkOn,
+  measureText,
+  paint,
+  renderPng,
+  setTone,
+} from "./render";
 
 interface Area {
   width: number;
@@ -46,13 +56,15 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 const editor = document.getElementById("editor") as HTMLTextAreaElement;
 const hud = document.getElementById("hud") as HTMLDivElement;
+const swatch = document.getElementById("swatch") as HTMLSpanElement;
+const palette = document.getElementById("palette") as HTMLDivElement;
 
 // --- Estado da sessao -----------------------------------------------------------
 
 let objs: Obj[] = [];
 let selectedId: number | null = null;
 let tool: Tool = "arrow";
-let color: Color = "accent";
+let color: Color = DEFAULT_ACCENT;
 let nextId = 1;
 /** Area coberta, em pixels fisicos. Vem do Rust ao abrir; ele confere o tamanho da imagem contra ela. */
 let area: Area | null = null;
@@ -111,7 +123,7 @@ function redraw(): void {
     for (const obj of objs) {
       // O texto em edicao aparece no campo, e nao duas vezes.
       if (editing?.id === obj.id) continue;
-      drawObject(ctx, obj, cor);
+      drawObject(ctx, obj);
     }
     const atual = selected();
     if (atual && !editing && !finishing) drawSelection(ctx, atual, cor);
@@ -122,10 +134,9 @@ function renderHud(): void {
   for (const botao of hud.querySelectorAll<HTMLElement>("[data-tool]")) {
     botao.dataset.on = String(botao.dataset.tool === tool);
   }
-  for (const botao of hud.querySelectorAll<HTMLElement>("[data-color]")) {
-    const opcao = botao.dataset.color as Color;
-    botao.dataset.on = String(opcao === color);
-    botao.querySelector<HTMLElement>(".vidro__swatch")!.style.background = paint(opcao, accent());
+  swatch.style.background = paint(color);
+  for (const botao of palette.querySelectorAll<HTMLElement>("[data-color]")) {
+    botao.dataset.on = String(botao.dataset.color === color);
   }
   // `data-cursor`, e nao `data-tool`: com o mesmo nome dos botoes, o clique
   // em qualquer coisa da barra subia ate o <body> e era lido como "escolher a
@@ -156,7 +167,7 @@ function startEditing(id: number, before: Obj[]): void {
   editing = { id, before };
   selectedId = id;
 
-  const fundo = paint(obj.color, accent());
+  const fundo = paint(obj.color);
   Object.assign(editor.style, {
     left: `${obj.x}px`,
     top: `${obj.y}px`,
@@ -364,9 +375,28 @@ function setColor(next: Color): void {
   renderHud();
 }
 
-/** Tecla 5: a proxima das tres. */
+/** Tecla 5: a proxima cor da paleta. */
 function cycleColor(): void {
   setColor(COLORS[(COLORS.indexOf(color) + 1) % COLORS.length]);
+}
+
+/**
+ * As cores de destaque do app, numa fileira sob a bolinha.
+ *
+ * Montada a cada abertura: o tom de cada cor depende do tema em que o app
+ * esta, e o tema pode ter mudado desde a ultima vez.
+ */
+function openPalette(): void {
+  palette.innerHTML = COLORS.map(
+    (id) => `<button class="vidro__color" data-color="${id}" title="${t(`accent.${id}` as "accent.mint")}">
+       <span class="vidro__swatch" style="background: ${paint(id)}"></span></button>`,
+  ).join("");
+  palette.hidden = false;
+  renderHud();
+}
+
+function closePalette(): void {
+  palette.hidden = true;
 }
 
 const FERRAMENTA_POR_TECLA: Record<string, Tool> = { "1": "text", "2": "arrow", "3": "rect", "4": "circle" };
@@ -394,7 +424,9 @@ window.addEventListener("keydown", (event) => {
 
   if (event.key === "Escape") {
     event.preventDefault();
-    void cancel();
+    // Com a paleta aberta, Esc so fecha a paleta.
+    if (!palette.hidden) closePalette();
+    else void cancel();
     return;
   }
 
@@ -466,21 +498,37 @@ hud.addEventListener("click", (event) => {
   if (!botao || !hud.contains(botao)) return;
   const ferramenta = botao.dataset.tool as Tool | undefined;
   const cor = botao.dataset.color as Color | undefined;
+  if (botao.id === "color") {
+    if (palette.hidden) openPalette();
+    else closePalette();
+    return;
+  }
+  closePalette();
   if (ferramenta) setTool(ferramenta);
   else if (cor) setColor(cor);
   else if (alvo.closest("#finish")) void finish();
   else if (alvo.closest("#close")) void cancel();
 });
 
-/** A barra pode sair da frente: arrastar pela alca a leva para outro lugar. */
+/**
+ * A barra pode sair da frente: arrastar pela alca a leva para outro lugar.
+ *
+ * A posicao de partida vem do retangulo na tela, e nao de `offsetLeft`: a
+ * barra comeca centralizada por `translateX(-50%)`, que o `offsetLeft` nao
+ * enxerga. Partir dele fazia a barra saltar meia largura para a direita no
+ * primeiro arraste.
+ */
 hud.addEventListener("pointerdown", (event) => {
   if (!(event.target as HTMLElement).closest("[data-grip]")) return;
-  const inicio = { x: event.clientX, y: event.clientY, left: hud.offsetLeft, top: hud.offsetTop };
+  const caixa = hud.getBoundingClientRect();
+  hud.style.left = `${caixa.left}px`;
+  hud.style.top = `${caixa.top}px`;
+  hud.style.transform = "none";
+  const inicio = { x: event.clientX, y: event.clientY, left: caixa.left, top: caixa.top };
   hud.setPointerCapture(event.pointerId);
   const mover = (e: PointerEvent) => {
     hud.style.left = `${inicio.left + e.clientX - inicio.x}px`;
     hud.style.top = `${inicio.top + e.clientY - inicio.y}px`;
-    hud.style.transform = "none";
   };
   const soltar = () => {
     hud.removeEventListener("pointermove", mover);
@@ -491,6 +539,9 @@ hud.addEventListener("pointerdown", (event) => {
 });
 
 // --- Entrar e sair -------------------------------------------------------------------
+
+/** Destaque escolhido no app: e a cor com que cada sessao do Vidro comeca. */
+let appAccent: Color = DEFAULT_ACCENT;
 
 async function applyPreferences(): Promise<void> {
   let salvo: Partial<Settings> | undefined;
@@ -503,6 +554,8 @@ async function applyPreferences(): Promise<void> {
   const tema = salvo?.theme ?? DEFAULT_THEME;
   applyTheme(tema);
   applyAccent(salvo?.accent ?? DEFAULT_ACCENT, tema);
+  setTone(effectiveTheme(tema));
+  appAccent = salvo?.accent ?? DEFAULT_ACCENT;
   setLang(salvo?.lang ?? detectLang());
   applyStaticTranslations();
 }
@@ -517,6 +570,7 @@ function reset(): void {
   history.clear();
   hud.hidden = false;
   hud.removeAttribute("style");
+  palette.hidden = true;
   document.body.dataset.finishing = "false";
 }
 
@@ -545,7 +599,6 @@ async function finish(): Promise<void> {
       objs,
       { width: window.innerWidth, height: window.innerHeight },
       physicalSize(),
-      accent(),
     );
     await invoke("vidro_finish", png);
   } catch (error) {
@@ -560,6 +613,7 @@ void listen<Area>("harp://vidro-open", async (event) => {
   area = event.payload;
   reset();
   await applyPreferences();
+  color = appAccent;
   renderHud();
   redraw();
   window.focus();

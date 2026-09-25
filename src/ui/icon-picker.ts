@@ -38,6 +38,27 @@ export function iconLabel(id: IconId): string {
 
 export function createIconPicker(host: HTMLElement, handlers: IconPickerHandlers): IconPicker {
   let slot = 0;
+  let legendaPadrao = "";
+
+  /**
+   * O nome do icone sob o mouse, sempre a vista no rodape.
+   *
+   * A dica nativa (`title`) demora a aparecer e some ao mexer o mouse; alguns
+   * icones pareciam nao ter nome. O rodape responde na hora, e tambem ao
+   * navegar pelo teclado.
+   */
+  const legendar = (event: Event) => {
+    const legenda = host.querySelector<HTMLElement>("[data-caption]");
+    if (!legenda) return;
+    const id = (event.target as HTMLElement).closest<HTMLElement>("[data-pick]")?.dataset.pick;
+    legenda.textContent = id ? iconLabel(id as IconId) : legendaPadrao;
+  };
+  host.addEventListener("mouseover", legendar);
+  host.addEventListener("focusin", legendar);
+  host.addEventListener("mouseleave", () => {
+    const legenda = host.querySelector<HTMLElement>("[data-caption]");
+    if (legenda) legenda.textContent = legendaPadrao;
+  });
 
   const botao = (id: IconId, atual: IconId | undefined) =>
     `<button class="gp-picker__icon" data-pick="${id}" data-on="${id === atual}"
@@ -79,7 +100,11 @@ export function createIconPicker(host: HTMLElement, handlers: IconPickerHandlers
           <span class="gp-picker__title">${t("icons.all")}</span>
           <div class="gp-picker__grid">${ICON_IDS.map((id) => botao(id, atual)).join("")}</div>
         </div>
-        ${atual ? `<button class="gp-picker__none" data-pick="">${t("icons.none")}</button>` : ""}`;
+        <div class="gp-picker__foot">
+          <span class="gp-picker__caption" data-caption>${atual ? iconLabel(atual) : t("icons.choose")}</span>
+          ${atual ? `<button class="gp-picker__none" data-pick="">${t("icons.none")}</button>` : ""}
+        </div>`;
+      legendaPadrao = atual ? iconLabel(atual) : t("icons.choose");
 
       host.hidden = false;
       posicionar(anchor);

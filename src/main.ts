@@ -7,6 +7,7 @@
 
 import { listen } from "@tauri-apps/api/event";
 import { getVersion } from "@tauri-apps/api/app";
+import { disable as disableAutostart, enable as enableAutostart, isEnabled as autostartEnabled } from "@tauri-apps/plugin-autostart";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
 
@@ -16,6 +17,7 @@ import {
   detectRecorders,
   getEffectsReport,
   listDrafts,
+  setTrayLabels,
   persistWindowState,
   placeTopCenter,
   readTextFile,
@@ -176,6 +178,7 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
       vidro: "vidroShortcut",
     } as const;
     effects = { ...effects, [campo[action]]: label };
+    renderTray();
     settings.shortcuts = { ...settings.shortcuts, [action]: combo };
     await saveSettings(settings);
     toast(t("toast.shortcut.set", { label }));
@@ -214,6 +217,7 @@ const settingsPanel = createSettingsPanel(el.settings, {
     idleFade: settings.idleFade,
     theme: settings.theme,
     accent: settings.accent,
+    autostart,
     update: {
       current: appVersion,
       available: updates?.pending() ?? null,
@@ -235,7 +239,40 @@ const settingsPanel = createSettingsPanel(el.settings, {
     void saveSettings(settings);
   },
   onUpdate: () => void installUpdate(),
+  onAutostart: (value) => void changeAutostart(value),
 });
+
+/**
+ * Iniciar com o Windows.
+ *
+ * A verdade mora no Windows (a entrada de inicializacao), e nao nas
+ * preferencias: se a pessoa desligar pelo Gerenciador de Tarefas, o painel
+ * precisa mostrar desligado.
+ */
+let autostart = false;
+
+async function changeAutostart(value: boolean): Promise<void> {
+  try {
+    if (value) await enableAutostart();
+    else await disableAutostart();
+    autostart = await autostartEnabled();
+    toast(t(autostart ? "toast.autostart.on" : "toast.autostart.off"));
+  } catch (error) {
+    toast(t("toast.autostart.failed", { error: String(error) }));
+  }
+  settingsPanel.sync();
+}
+
+/** Menu da bandeja no idioma da pessoa, com os atalhos que valem de fato. */
+function renderTray(): void {
+  const comAtalho = (texto: string, atalho: string | null) => (atalho ? `${texto}\t${atalho}` : texto);
+  void setTrayLabels({
+    show: t("tray.show"),
+    jot: comAtalho(t("tray.jot"), effects.jotShortcut),
+    vidro: comAtalho(t("tray.vidro"), effects.vidroShortcut),
+    quit: t("tray.quit"),
+  }).catch(() => {});
+}
 
 /** Os icones mais escolhidos, com o mais recente desempatando. */
 function recentIcons(): IconId[] {
@@ -493,6 +530,7 @@ function changeLang(lang: Lang): void {
   updateMetrics(editor.getText());
   renderTabs();
   renderUpdate();
+  renderTray();
   if (!el.modules.hidden) renderModulesMenu();
   settingsPanel.refresh();
 
@@ -764,7 +802,12 @@ function renderTabs(): void {
     pick.className = "gp-tab__icon";
     pick.dataset.iconPick = String(slot);
     pick.dataset.empty = String(!icone);
-    pick.title = icone ? `${iconLabel(icone)} — ${t("icons.choose")}` : t("icons.choose");
+    // So a aba ativa troca de icone. Nas outras, o glifo faz parte do clique
+    // que seleciona a aba: com o X de um lado e o seletor do outro, sobrava
+    // pouco lugar para simplesmente trocar de aba.
+    if (slot === activeNote) {
+      pick.title = icone ? `${iconLabel(icone)} — ${t("icons.choose")}` : t("icons.choose");
+    }
     if (icone) pick.innerHTML = iconSvg(icone);
     tab.append(pick);
 
@@ -1605,6 +1648,9 @@ function wireEvents(): void {
   // inclusive as feitas pela janela de rascunho.
   void listen<Draft[]>("harp://drafts", (event) => renderDrafts(event.payload));
 
+  // Sair pelo menu da bandeja passa por aqui, para o texto ser gravado antes.
+  void listen("harp://quit", () => void closeApp());
+
   // A janela do Vidro ja sumiu quando a captura falha; quem avisa e esta.
   void listen<string>("harp://vidro-failed", (event) =>
     toast(t("toast.vidro.failed", { error: event.payload })),
@@ -1687,7 +1733,7 @@ function wireEvents(): void {
     // O icone abre o seletor daquela aba sem trocar para ela: escolher o icone
     // de outra aba nao precisa tirar a pessoa do texto em que esta.
     const pick = target.closest<HTMLElement>("[data-icon-pick]");
-    if (pick) {
+    if (pick && Number(pick.dataset.iconPick) === activeNote) {
       event.stopPropagation();
       const slot = Number(pick.dataset.iconPick);
       if (iconPicker.isOpenFor(slot)) iconPicker.close();
@@ -1703,7 +1749,11 @@ function wireEvents(): void {
     }
 
     const tab = target.closest<HTMLElement>("[data-note]");
-    if (tab) void switchNote(Number(tab.dataset.note));
+    if (tab) {
+      // O seletor era da aba de antes; trocar de aba o fecha.
+      iconPicker.close();
+      void switchNote(Number(tab.dataset.note));
+    }
   });
 
   // Sinais de presenca: qualquer um deles cancela o esmaecimento.
@@ -1827,6 +1877,8 @@ async function boot(): Promise<void> {
   wireEvents();
   void checkRecorders();
   appVersion = await getVersion().catch(() => "");
+  autostart = await autostartEnabled().catch(() => false);
+  renderTray();
   // Ao recarregar a janela, os rascunhos continuam no processo.
   document.getElementById("drafts-glyph")!.innerHTML = glifoRascunho;
   renderDrafts(await listDrafts().catch(() => []));
