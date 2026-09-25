@@ -76,6 +76,8 @@ Dizer isto evita que o site prometa o que o app não entrega:
 - Não é um gerenciador de conhecimento: não tem base, nem links entre notas, nem
   busca global no acervo.
 - Não é um editor de texto rico: não tem estilos, tabelas nem exportação.
+- Não é editor de imagem nem de screenshot: o Vidro não salva, não recorta,
+  não desfoca. Copia e sai.
 - Não é colaborativo, não tem nuvem, não tem conta. Tudo é local.
 - Não tem IA dentro.
 
@@ -169,12 +171,25 @@ Fatos verificáveis, para o site não prometer o que não existe:
 - **Oculto de gravações:** a janela não aparece em captura nem em
   compartilhamento de tela (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 2004+).
 - **Invocação global:** aparece e some com um atalho, de qualquer aplicativo.
-- Até cinco notas em abas, com histórico de versões local.
+- Até dez notas em abas, com histórico de versões local. Cada aba pode ter um
+  ícone, entre 25 categorias fixas; o app sugere alguns a partir do texto, na
+  hora de escolher, sem IA e sem rede.
 - **Teleprompter** com rolagem contínua, modo faixa no topo da tela e modo tela
   cheia.
 - Abrir e salvar `.txt` e `.md`.
 - **Markdown onde ele ajuda:** listas continuam sozinhas no Enter, negrito e
-  itálico por atalho. Não é texto formatado — o arquivo continua sendo texto.
+  itálico por atalho, e tarefas (`- [ ]`) criadas e marcadas com `Ctrl+Enter`
+  ou com um clique na caixa. Não é texto formatado — o arquivo continua sendo
+  texto.
+- **Rascunhos:** `Win+J` abre um campo pequeno sobre qualquer aplicativo;
+  `Enter` guarda, copia e devolve o foco a quem estava antes. Os dez últimos
+  ficam acessíveis na janela principal e **somem ao encerrar o Harp** — são
+  memória curta de propósito, nunca vão para o disco.
+- **Vidro:** `Win+Alt+V` cobre a tela com uma camada transparente para
+  escrever, apontar e circular sobre o que está nela — texto, seta, retângulo e
+  círculo. `Ctrl+Shift+Enter` copia tela e anotações numa imagem só, pronta
+  para colar. Não salva arquivo, não guarda histórico, não é editor de imagem:
+  anotar, copiar, sair.
 - **Endereços no texto viram links:** `Ctrl+clique` abre no navegador. Não há
   inserir link nem esconder o endereço atrás de um rótulo.
 - Posições rápidas: cantos, metades, tela inteira.

@@ -785,6 +785,139 @@ para poder ser copiado.
 
 ---
 
+### Harp, segunda etapa — fazer mais sem mostrar mais
+
+Regra que organizou tudo desta etapa: antes de pôr um elemento permanente na
+interface, perguntar se ele pode aparecer só quando necessário. O Harp passou a
+fazer bem mais — tarefas, ícones, rascunhos, Vidro — e a janela principal não
+ganhou nenhum botão fixo.
+
+### `Ctrl+Shift+B` é tema, não fundo **[D]**
+
+O atalho ciclava o fundo da janela, mas o desfoque nativo não funciona na maior
+parte das máquinas: ciclar entre um fundo que funciona e dois que não funcionam
+não ajudava ninguém. Agora alterna claro e escuro, a partir do tema *visível* —
+em "sistema" com o Windows escuro, ele vai para o claro. O fundo continua no
+chip da barra.
+
+### Dez abas, e o `0` é a décima **[D]**
+
+Cinco era pouco para um dia com várias frentes; dez ainda não vira gerenciador
+de arquivos. `Ctrl+0` abre a décima, a convenção dos navegadores. Com todas
+abertas numa janela estreita, as abas encolhem em vez de empurrar a área de
+arraste para fora: ela tem largura mínima.
+
+### Ícones: escolhidos pelos pixels da aba, não pela vitrine **[D]**
+
+`dev/icons.html` compara Heroicons, Phosphor e Tabler nos 25 conceitos, no
+tamanho real da aba recolhida e ampliados por uma lupa que mostra os pixels de
+verdade — ampliar o SVG redesenharia o vetor e mostraria uma nitidez que não
+existe na aba.
+
+A lupa decidiu: abaixo de 1 px de traço, ícone de contorno vira borrão cinza, e
+a silhueta preenchida sobrevive. Ficou **Heroicons 16/solid ("micro")**, que
+ainda continua a linguagem do ponto preenchido que a aba recolhida já usava. O
+ícone recolhido tem 10 px contra os 9 do ponto: a barra não cresceu por causa
+dele.
+
+Só os 25 ícones entram no app, importados um a um (`src/ui/tab-icons.ts`). As
+três bibliotecas ficam como dependências de desenvolvimento, para a comparação
+continuar existindo.
+
+### Sugestão de ícone: contagem, não inteligência **[D]**
+
+`src/ui/icon-suggest.ts` conta sinais no texto — tarefas, listas, tabelas,
+blocos de código, endereços, palavras de cada categoria nos três idiomas — e
+ordena. Roda uma vez, quando o seletor abre, nunca enquanto a pessoa escreve. O
+mesmo texto dá sempre a mesma resposta, e a sugestão nunca troca um ícone
+escolhido. Palavras são comparadas inteiras: "ata" não acende "reunião" dentro
+de "batata".
+
+### Tarefas: o texto continua sendo Markdown **[D]**
+
+`- [ ]` e `- [x]` ficam no arquivo como estão; a caixa é desenhada no lugar do
+`[ ]` e aceita clique. `Ctrl+Enter` cria e alterna, mas nunca remove a caixa —
+sair de tarefa é apagar o `[ ]`, gesto que já existe. Continuar no `Enter`,
+encerrar numa tarefa vazia e aninhar com `Tab` já vinham do suporte a Markdown
+do editor, que reconhece o marcador de tarefa; nada disso foi reimplementado.
+
+A caixa é um intervalo atômico: o cursor pula por cima dela e o Backspace apaga
+o `[ ]` inteiro, nunca metade.
+
+### Rascunhos: memória curta, por construção **[D]**
+
+Os rascunhos moram só em memória, no processo Rust (`jot.rs`). Esconder o Harp
+não os apaga; encerrar apaga — não por uma limpeza que poderia falhar, mas
+porque eles nunca foram para o disco. Dez no máximo, o mais antigo sai.
+
+`Enter` guarda, copia pelo Rust (o clipboard do navegador exige documento em
+foco, e a janela está sumindo) e devolve o foco à janela que estava em primeiro
+plano antes (`focus.rs`). O Windows só deixa trocar o primeiro plano a quem
+está nele, então a ordem importa: esconder, e logo em seguida devolver.
+
+Na janela principal, o acesso é `Ctrl+J` e um chip com a contagem que só existe
+quando há rascunho.
+
+### Janelas passageiras não têm lugar guardado **[D]**
+
+O rastreamento de posição (`window_state.rs`) passou a ignorar tudo que não
+seja a janela principal. Sem isso, o Harp reabriria no canto da tela onde o
+último rascunho foi escrito.
+
+### Vidro: a imagem nunca é uma foto da janela **[D]**
+
+A captura final junta duas camadas:
+
+1. a tela, fotografada pelo Rust **depois** de a janela do Vidro sumir e o
+   compositor terminar de redesenhar (`DwmFlush`);
+2. as anotações, desenhadas num PNG transparente a partir do modelo de objetos.
+
+Por isso barra, seleção e alças não têm como aparecer na imagem: nenhuma das
+duas camadas as contém. E o que se vê enquanto se anota é exatamente o que se
+copia, porque a tela e a imagem usam a mesma função de desenho (`render.ts`).
+
+A janela principal sai de cena enquanto o Vidro está aberto e volta no fim, se
+estava lá.
+
+### Vidro: três cores, e texto sempre legível **[D]**
+
+Destaque, branco e preto. Cada traço leva um halo fino de contraste, para uma
+seta branca não sumir numa página branca. O texto vira uma caixa na cor
+escolhida, com a letra preta ou branca — a de mais contraste com a caixa. É o
+que permite escrever sobre qualquer fundo sem escolher cor de letra.
+
+### Vidro: desfazer por cópias inteiras **[D]**
+
+O histórico guarda o estado inteiro antes de cada mudança, e não comandos
+inversos. Com poucos objetos isso não custa nada, e não existe desfazer "quase"
+certo. Setas do teclado seguidas contam como um passo só.
+
+### `Win+Alt+V` para o Vidro **[D]**
+
+O V de Vidro, vizinho do `Win+V` do histórico do clipboard — o Vidro também
+termina no clipboard — sem colidir com ele. Antes de escolher, uma sonda com
+`RegisterHotKey` testou as candidatas na máquina real: `Win+Shift+V` estava
+ocupado pelo Windows; `Ctrl+Alt+V` ficou de fora por ser "colar especial" no
+Office e `AltGr+V` em teclados ABNT2. A lista está numa constante só,
+`VIDRO_SHORTCUTS` em `shortcuts.rs`, com `Ctrl+Alt+Shift+V` de reserva. `Win+J`
+também passou pela sonda.
+
+### Não existe bandeja **[D]**
+
+A especificação desta etapa fala em "Harp só na bandeja". O Harp não tem ícone
+na bandeja: esconder é minimizar (`Ctrl+Alt+Space`). Os atalhos globais do
+Rascunho e do Vidro funcionam com a janela principal minimizada, escondida ou
+atrás de outro programa — que é o que a bandeja garantiria.
+
+### Testar a interface sem compilar o Rust **[D]**
+
+`dev/app.html` e `dev/vidro.html` rodam as páginas reais no navegador com o
+Tauri simulado (`@tauri-apps/api/mocks`). A do Vidro guarda a imagem que iria
+para o clipboard em `window.__png`, para conferir que nada operacional entra
+nela. Nenhuma das duas vai para o instalador.
+
+---
+
 ## 9. Atalhos
 
 | Atalho | Ação | Escopo | Fase |

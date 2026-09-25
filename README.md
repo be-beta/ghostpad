@@ -115,7 +115,13 @@ envia um binário feito na própria máquina.
 - **Esmaece sozinho** quando fica parado e sem foco
 - **Atalhos globais configuráveis**, porque variam de máquina para máquina
 - **Abrir e salvar arquivos** `.txt` e `.md`, sem depender de outro editor
-- **Até cinco anotações** em abas discretas no topo, cada uma com seu desfazer
+- **Até dez anotações** em abas discretas no topo, cada uma com seu desfazer e,
+  se quiser, um ícone — sugerido pelo próprio texto, sem rede
+- **Tarefas em Markdown**: `Ctrl+Enter` cria e marca `- [ ]`, e a caixa aceita clique
+- **Rascunhos**: `Win+J` abre um campo sobre qualquer app; `Enter` guarda, copia e
+  devolve o foco. Os dez últimos ficam em `Ctrl+J`, e somem ao encerrar o Harp
+- **Vidro**: `Win+Alt+V` cobre a tela para anotar com texto, seta, retângulo e
+  círculo; `Ctrl+Shift+Enter` copia tela e anotações numa imagem só
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Teleprompter** com rolagem automática e modo faixa para gravações
@@ -129,10 +135,12 @@ envia um binário feito na própria máquina.
 |---|---|
 | `Ctrl+/` | Painel com todos os atalhos |
 | `Ctrl+Alt+Space` | Chama ou esconde o Harp, de qualquer app |
+| `Win+J` | Rascunho rápido, de qualquer app |
+| `Win+Alt+V` | Vidro: anotar sobre a tela e copiar |
 | `Ctrl+Shift+Enter` | Copia tudo e limpa (`Ctrl+Z` desfaz) |
 | `Ctrl+S` / `Ctrl+Shift+S` | Salvar / salvar como |
 | `Ctrl+O` | Abrir arquivo de texto |
-| `Ctrl+1` … `Ctrl+5` | Troca de aba |
+| `Ctrl+1` … `Ctrl+9`, `Ctrl+0` | Troca de aba (o `0` é a décima) |
 | `Ctrl+T` / `Ctrl+W` | Nova aba / fechar aba |
 | `Ctrl+Alt+P` / `Ctrl+Alt+N` | Teleprompter / modo faixa |
 | `Ctrl+Alt+F` | Teleprompter em tela cheia |
@@ -140,6 +148,8 @@ envia um binário feito na própria máquina.
 | `Ctrl+=` / `Ctrl+−` | Aumenta / diminui o tamanho do texto |
 | `Ctrl+,` | Configurações: idioma, fonte e tamanho |
 | `Ctrl+Shift+V` | Versões anteriores do texto |
+| `Ctrl+J` | Rascunhos recentes |
+| `Ctrl+Enter` | Cria a tarefa, ou marca e desmarca |
 | `Ctrl+[` / `Ctrl+]` | Diminui / aumenta a opacidade em 10% |
 | `Ctrl+Shift+[` / `]` | Opacidade em saltos de 50% |
 | `Ctrl+P` | Alterna sempre-no-topo |
@@ -148,13 +158,28 @@ envia um binário feito na própria máquina.
 | `Ctrl+Alt+1..5` | Encaixa nos cantos |
 | `Ctrl+Alt+6..9` / `Ctrl+Alt+0` | Metade da tela / tela toda |
 | `Ctrl+Alt+Shift+setas` | Redimensiona a janela |
-| `Ctrl+Shift+B` | Alterna o fundo: transparente, desfoque, acrylic |
+| `Ctrl+Shift+B` | Tema claro / escuro |
 | `Ctrl+Q` | Fecha |
 | `Ctrl+Alt+G` | **Resgate** — desfaz todos os modos e traz a janela de volta |
 
 O resgate é global: funciona mesmo com a janela em modo fantasma, oculta ou
 fora da área visível. Se outro programa já usar `Ctrl+Alt+G`, o Harp passa
-para `Ctrl+Alt+Shift+G` e mostra o atalho ativo nos avisos.
+para `Ctrl+Alt+Shift+G` e mostra o atalho ativo nos avisos. O mesmo vale para
+`Win+J` e `Win+Alt+V`; todos os atalhos globais podem ser trocados em `Ctrl+/`.
+
+### Dentro do Vidro
+
+| Atalho | Ação |
+|---|---|
+| `1` `2` `3` `4` | Texto, seta, retângulo, círculo |
+| `5` | Próxima cor: destaque, branco, preto |
+| `Shift` ao desenhar | Seta em 45°, retângulo e círculo proporcionais |
+| Setas / `Shift+setas` | Move o selecionado 1 px / 10 px |
+| `Ctrl+C` / `Ctrl+V` | Duplica o selecionado |
+| `Delete` | Apaga o selecionado |
+| `Ctrl+Z` / `Ctrl+Y` | Desfaz / refaz |
+| `Ctrl+Shift+Enter` | Copia tela e anotações e sai |
+| `Esc` | Sai sem copiar |
 
 ## Requisitos de desenvolvimento
 
