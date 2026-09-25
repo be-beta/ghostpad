@@ -1222,7 +1222,7 @@ function setupLayerIndex() {
       $$("#camada-index button").forEach((b) => b.parentElement.classList.toggle("is-on", b === btn));
       return;
     }
-    goTo(Math.round(camada.top + camada.total * (camada.beats[i] ?? 0)));
+    jumpTo(Math.round(camada.top + camada.total * (camada.beats[i] ?? 0)));
   });
 }
 
@@ -1244,6 +1244,33 @@ function anchorTarget(el) {
   return Math.round(clamp(y, 0, max));
 }
 
+/**
+ * Pula direto para um ponto da página.
+ *
+ * Quem clica em "Manifesto" quer o manifesto, e não as seis cenas que existem
+ * entre ele e o topo passando em dois segundos. As cenas são refeitas no lugar
+ * novo em vez de correrem até ele: `ready = false` faz cada uma assumir o
+ * estado daquele ponto no quadro seguinte.
+ */
+let jumpTimer = 0;
+
+function jumpTo(y) {
+  anim = null;
+  for (const s of scenes) s.ready = false;
+  scrollTo(0, y);
+  // Um piscar curto no lugar do trajeto: sem ele, o corte confunde; com uma
+  // animação longa, vira o que a pessoa quis evitar.
+  if (!isStatic()) {
+    root.classList.remove("is-jump");
+    void root.offsetWidth;
+    root.classList.add("is-jump");
+    clearTimeout(jumpTimer);
+    jumpTimer = setTimeout(() => root.classList.remove("is-jump"), 400);
+  }
+  stepButton.update();
+  kick();
+}
+
 function setupAnchors() {
   document.addEventListener("click", (e) => {
     const a = e.target.closest('a[href^="#"]');
@@ -1251,9 +1278,7 @@ function setupAnchors() {
     const el = document.getElementById(a.getAttribute("href").slice(1));
     if (!el) return;
     e.preventDefault();
-    const y = anchorTarget(el);
-    if (isStatic()) scrollTo({ top: y, behavior: "smooth" });
-    else goTo(y);
+    jumpTo(anchorTarget(el));
     // Quem chegou pelo teclado continua no fluxo: o foco vai para o destino.
     el.setAttribute("tabindex", "-1");
     el.focus({ preventScroll: true });

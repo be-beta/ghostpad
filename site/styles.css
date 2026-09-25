@@ -4754,3 +4754,22 @@ p,
 .sc:not(:hover):not(:focus-visible):not(.is-live) .sc__stage *::after {
   animation-play-state: paused;
 }
+
+/* Corte entre uma parte e outra da página: a tela pisca uma vez, de leve, em
+   vez de percorrer tudo o que existe no caminho. */
+.is-jump main,
+.is-jump .site-footer {
+  animation: jump-in 340ms var(--ease);
+}
+
+@keyframes jump-in {
+  0% { opacity: 0.15; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-jump main,
+  .is-jump .site-footer {
+    animation: none;
+  }
+}
