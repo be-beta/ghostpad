@@ -809,7 +809,7 @@ arraste para fora: ela tem largura mínima.
 
 ### Ícones: escolhidos pelos pixels da aba, não pela vitrine **[D]**
 
-`dev/icons.html` compara Heroicons, Phosphor e Tabler nos 25 conceitos, no
+`dev/icons.html` compara Heroicons, Phosphor e Tabler nos 30 conceitos, no
 tamanho real da aba recolhida e ampliados por uma lupa que mostra os pixels de
 verdade — ampliar o SVG redesenharia o vetor e mostraria uma nitidez que não
 existe na aba.
@@ -817,6 +817,20 @@ existe na aba.
 A lupa decidiu: abaixo de 1 px de traço, ícone de contorno vira borrão cinza, e
 a silhueta preenchida sobrevive. Ficou **Heroicons 16/solid ("micro")**, que
 ainda continua a linguagem do ponto preenchido que a aba recolhida já usava.
+
+### Seletor de ícone: só na aba ativa, com o nome à vista **[D]**
+
+Com o X de um lado e o seletor do outro, sobrava pouco lugar numa aba para
+simplesmente selecioná-la. Agora só a aba ativa troca de ícone; nas outras, o
+glifo faz parte do clique que seleciona a aba.
+
+O nome de cada ícone aparece no rodapé do seletor assim que o mouse (ou o
+teclado) chega nele. A dica nativa do navegador demora e some ao mexer o mouse,
+e alguns ícones pareciam não ter nome.
+
+Eram 25 categorias, todas do trabalho sério. Cinco menos sérias — urgente,
+rápido, experimento, bug, querido — fecham 30: anotação também é urgência,
+teste, defeito e coisa de que se gosta.
 
 ### A aba não encolhe, ela se cala **[D]**
 
@@ -830,7 +844,7 @@ O número deixou de ser rótulo. Ele existe para lembrar qual tecla chama a aba
 (`Ctrl+número`), então aparece como dica de tecla: pequeno, apagado, um pouco
 abaixo da linha — e mostra `0` na décima, que é o que se aperta.
 
-Só os 25 ícones entram no app, importados um a um (`src/ui/tab-icons.ts`). As
+Só os 30 ícones entram no app, importados um a um (`src/ui/tab-icons.ts`). As
 três bibliotecas ficam como dependências de desenvolvimento, para a comparação
 continuar existindo.
 
@@ -920,23 +934,34 @@ suave). Os cantos ficam transparentes: o clipboard recebe PNG, que preserva
 isso, e um bitmap para aplicativos antigos, que podem pintar esses cantos de
 preto ou branco.
 
-### Vidro: as três cores à vista **[D]**
+### Vidro: as cores são as do Harp **[D]**
 
-As bolinhas de cor não funcionavam. O `<body>` marcava a ferramenta ativa com
-`data-tool`, o mesmo atributo dos botões; o clique subia até ele e era lido
-como "escolher a ferramenta atual", antes de chegar à cor. O atributo do
-`<body>` virou `data-cursor`, e o clique só considera botões da própria barra.
+A primeira versão tinha três cores (destaque, branco, preto), e as bolinhas não
+funcionavam: o `<body>` marcava a ferramenta ativa com `data-tool`, o mesmo
+atributo dos botões, e o clique subia até ele e era lido como "escolher a
+ferramenta atual". O atributo do `<body>` virou `data-cursor`, e o clique só
+considera botões da própria barra.
 
-De quebra, as três cores passaram a ficar à vista, em vez de um botão que
-alterna: numa bolinha que troca para outra cor, o clique parece não ter feito
-nada. A tecla `5` continua alternando.
+Agora a bolinha mostra a cor em uso e, clicada, abre as **sete cores de
+destaque do app**, no tom do tema em que ele está — as mesmas das
+configurações. Cada sessão começa na cor de destaque escolhida no app; `5`
+alterna entre elas. Escolher uma cor com um objeto selecionado muda a cor dele.
 
-### Vidro: três cores, e texto sempre legível **[D]**
+### Vidro: texto sempre legível **[D]**
 
-Destaque, branco e preto. Cada traço leva um halo fino de contraste, para uma
-seta branca não sumir numa página branca. O texto vira uma caixa na cor
-escolhida, com a letra preta ou branca — a de mais contraste com a caixa. É o
-que permite escrever sobre qualquer fundo sem escolher cor de letra.
+O texto vira uma etiqueta na cor escolhida, com a letra preta ou branca — a de
+mais contraste com a etiqueta. É o que permite escrever sobre qualquer fundo
+sem escolher cor de letra. Pela mesma conta, cada traço leva um halo: escuro em
+volta de cor clara, claro em volta de cor escura, para um roxo profundo não
+sumir numa página escura.
+
+### Vidro: a barra se arrasta sem saltar **[D]**
+
+A barra começa centralizada por `translateX(-50%)`. O arraste partia de
+`offsetLeft`, que não enxerga essa translação, e a barra saltava meia largura
+para a direita no primeiro movimento. Agora a partida é o retângulo real na
+tela. A alça tem duas colunas de quatro pontos, com a altura múltipla do passo
+do desenho — com 22 px, a última fileira saía cortada.
 
 ### Vidro: desfazer por cópias inteiras **[D]**
 
@@ -954,12 +979,27 @@ Office e `AltGr+V` em teclados ABNT2. A lista está numa constante só,
 `VIDRO_SHORTCUTS` em `shortcuts.rs`, com `Ctrl+Alt+Shift+V` de reserva. `Win+J`
 também passou pela sonda.
 
-### Não existe bandeja **[D]**
+### Bandeja e iniciar com o Windows **[D]**
 
-A especificação desta etapa fala em "Harp só na bandeja". O Harp não tem ícone
-na bandeja: esconder é minimizar (`Ctrl+Alt+Space`). Os atalhos globais do
-Rascunho e do Vidro funcionam com a janela principal minimizada, escondida ou
-atrás de outro programa — que é o que a bandeja garantiria.
+O Harp tem ícone na bandeja (`tray.rs`): clicar traz a janela; o menu tem
+mostrar, Rascunho, Vidro e sair, no idioma do app e com os atalhos que valem de
+fato. Sair pela bandeja passa pela janela principal, que grava o texto antes;
+se ela não responder em quatro segundos, o processo sai assim mesmo — "Sair"
+que não sai seria pior.
+
+"Iniciar com o Windows" fica nas configurações. O Windows abre o Harp com
+`--hidden`, e ele sobe escondido, só na bandeja, com os atalhos globais já
+valendo: quem liga o computador não pediu uma janela, pediu os atalhos prontos.
+O estado vem do próprio Windows (a entrada de inicialização), e não das
+preferências, para o painel não mentir se a pessoa desligar pelo Gerenciador
+de Tarefas.
+
+### Fechar a janela principal encerra o Harp **[D]**
+
+Desde que Rascunho e Vidro ganharam janelas próprias, que vivem escondidas o
+tempo todo, fechar a principal deixava de encerrar o processo: o Harp
+"fechado" continuava rodando invisível, com os atalhos globais ativos. Agora a
+destruição da janela principal encerra o app.
 
 ### Testar a interface sem compilar o Rust **[D]**
 

@@ -186,7 +186,7 @@ Fatos verificáveis, para o site não prometer o que não existe:
   compartilhamento de tela (`WDA_EXCLUDEFROMCAPTURE`, Windows 10 2004+).
 - **Invocação global:** aparece e some com um atalho, de qualquer aplicativo.
 - Até dez notas em abas, com histórico de versões local. Cada aba pode ter um
-  ícone, entre 25 categorias fixas; o app sugere alguns a partir do texto, na
+  ícone, entre 30 categorias fixas; o app sugere alguns a partir do texto, na
   hora de escolher, sem IA e sem rede. Recolhidas, as abas mostram só os
   ícones.
 - **Aparência:** tema claro, escuro ou do sistema (`Ctrl+Shift+B` alterna),
@@ -205,8 +205,9 @@ Fatos verificáveis, para o site não prometer o que não existe:
   memória curta de propósito, nunca vão para o disco.
 - **Vidro:** `Win+Alt+V` cobre a tela com uma camada transparente para
   escrever, apontar e circular sobre o que está nela — texto, seta, retângulo e
-  círculo, em três cores (o destaque do Harp, branco e preto). O texto vira
-  uma etiqueta legível sobre qualquer fundo. `Ctrl+Shift+Enter` copia tela e
+  círculo, nas cores de destaque do próprio Harp. O texto vira uma etiqueta
+  com letra preta ou branca, a que contrastar mais — legível sobre qualquer
+  fundo. `Ctrl+Shift+Enter` copia tela e
   anotações numa imagem só, com os cantos arredondados, pronta para colar — e
   devolve você ao aplicativo onde estava. Não salva arquivo, não guarda histórico, não é editor de imagem:
   anotar, copiar, sair.
@@ -218,6 +219,8 @@ Fatos verificáveis, para o site não prometer o que não existe:
   procurar versão nova, e ela não envia nada sobre quem usa.
 - **Atualização dentro do app:** um ponto discreto sobre a engrenagem quando há
   versão nova; instala quando a pessoa clica, nunca sozinho.
+- **Sempre à mão:** ícone na bandeja do sistema e opção de iniciar com o
+  Windows — o Harp sobe escondido, e os atalhos já funcionam desde o login.
 - **Download livre.** Não é preciso conta no GitHub, nem conta nenhuma, para
   baixar ou para receber atualizações.
 - **Windows.** Requer WebView2, já incluso no Windows 11.

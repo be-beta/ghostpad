@@ -122,13 +122,15 @@ envia um binário feito na própria máquina.
 - **Rascunhos**: `Win+J` abre um campo sobre qualquer app; `Enter` guarda, copia e
   devolve o foco. Os dez últimos ficam em `Ctrl+J`, e somem ao encerrar o Harp
 - **Vidro**: `Win+Alt+V` cobre a tela para anotar com texto, seta, retângulo e
-  círculo, em destaque, branco ou preto; `Ctrl+Shift+Enter` copia tela e
+  círculo, nas cores de destaque do app; `Ctrl+Shift+Enter` copia tela e
   anotações numa imagem só, com os cantos arredondados
 - **Histórico local de versões**, para recuperar texto perdido
 - **Aviso quando há gravação em andamento**, lembrando de se ocultar
 - **Teleprompter** com rolagem automática e modo faixa para gravações
 - **Português, inglês e espanhol**, com oito opções de fonte embutidas
 - **Tema claro, escuro ou do sistema**, com cor de destaque à escolha
+- **Bandeja e início com o Windows**: o Harp pode subir escondido ao ligar o
+  computador, com os atalhos globais já valendo
 - **Autosave** do texto, com backup
 
 ## Atalhos
@@ -174,7 +176,7 @@ para `Ctrl+Alt+Shift+G` e mostra o atalho ativo nos avisos. O mesmo vale para
 | Atalho | Ação |
 |---|---|
 | `1` `2` `3` `4` | Texto, seta, retângulo, círculo |
-| `5` | Próxima cor: destaque, branco, preto |
+| `5` | Próxima cor de destaque |
 | `Shift` ao desenhar | Seta em 45°, retângulo e círculo proporcionais |
 | Setas / `Shift+setas` | Move o selecionado 1 px / 10 px |
 | `Ctrl+C` / `Ctrl+V` | Duplica o selecionado |
