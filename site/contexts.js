@@ -35,23 +35,59 @@ const img = (name, cls = "", pos = "50% 50%") =>
  */
 const video = (name, pos = "50% 50%") =>
   `<video class="ctx-img" data-src="video/${name}.mp4" poster="video/${name}.jpg" muted loop playsinline
-    preload="none" tabindex="-1" aria-hidden="true" style="object-position:${pos}"></video>`;
+    preload="metadata" tabindex="-1" aria-hidden="true" style="object-position:${pos}"></video>`;
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+/**
+ * Tenta tocar, e não desiste no primeiro não.
+ *
+ * `play()` pode ser recusado por três motivos comuns: os dados ainda não
+ * chegaram, a janela estava escondida, ou o navegador exige um gesto antes de
+ * qualquer vídeo. Sem isto, o quadro do `poster` ficava parado para sempre e
+ * parecia uma imagem — que é exatamente o contrário do que a cena diz.
+ */
+function keepPlaying(v) {
+  if (reduced.matches || !v.isConnected) return;
+  if (!v.src) v.src = v.dataset.src;
+  const tryPlay = () => v.play().catch(() => {});
+  tryPlay();
+  v.addEventListener("canplay", tryPlay, { once: true });
+  v.addEventListener("loadeddata", tryPlay, { once: true });
+}
+
+const visible = new Set();
 
 const videoWatcher = new IntersectionObserver(
   (entries) => {
     for (const e of entries) {
       const v = e.target;
       if (e.isIntersecting) {
-        if (reduced.matches) continue;
-        if (!v.src) v.src = v.dataset.src;
-        v.play?.().catch(() => {});
-      } else v.pause?.();
+        visible.add(v);
+        keepPlaying(v);
+      } else {
+        visible.delete(v);
+        v.pause?.();
+      }
     }
   },
   { rootMargin: "600px 0px" }
 );
+
+/* A janela volta, a aba volta: o que está à vista volta a andar. */
+const resumeVisible = () => {
+  if (document.visibilityState !== "visible") return;
+  for (const v of visible) keepPlaying(v);
+};
+
+document.addEventListener("visibilitychange", resumeVisible);
+addEventListener("focus", resumeVisible);
+
+/* Navegador que só libera vídeo depois de um gesto: o primeiro clique, toque
+   ou rolagem serve de gesto. */
+for (const ev of ["pointerdown", "keydown", "wheel", "touchstart"]) {
+  addEventListener(ev, resumeVisible, { once: true, passive: true });
+}
 
 const raw = (src, pos = "50% 50%") =>
   `<img class="ctx-img" src="${src}" alt="" loading="lazy" decoding="async" style="object-position:${pos}">`;

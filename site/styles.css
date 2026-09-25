@@ -47,33 +47,33 @@
 @property --accent-b { syntax: "<number>"; inherits: true; initial-value: 245; }
 
 :root {
-  --accent-r: 139;
-  --accent-g: 116;
-  --accent-b: 245;
-  --on-accent: #ffffff;
-  transition: --accent-r 1600ms ease, --accent-g 1600ms ease, --accent-b 1600ms ease;
-}
-
-:root[data-accent="mint"] {
   --accent-r: 110;
   --accent-g: 231;
   --accent-b: 183;
   --on-accent: #141414;
+  transition: --accent-r 1600ms ease, --accent-g 1600ms ease, --accent-b 1600ms ease;
+}
+
+:root[data-accent="purple"] {
+  --accent-r: 139;
+  --accent-g: 116;
+  --accent-b: 245;
+  --on-accent: #ffffff;
 }
 
 /* No claro, cada destaque troca de tom: o mesmo roxo que brilha no escuro
    some numa página branca. São os dois tons que o app tem para cada cor. */
 :root[data-theme="light"] {
-  --accent-r: 50;
-  --accent-g: 21;
-  --accent-b: 173;
-  --on-accent: #ffffff;
-}
-
-:root[data-theme="light"][data-accent="mint"] {
   --accent-r: 13;
   --accent-g: 148;
   --accent-b: 108;
+  --on-accent: #ffffff;
+}
+
+:root[data-theme="light"][data-accent="purple"] {
+  --accent-r: 50;
+  --accent-g: 21;
+  --accent-b: 173;
   --on-accent: #ffffff;
 }
 
@@ -797,6 +797,14 @@ a:hover > .arrow {
   letter-spacing: -0.018em;
   color: var(--fg);
   transform: translateX(-50%);
+}
+
+.captions__more {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.82em;
+  letter-spacing: -0.01em;
+  color: var(--fg-2);
 }
 
 .captions__small {

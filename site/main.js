@@ -388,7 +388,7 @@ scene("origem", (el) => {
     if (autoTyped || pad.value || document.activeElement === pad) return;
     autoTyped = true;
     cancelAuto = typeText(
-      "Testar a abertura mais curta",
+      "Repensar a escrita na tela",
       (s) => {
         pad.value = s;
         placeCaret();
