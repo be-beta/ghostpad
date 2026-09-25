@@ -117,7 +117,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Tag com hifen (v0.2.0-teste.1) sai como pre-lancamento. O endereco
+          # "latest" do GitHub ignora pre-lancamentos, entao o atualizador de
+          # quem ja instalou nunca oferece uma versao de teste.
+          $extra = @()
+          if ("${{ github.ref_name }}" -match "-") { $extra += "--prerelease" }
           gh release create "${{ github.ref_name }}" `
             Harp-Setup.exe Harp-Setup.exe.sha256 latest.json `
             --title "Harp ${{ github.ref_name }}" `
-            --generate-notes
+            --generate-notes @extra
