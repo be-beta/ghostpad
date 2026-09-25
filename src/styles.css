@@ -188,21 +188,28 @@ body {
   overflow: hidden;
 }
 
+/* Aba: glifo, numero discreto e X.
+ *
+ * O glifo e a identidade da aba — o icone escolhido, ou um ponto quando nao ha
+ * icone — e tem o mesmo tamanho aberta ou recolhida. Recolher so esconde o
+ * numero e o X: a aba nao encolhe, ela se cala. */
 .gp-tab {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: 20px;
-  padding: 0 7px;
+  height: 22px;
+  min-width: 0;
+  flex-shrink: 1;
+  padding: 0 6px;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--gp-text-dim);
   font-family: inherit;
-  font-size: 11px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background-color 120ms var(--gp-ease), color 120ms var(--gp-ease);
+  overflow: hidden;
+  transition: background-color 140ms var(--gp-ease), color 140ms var(--gp-ease),
+    padding 180ms var(--gp-ease);
 }
 
 .gp-tab:hover {
@@ -213,7 +220,65 @@ body {
 .gp-tab[data-active="true"] {
   background: rgba(var(--gp-accent-rgb), 0.16);
   color: var(--gp-accent);
-  font-weight: 600;
+}
+
+/* Glifo: o icone, ou um ponto. Clicar nele abre o seletor de icone. */
+.gp-tab__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.gp-tab__icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.gp-tab__icon:hover {
+  color: var(--gp-text);
+  background: var(--gp-surface);
+}
+
+.gp-tab[data-active="true"] .gp-tab__icon:hover {
+  color: var(--gp-accent);
+  background: rgba(var(--gp-accent-rgb), 0.18);
+}
+
+/* Sem icone, o glifo e o ponto que as abas sempre tiveram. */
+.gp-tab__icon[data-empty="true"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2.5px;
+  background: var(--gp-surface-strong);
+}
+
+.gp-tab[data-active="true"] .gp-tab__icon[data-empty="true"]::before {
+  background: var(--gp-accent);
+}
+
+/* Numero: referencia para o atalho (Ctrl+numero), e nao rotulo da aba. Por
+   isso pequeno, apagado e um pouco abaixo da linha, como uma dica de tecla. */
+.gp-tab__num {
+  max-width: 16px;
+  margin-left: 3px;
+  overflow: hidden;
+  color: var(--gp-text-faint);
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1;
+  transform: translateY(2px);
+  transition: max-width 180ms var(--gp-ease), opacity 140ms var(--gp-ease),
+    margin 180ms var(--gp-ease);
+}
+
+.gp-tab[data-active="true"] .gp-tab__num {
+  color: rgba(var(--gp-accent-rgb), 0.75);
 }
 
 /* O X so aparece na aba ativa ou sob o mouse: fechar e destrutivo e nao deve
@@ -222,6 +287,7 @@ body {
   display: none;
   width: 12px;
   height: 12px;
+  margin-left: 3px;
   padding: 0;
   border: none;
   border-radius: 3px;
@@ -257,6 +323,7 @@ body {
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
+  transition: opacity 140ms var(--gp-ease);
 }
 
 .gp-tabs__add:hover {
@@ -264,116 +331,22 @@ body {
   color: var(--gp-text);
 }
 
-/* Recolhidas: cada aba vira um ponto e so a atual fica acesa. O + some junto,
-   porque criar aba nao e algo que se faca sem olhar. */
+/* Recolhidas: so o glifo, no mesmo tamanho. Sem fundo nas abas — a ativa se
+   distingue pela cor do glifo, como o ponto aceso de antes. */
 body[data-tabs="collapsed"] .gp-tab {
-  max-width: 9px;
-  min-width: 9px;
-  height: 9px;
-  padding: 0;
-  gap: 0;
-  border-radius: 3px;
-  background: var(--gp-surface-strong);
-  color: transparent;
-  overflow: hidden;
+  padding: 0 3px;
+  background: transparent;
 }
 
-body[data-tabs="collapsed"] .gp-tab[data-active="true"] {
-  background: var(--gp-accent);
+body[data-tabs="collapsed"] .gp-tab__num {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
 }
 
 body[data-tabs="collapsed"] .gp-tab__close,
 body[data-tabs="collapsed"] .gp-tabs__add {
   display: none !important;
-}
-
-/* Icone da aba. Opcional: sem ele, o lugar so aparece na aba ativa ou sob o
-   mouse (como o X), para quem quiser escolher um; nas outras, nada muda. */
-.gp-tab__icon {
-  display: inline-grid;
-  place-items: center;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 auto;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.gp-tab__icon svg {
-  width: 12px;
-  height: 12px;
-  display: block;
-}
-
-.gp-tab__icon:hover {
-  color: var(--gp-text);
-}
-
-.gp-tab[data-active="true"] .gp-tab__icon:hover {
-  color: var(--gp-accent);
-  background: rgba(var(--gp-accent-rgb), 0.18);
-}
-
-/* Lugar vazio: um anel pequeno e apagado, que convida sem insistir. */
-.gp-tab__icon[data-empty="true"] {
-  display: none;
-}
-
-.gp-tab__icon[data-empty="true"]::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.2px currentColor;
-  opacity: 0.55;
-}
-
-.gp-tab[data-active="true"] .gp-tab__icon[data-empty="true"],
-.gp-tab:hover .gp-tab__icon[data-empty="true"] {
-  display: inline-grid;
-}
-
-/* Recolhidas, as abas com icone mostram so o icone, no lugar do ponto e quase
-   do mesmo tamanho dele (10 px contra 9): a barra nao cresce por causa disso. */
-body[data-tabs="collapsed"] .gp-tab__num,
-body[data-tabs="collapsed"] .gp-tab__icon[data-empty="true"] {
-  display: none !important;
-}
-
-body[data-tabs="collapsed"] .gp-tab[data-has-icon="true"] {
-  max-width: 10px;
-  min-width: 10px;
-  height: 10px;
-  background: transparent;
-  color: var(--gp-text-dim);
-  overflow: visible;
-}
-
-body[data-tabs="collapsed"] .gp-tab[data-has-icon="true"][data-active="true"] {
-  background: transparent;
-  color: var(--gp-accent);
-}
-
-body[data-tabs="collapsed"] .gp-tab__icon,
-body[data-tabs="collapsed"] .gp-tab__icon svg {
-  width: 10px;
-  height: 10px;
-}
-
-/* `max-width` no lugar de `width`: largura automatica nao anima, e era por isso
-   que as abas recolhiam num corte seco e so a volta parecia suave. */
-.gp-tab {
-  max-width: 160px;
-  min-width: 0;
-  flex-shrink: 1;
-  overflow: hidden;
-}
-
-.gp-tab,
-.gp-tabs__add {
-  transition: background-color 140ms var(--gp-ease), color 140ms var(--gp-ease),
-    max-width 180ms var(--gp-ease), min-width 180ms var(--gp-ease),
-    height 180ms var(--gp-ease), padding 180ms var(--gp-ease);
 }
 
 /* Janela estreita: as abas viram so o numero, sem o X. */
@@ -530,7 +503,7 @@ body[data-ghost="true"] .gp-resize {
   display: inline-block;
   width: 0.78em;
   height: 0.78em;
-  margin: 0 0.12em;
+  margin: 0 0.1em 0 0;
   vertical-align: -0.08em;
   border: 1.5px solid var(--gp-text-dim);
   border-radius: 3px;
@@ -608,7 +581,6 @@ body[data-ghost="true"] .gp-resize {
 /* Janela estreita: os chips de estado viram so o ponto colorido e as metricas
    extras somem. Sem isto, os dois lados da barra se sobrepunham. */
 body[data-narrow="true"] .gp-chip__label,
-body[data-narrow="true"] #chip-backdrop,
 body[data-dense="true"] .gp-chip__label {
   display: none;
 }

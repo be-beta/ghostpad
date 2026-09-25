@@ -46,7 +46,6 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 const editor = document.getElementById("editor") as HTMLTextAreaElement;
 const hud = document.getElementById("hud") as HTMLDivElement;
-const swatch = document.getElementById("swatch") as HTMLSpanElement;
 
 // --- Estado da sessao -----------------------------------------------------------
 
@@ -123,9 +122,15 @@ function renderHud(): void {
   for (const botao of hud.querySelectorAll<HTMLElement>("[data-tool]")) {
     botao.dataset.on = String(botao.dataset.tool === tool);
   }
-  swatch.style.background = paint(color, accent());
-  swatch.dataset.color = color;
-  document.body.dataset.tool = tool;
+  for (const botao of hud.querySelectorAll<HTMLElement>("[data-color]")) {
+    const opcao = botao.dataset.color as Color;
+    botao.dataset.on = String(opcao === color);
+    botao.querySelector<HTMLElement>(".vidro__swatch")!.style.background = paint(opcao, accent());
+  }
+  // `data-cursor`, e nao `data-tool`: com o mesmo nome dos botoes, o clique
+  // em qualquer coisa da barra subia ate o <body> e era lido como "escolher a
+  // ferramenta atual" — foi assim que as bolinhas de cor pararam de funcionar.
+  document.body.dataset.cursor = tool;
 }
 
 // --- Mudancas com historico -------------------------------------------------------
@@ -347,16 +352,21 @@ function setTool(next: Tool): void {
   renderHud();
 }
 
-/** Proxima cor; se ha objeto selecionado, ele muda junto. */
-function cycleColor(): void {
-  color = COLORS[(COLORS.indexOf(color) + 1) % COLORS.length];
+/** Troca a cor; se ha objeto selecionado, ele muda junto. */
+function setColor(next: Color): void {
+  color = next;
   const obj = selected();
-  if (obj) {
+  if (obj && obj.color !== next) {
     commit(structuredClone(objs));
-    replace(obj.id, { ...obj, color });
+    replace(obj.id, { ...obj, color: next });
     redraw();
   }
   renderHud();
+}
+
+/** Tecla 5: a proxima das tres. */
+function cycleColor(): void {
+  setColor(COLORS[(COLORS.indexOf(color) + 1) % COLORS.length]);
 }
 
 const FERRAMENTA_POR_TECLA: Record<string, Tool> = { "1": "text", "2": "arrow", "3": "rect", "4": "circle" };
@@ -451,9 +461,13 @@ function prevent(event: KeyboardEvent, action: () => void): void {
 
 hud.addEventListener("click", (event) => {
   const alvo = event.target as HTMLElement;
-  const ferramenta = alvo.closest<HTMLElement>("[data-tool]")?.dataset.tool as Tool | undefined;
+  // Procura so dentro da barra: nada fora dela e botao.
+  const botao = alvo.closest<HTMLElement>("button");
+  if (!botao || !hud.contains(botao)) return;
+  const ferramenta = botao.dataset.tool as Tool | undefined;
+  const cor = botao.dataset.color as Color | undefined;
   if (ferramenta) setTool(ferramenta);
-  else if (alvo.closest("#color")) cycleColor();
+  else if (cor) setColor(cor);
   else if (alvo.closest("#finish")) void finish();
   else if (alvo.closest("#close")) void cancel();
 });

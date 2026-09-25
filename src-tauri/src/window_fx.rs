@@ -1,19 +1,17 @@
 //! Efeitos de janela especificos do Windows.
 //!
-//! Tres responsabilidades, nenhuma possivel via CSS:
+//! Duas responsabilidades, nenhuma possivel via CSS:
 //!
-//! 1. Fundo da janela (backdrop). O padrao e transparencia real: o WebView2 fica
-//!    transparente e uma camada CSS escurece por cima. Desfoque nativo (acrylic
-//!    ou blur do DWM) e OPCIONAL, nunca o padrao, porque nao e confiavel:
-//!    - o acrylic do Windows 11 vira cor solida quando a janela perde o foco, e
-//!      uma sobreposicao passa a maior parte do tempo sem foco;
-//!    - em algumas maquinas as APIs retornam sucesso e mesmo assim pintam um
-//!      fundo opaco, entao o retorno da chamada nao prova que o efeito aparece.
-//!    `backdrop-filter` do CSS nao resolve: so enxerga a propria pagina.
-//! 2. Cantos arredondados nativos, para o backdrop acompanhar o border-radius.
-//! 3. Display affinity, que esconde a janela de softwares de captura.
+//! 1. Cantos arredondados nativos, para a janela acompanhar o border-radius.
+//! 2. Display affinity, que esconde a janela de softwares de captura.
+//!
+//! O fundo e sempre transparencia real: o WebView2 fica transparente e uma
+//! camada CSS escurece por cima, na opacidade que a pessoa escolheu. Houve um
+//! desfoque nativo opcional (acrylic e blur do DWM), removido: o acrylic vira
+//! cor solida quando a janela perde o foco, e em parte das maquinas as APIs
+//! respondiam sucesso e pintavam um fundo opaco.
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tauri::{Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow};
 
 #[cfg(target_os = "windows")]
@@ -42,17 +40,6 @@ pub struct EffectsReport {
     pub jot_shortcut: Option<String>,
     /// Atalho do Vidro efetivamente registrado.
     pub vidro_shortcut: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum Backdrop {
-    /// Transparencia real, sem desfoque. Funciona em qualquer maquina.
-    Transparent,
-    /// Acrylic do Windows 11. Some quando a janela perde o foco.
-    Acrylic,
-    /// Blur legado do DWM. Mantem-se sem foco, mas pode pesar ao arrastar.
-    Blur,
 }
 
 /// Desliga os atalhos de navegador do WebView2.
@@ -127,30 +114,6 @@ fn set_exclude_from_capture_inner(window: &WebviewWindow, enable: bool) -> Resul
 // ---------------------------------------------------------------------------
 // Comandos expostos ao frontend
 // ---------------------------------------------------------------------------
-
-/// Troca o fundo da janela. Sempre limpa os dois efeitos antes, porque aplicar
-/// um sobre o outro deixa o DWM num estado indefinido.
-#[tauri::command]
-pub fn set_backdrop(window: WebviewWindow, kind: Backdrop) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        let _ = window_vibrancy::clear_acrylic(&window);
-        let _ = window_vibrancy::clear_blur(&window);
-        // Tint quase transparente: quem escurece e a camada CSS, que anima sem
-        // flicker. O efeito nativo so fornece o desfoque.
-        let tint = Some((18, 18, 18, 10));
-        match kind {
-            Backdrop::Transparent => Ok(()),
-            Backdrop::Acrylic => window_vibrancy::apply_acrylic(&window, tint).map_err(|e| e.to_string()),
-            Backdrop::Blur => window_vibrancy::apply_blur(&window, tint).map_err(|e| e.to_string()),
-        }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let _ = (&window, kind);
-        Ok(())
-    }
-}
 
 #[tauri::command]
 pub fn get_effects_report(report: State<'_, EffectsReport>) -> EffectsReport {

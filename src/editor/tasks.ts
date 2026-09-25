@@ -3,7 +3,7 @@
  *
  * O arquivo continua sendo Markdown comum — qualquer outro editor le as mesmas
  * tarefas. O que muda e so a mao: Ctrl+Enter cria e marca, e a caixa desenhada
- * no lugar do `[ ]` aceita clique.
+ * no lugar do `- [ ]` aceita clique.
  *
  * Continuar a lista no Enter, encerrar numa tarefa vazia e aninhar com Tab ja
  * vem do suporte a Markdown do editor, que reconhece o marcador de tarefa ao
@@ -123,9 +123,15 @@ function desenhar(view: EditorView): DecorationSet {
       const tarefa = TAREFA.exec(line.text);
       if (tarefa) {
         const feita = tarefa[2] !== " ";
-        const inicio = line.from + tarefa[1].length;
+        // Em lista com marcador, o "- " some junto com o "[ ]": na tela fica so
+        // a caixa, e o arquivo continua `- [ ]`. Em lista numerada o numero
+        // fica, porque ali ele diz a ordem.
+        const recuo = /^\s*/.exec(line.text)![0].length;
+        const comMarcador = "-*+".includes(line.text[recuo]);
+        const inicio = line.from + (comMarcador ? recuo : tarefa[1].length);
+        const fim = line.from + tarefa[1].length + 3;
         if (feita) builder.add(line.from, line.from, linhaFeita);
-        builder.add(inicio, inicio + 3, Decoration.replace({ widget: new Caixa(feita) }));
+        builder.add(inicio, fim, Decoration.replace({ widget: new Caixa(feita) }));
       }
       pos = line.to + 1;
     }

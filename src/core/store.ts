@@ -14,7 +14,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { load, type Store } from "@tauri-apps/plugin-store";
-import type { Backdrop, GlobalAction, KeyCombo } from "./bridge";
+import type { GlobalAction, KeyCombo } from "./bridge";
 import { DEFAULT_FONT, DEFAULT_FONT_SIZE, type FontId } from "./fonts";
 import { detectLang, type Lang } from "./i18n";
 import { DEFAULT_ACCENT, DEFAULT_THEME, type AccentId, type Theme } from "./theme";
@@ -25,7 +25,6 @@ export interface Settings {
   opacity: number;
   alwaysOnTop: boolean;
   excludeFromCapture: boolean;
-  backdrop: Backdrop;
   /** Esmaece sozinho quando a janela fica parada e sem foco. */
   idleFade: boolean;
   /** Atalhos globais escolhidos pelo usuario; ausentes = padrao do backend. */
@@ -56,9 +55,6 @@ export const DEFAULT_SETTINGS: Settings = {
   alwaysOnTop: true,
   // Nunca liga sozinho: um usuario que nao pediu isso acharia que o app sumiu.
   excludeFromCapture: false,
-  // Transparencia real e o unico fundo que funciona em qualquer maquina e com a
-  // janela sem foco. Desfoque nativo fica como escolha explicita do usuario.
-  backdrop: "transparent",
   idleFade: true,
   // Linha curta e mais facil de ler descendo: o olho pega a frase inteira.
   notchWidth: 620,

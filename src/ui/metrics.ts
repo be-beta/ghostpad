@@ -17,7 +17,6 @@ export type MetricModules = Record<MetricKey, boolean>;
 export type ControlKey =
   | "fontSize"
   | "opacity"
-  | "backdrop"
   | "onTop"
   | "ghost"
   | "stealth"
@@ -26,7 +25,7 @@ export type ControlKey =
 export type BarControls = Record<ControlKey, boolean>;
 
 /** Botões de modo da janela, agrupados à parte no menu. */
-export const MODE_KEYS: ControlKey[] = ["onTop", "ghost", "stealth", "backdrop"];
+export const MODE_KEYS: ControlKey[] = ["onTop", "ghost", "stealth"];
 
 export const CONTROL_KEYS: ControlKey[] = ["fontSize", "opacity", "prompter"];
 
@@ -36,9 +35,8 @@ export const DEFAULT_CONTROLS: BarControls = {
   stealth: true,
   fontSize: true,
   opacity: true,
-  // Desligados por padrão: o desfoque nativo falha em parte das máquinas, e os
-  // controles do teleprompter só interessam a quem usa o modo.
-  backdrop: false,
+  // Desligado por padrao: os controles do teleprompter so interessam a quem
+  // usa o modo.
   prompter: false,
 };
 

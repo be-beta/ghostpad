@@ -46,9 +46,37 @@ async function aplicarPreferencias(): Promise<void> {
   dica.textContent = t("jot.hint");
 }
 
+/** Altura de uma linha do campo, e quantas cabem antes de a janela parar de crescer. */
+const LINHA = 21;
+const MIN_LINHAS = 2;
+const MAX_LINHAS = 8;
+/** Altura da janela com duas linhas: folgas, campo e a linha de ajuda. */
+const ALTURA_BASE = 76;
+
+let linhasAtuais = MIN_LINHAS;
+
+/**
+ * Ajusta a janela ao texto: duas linhas no minimo, oito no maximo.
+ *
+ * Conta as linhas de verdade, inclusive as quebradas pela largura, e nao so os
+ * Enter: um paragrafo longo tambem precisa de espaco. Quem cresce e a janela,
+ * para cima — o canto de baixo fica onde estava.
+ */
+function ajustar(): void {
+  campo.style.height = "auto";
+  const linhas = Math.min(MAX_LINHAS, Math.max(MIN_LINHAS, Math.ceil(campo.scrollHeight / LINHA)));
+  campo.style.height = `${linhas * LINHA}px`;
+  if (linhas === linhasAtuais) return;
+  linhasAtuais = linhas;
+  void invoke("jot_fit", { height: ALTURA_BASE + (linhas - MIN_LINHAS) * LINHA });
+}
+
 function limpar(): void {
   campo.value = "";
+  ajustar();
 }
+
+campo.addEventListener("input", ajustar);
 
 /** Enter confirma, mas nao no meio de uma composicao (acentos, IME). */
 campo.addEventListener("keydown", (event) => {

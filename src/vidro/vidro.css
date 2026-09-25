@@ -13,13 +13,16 @@ body.vidro {
   cursor: crosshair;
 }
 
-/* Moldura: diz "voce esta no Vidro" sem cobrir nada. Some na captura porque
-   a janela inteira some antes dela. */
+/* Moldura: diz "voce esta no Vidro" sem cobrir nada, com o canto arredondado
+   das janelas do Harp. Um pouco afastada da borda do monitor, para o arco
+   aparecer. Some na captura porque a janela inteira some antes dela. */
 body.vidro::after {
   content: "";
   position: fixed;
-  inset: 0;
-  border: 2px solid rgba(var(--gp-accent-rgb), 0.55);
+  inset: 4px;
+  border: 2px solid rgba(var(--gp-accent-rgb), 0.6);
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(0, 0, 0, 0.12);
   pointer-events: none;
 }
 
@@ -27,7 +30,7 @@ body.vidro[data-finishing="true"]::after {
   display: none;
 }
 
-body.vidro[data-tool="text"] {
+body.vidro[data-cursor="text"] {
   cursor: text;
 }
 
@@ -64,14 +67,14 @@ body.vidro[data-hover="true"] {
 
 .vidro__hud {
   position: fixed;
-  top: 18px;
+  top: 20px;
   left: 50%;
   z-index: 10;
   display: flex;
   align-items: center;
   gap: 2px;
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--gp-panel);
   box-shadow: inset 0 0 0 1px var(--gp-border), 0 8px 24px rgba(0, 0, 0, 0.35);
   color: var(--gp-text);
@@ -139,11 +142,34 @@ body.vidro[data-hover="true"] {
   font-weight: 700;
 }
 
+.vidro__color {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vidro__color:hover {
+  background: var(--gp-surface);
+}
+
 .vidro__swatch {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   box-shadow: 0 0 0 1.5px var(--gp-border);
+  transition: box-shadow 120ms var(--gp-ease), transform 120ms var(--gp-ease);
+}
+
+/* A cor em uso ganha um anel na cor de destaque. */
+.vidro__color[data-on="true"] .vidro__swatch {
+  box-shadow: 0 0 0 2px var(--gp-panel), 0 0 0 3.5px var(--gp-accent);
+  transform: scale(1.05);
 }
 
 .vidro__sep {

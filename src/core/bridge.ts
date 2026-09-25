@@ -16,7 +16,6 @@ export type Corner =
   | "top-center"
   | "center";
 
-export type Backdrop = "transparent" | "acrylic" | "blur";
 
 export interface EffectsReport {
   roundedCorners: boolean;
@@ -103,7 +102,6 @@ export interface KeyCombo {
 export const setGlobalShortcut = (action: GlobalAction, combo: KeyCombo) =>
   invoke<string>("set_global_shortcut", { action, ...combo });
 
-export const setBackdrop = (kind: Backdrop) => invoke<void>("set_backdrop", { kind });
 
 export const persistWindowState = () => invoke<void>("persist_window_state");
 

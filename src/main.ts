@@ -22,7 +22,6 @@ import {
   setAlwaysOnTop,
   rememberSize,
   resizeBy,
-  setBackdrop,
   setClickThrough,
   setGlobalShortcut,
   snapHalf,
@@ -33,7 +32,6 @@ import {
   type KeyCombo,
   setExcludeFromCapture,
   snapToCorner,
-  type Backdrop,
   type Corner,
   type EffectsReport,
 } from "./core/bridge";
@@ -102,7 +100,6 @@ const el = {
   chipOnTop: document.getElementById("chip-ontop") as HTMLButtonElement,
   chipGhost: document.getElementById("chip-ghost") as HTMLButtonElement,
   chipStealth: document.getElementById("chip-stealth") as HTMLButtonElement,
-  chipBackdrop: document.getElementById("chip-backdrop") as HTMLButtonElement,
   updateDot: document.getElementById("update-dot") as HTMLSpanElement,
   chipHelp: document.getElementById("chip-help") as HTMLButtonElement,
   metrics: document.getElementById("metrics") as HTMLSpanElement,
@@ -489,7 +486,6 @@ function changeLang(lang: Lang): void {
   setLang(lang);
   applyStaticTranslations();
 
-  el.chipBackdrop.textContent = backdropLabel(settings.backdrop);
   el.chipStealth.title = effects.captureExclusionAvailable
     ? t("chip.stealth.title")
     : t("chip.stealth.unavailable");
@@ -562,31 +558,7 @@ async function toggleStealth(force?: boolean): Promise<void> {
   }
 }
 
-// --- Fundo -----------------------------------------------------------------
-
-const BACKDROP_ORDER: Backdrop[] = ["transparent", "blur", "acrylic"];
-const backdropLabel = (kind: Backdrop) => t(`backdrop.${kind}` as "backdrop.transparent");
-
-async function applyBackdrop(kind: Backdrop, announce: boolean): Promise<void> {
-  try {
-    await setBackdrop(kind);
-    settings.backdrop = kind;
-    el.chipBackdrop.textContent = backdropLabel(kind);
-    if (announce) {
-      // O aviso do acrylic existe porque o comportamento surpreende: ele some
-      // justamente quando o usuario clica no app de baixo.
-      toast(
-        kind === "acrylic"
-          ? t("toast.backdrop.acrylic")
-          : t("toast.backdrop.set", { name: backdropLabel(kind) }),
-      );
-      void saveSettings(settings);
-    }
-  } catch (error) {
-    if (announce) toast(t("toast.backdrop.failed", { error: String(error) }));
-    if (kind !== "transparent") await applyBackdrop("transparent", false);
-  }
-}
+// --- Tema ------------------------------------------------------------------
 
 function changeTheme(theme: Theme): void {
   settings.theme = theme;
@@ -599,9 +571,9 @@ function changeTheme(theme: Theme): void {
 /**
  * Ctrl+Shift+B: claro e escuro, sem passar pelas configuracoes.
  *
- * O atalho era do fundo da janela, mas o desfoque nativo nao funciona na maior
- * parte das maquinas, e ciclar entre um fundo que funciona e dois que nao
- * funcionam nao ajudava ninguem. O fundo continua acessivel pela barra.
+ * O atalho era do fundo da janela (acrylic e desfoque), que saiu do app: o
+ * desfoque nativo nao funcionava na maior parte das maquinas, e opacidade mais
+ * tema ja decidem quanto do que esta atras aparece.
  *
  * Alterna a partir do tema *visivel*: em "sistema" com o Windows escuro, o
  * atalho vai para o claro, e nao para um escuro explicito que nao muda nada.
@@ -613,10 +585,6 @@ function toggleTheme(): void {
   toast(t(next === "light" ? "toast.theme.light" : "toast.theme.dark"));
 }
 
-function cycleBackdrop(): void {
-  const next = BACKDROP_ORDER[(BACKDROP_ORDER.indexOf(settings.backdrop) + 1) % BACKDROP_ORDER.length];
-  void applyBackdrop(next, true);
-}
 
 // --- Texto -----------------------------------------------------------------
 
@@ -678,7 +646,6 @@ function applyBarControls(): void {
   const mostrar = settings.barControls;
   el.fontSize.hidden = !mostrar.fontSize;
   el.metricOpacity.hidden = !mostrar.opacity;
-  el.chipBackdrop.hidden = !mostrar.backdrop;
   el.chipOnTop.hidden = !mostrar.onTop;
   el.chipGhost.hidden = !mostrar.ghost;
   el.chipStealth.hidden = !mostrar.stealth;
@@ -789,8 +756,8 @@ function renderTabs(): void {
     tab.dataset.active = String(slot === activeNote);
     tab.title = `${t("history.tab", { n: index + 1 })} (Ctrl+${tabDigit(index)})`;
 
-    // O icone e opcional. Sem ele, o lugar existe mas so aparece na aba ativa
-    // ou sob o mouse, como o X — nao vale pedir atencao em todas as abas.
+    // O glifo e o icone escolhido, ou o ponto de sempre quando nao ha icone.
+    // Nos dois casos, clicar nele abre o seletor.
     const icone = settings.tabIcons[String(slot)];
     tab.dataset.hasIcon = String(Boolean(icone));
     const pick = document.createElement("span");
@@ -803,7 +770,8 @@ function renderTabs(): void {
 
     const numero = document.createElement("span");
     numero.className = "gp-tab__num";
-    numero.textContent = String(index + 1);
+    // A tecla, e nao a posicao: a decima aba mostra 0, que e o que se aperta.
+    numero.textContent = tabDigit(index);
     tab.append(numero);
 
     const close = document.createElement("span");
@@ -1631,7 +1599,6 @@ function wireEvents(): void {
   el.chipOnTop.addEventListener("click", () => void toggleAlwaysOnTop());
   el.chipGhost.addEventListener("click", () => void toggleGhost());
   el.chipStealth.addEventListener("click", () => void toggleStealth());
-  el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
   el.chipDrafts.addEventListener("click", () => draftsPanel.toggle());
 
   // Os rascunhos moram no Rust; a janela so mostra. Chega aqui a cada mudanca,
@@ -1806,7 +1773,6 @@ async function boot(): Promise<void> {
 
   applyOpacity(settings.opacity);
   revealOnLaunch();
-  await applyBackdrop(settings.backdrop, false);
 
   openNotes = settings.openNotes.filter((slot) => slot >= 1 && slot <= MAX_NOTES);
   if (!openNotes.length) openNotes = [1];

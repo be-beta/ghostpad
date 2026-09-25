@@ -128,17 +128,43 @@ pub fn toggle(app: &AppHandle) {
 /// Enter: guarda, copia e devolve o foco. Texto vazio so fecha.
 #[tauri::command]
 pub fn jot_commit(app: AppHandle, drafts: State<'_, Drafts>, text: String) -> Result<(), String> {
-    let resultado = if text.trim().is_empty() {
-        Ok(())
-    } else {
-        drafts.push(text.clone());
-        changed(&app, &drafts);
-        copy_text(&text)
-    };
-    // Fecha mesmo se o clipboard falhar: o rascunho ja esta guardado, e ficar
-    // preso numa janela por causa disso seria pior.
+    // Primeiro sai da frente e devolve o foco; guardar e copiar vem depois. Se
+    // alguma coisa demorar, a pessoa ja esta de volta onde estava — e nao e
+    // puxada para la depois de ter ido para outro lugar.
     hide_and_return(&app, &drafts);
-    resultado
+    if text.trim().is_empty() {
+        return Ok(());
+    }
+    drafts.push(text.clone());
+    changed(&app, &drafts);
+    copy_text(&text)
+}
+
+/// Ajusta a altura da janela ao texto, mantendo o canto de baixo no lugar.
+///
+/// `height` vem em pixels logicos, da propria janela. A borda invisivel do
+/// Windows entra na conta: `set_size` mexe no tamanho interno, e a posicao e do
+/// lado de fora.
+#[tauri::command]
+pub fn jot_fit(app: AppHandle, height: f64) {
+    let Some(window) = app.get_webview_window("jot") else { return };
+    let (Ok(scale), Ok(pos), Ok(fora), Ok(dentro)) = (
+        window.scale_factor(),
+        window.outer_position(),
+        window.outer_size(),
+        window.inner_size(),
+    ) else {
+        return;
+    };
+
+    let altura = (height * scale).round().max(1.0) as u32;
+    if altura == dentro.height {
+        return;
+    }
+    let moldura = fora.height.saturating_sub(dentro.height) as i32;
+    let base = pos.y + fora.height as i32;
+    let _ = window.set_size(tauri::PhysicalSize::new(dentro.width, altura));
+    let _ = window.set_position(PhysicalPosition::new(pos.x, base - altura as i32 - moldura));
 }
 
 /// Esc: fecha sem guardar nada.

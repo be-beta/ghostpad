@@ -102,6 +102,9 @@ pub fn toggle(app: &AppHandle) {
 }
 
 /// Sai do Vidro e devolve tudo como estava: janela principal e foco.
+///
+/// A principal volta sem ser ativada: mostrar do jeito comum a poria em
+/// primeiro plano, e o foco precisa ir para o aplicativo onde a pessoa estava.
 fn leave(app: &AppHandle, state: &Vidro) {
     if let Some(window) = app.get_webview_window("vidro") {
         let _ = window.hide();
@@ -109,10 +112,28 @@ fn leave(app: &AppHandle, state: &Vidro) {
     let main_visible = state.main_visible.lock().map(|slot| *slot).unwrap_or(false);
     if main_visible {
         if let Some(main) = app.get_webview_window("main") {
-            let _ = main.show();
+            show_without_focus(&main);
         }
     }
     state.previous.restore();
+}
+
+#[cfg(target_os = "windows")]
+fn show_without_focus(window: &tauri::WebviewWindow) {
+    use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_SHOWNOACTIVATE};
+    match window.hwnd() {
+        Ok(hwnd) => unsafe {
+            let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+        },
+        Err(_) => {
+            let _ = window.show();
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn show_without_focus(window: &tauri::WebviewWindow) {
+    let _ = window.show();
 }
 
 /// Esc: sai sem capturar.
@@ -121,26 +142,54 @@ pub fn vidro_cancel(app: AppHandle, state: State<'_, Vidro>) {
     leave(&app, &state);
 }
 
+/// Raio dos cantos da imagem copiada, em pixels logicos: o mesmo das janelas
+/// do Harp, para a captura sair com a cara do app.
+const RAIO_CANTOS: f64 = 12.0;
+
 /// Ctrl+Shift+Enter: recebe as anotacoes em PNG, captura a tela, junta e copia.
 ///
 /// O PNG chega como corpo bruto da chamada, e nao como JSON: um vetor de bytes
 /// serializado como lista de numeros seria varias vezes maior.
+///
+/// A ordem e o que importa aqui. So o que precisa da tela acontece antes de
+/// devolver o foco: esconder, esperar o compositor, fotografar — dezenas de
+/// milissegundos. Juntar as camadas e gravar no clipboard (que codifica um PNG
+/// do tamanho do monitor) leva bem mais, e vai para outra thread. Antes, o foco
+/// so voltava no fim de tudo, e quem ja tinha trocado de janela era puxado de
+/// volta um segundo depois.
 #[tauri::command]
 pub fn vidro_finish(
     app: AppHandle,
     state: State<'_, Vidro>,
     request: tauri::ipc::Request<'_>,
 ) -> Result<(), String> {
-    let resultado = finish(&app, &state, &request);
+    let capturado = capture_screen(&app, &state, &request);
     leave(&app, &state);
-    if let Err(error) = &resultado {
-        // A janela do Vidro ja sumiu; quem avisa e a principal.
-        let _ = app.emit_to("main", "harp://vidro-failed", error.clone());
-    }
-    resultado
+
+    let (tela, anotacoes, area) = match capturado {
+        Ok(partes) => partes,
+        Err(error) => {
+            // A janela do Vidro ja sumiu; quem avisa e a principal.
+            let _ = app.emit_to("main", "harp://vidro-failed", error.clone());
+            return Err(error);
+        }
+    };
+
+    std::thread::spawn(move || {
+        if let Err(error) = compose_and_copy(tela, &anotacoes, area) {
+            let _ = app.emit_to("main", "harp://vidro-failed", error);
+        }
+    });
+    Ok(())
 }
 
-fn finish(app: &AppHandle, state: &Vidro, request: &tauri::ipc::Request<'_>) -> Result<(), String> {
+/// Esconde o Vidro e fotografa a tela. Devolve a tela, o PNG das anotacoes e
+/// a area, para o resto acontecer fora da thread principal.
+fn capture_screen(
+    app: &AppHandle,
+    state: &Vidro,
+    request: &tauri::ipc::Request<'_>,
+) -> Result<(Vec<u8>, Vec<u8>, Area), String> {
     let tauri::ipc::InvokeBody::Raw(png) = request.body() else {
         return Err("anotacoes nao chegaram como imagem".into());
     };
@@ -158,7 +207,11 @@ fn finish(app: &AppHandle, state: &Vidro, request: &tauri::ipc::Request<'_>) -> 
     }
     capture::wait_for_composition();
 
-    let mut tela = capture::screen(area)?;
+    let tela = capture::screen(area)?;
+    Ok((tela, png.clone(), area))
+}
+
+fn compose_and_copy(mut tela: Vec<u8>, png: &[u8], area: Area) -> Result<(), String> {
     let (largura, altura, anotacoes) = decode_png(png)?;
     if largura != area.width || altura != area.height {
         return Err(format!(
@@ -167,6 +220,7 @@ fn finish(app: &AppHandle, state: &Vidro, request: &tauri::ipc::Request<'_>) -> 
         ));
     }
     compose(&mut tela, &anotacoes);
+    round_corners(&mut tela, area.width, area.height, RAIO_CANTOS * area.scale);
 
     arboard::Clipboard::new()
         .and_then(|mut clipboard| {
@@ -177,6 +231,35 @@ fn finish(app: &AppHandle, state: &Vidro, request: &tauri::ipc::Request<'_>) -> 
             })
         })
         .map_err(|e| format!("clipboard: {e}"))
+}
+
+/// Recorta os quatro cantos em arco, com borda suave.
+///
+/// Os cantos ficam transparentes. Aplicativos que leem o PNG do clipboard (a
+/// maioria dos navegadores, chats e editores) mostram o recorte; os que so leem
+/// o formato antigo de bitmap podem pintar esses cantos de preto ou branco.
+fn round_corners(rgba: &mut [u8], w: u32, h: u32, raio: f64) {
+    let r = raio.max(0.0).min(w.min(h) as f64 / 2.0);
+    let lado = r.ceil() as u32;
+    if lado == 0 {
+        return;
+    }
+    for cy in 0..lado {
+        for cx in 0..lado {
+            // Distancia do centro do pixel ao centro do arco do canto.
+            let dx = r - (cx as f64 + 0.5);
+            let dy = r - (cy as f64 + 0.5);
+            let fora = (dx * dx + dy * dy).sqrt() - r;
+            let cobertura = (0.5 - fora).clamp(0.0, 1.0);
+            if cobertura >= 1.0 {
+                continue;
+            }
+            for (x, y) in [(cx, cy), (w - 1 - cx, cy), (cx, h - 1 - cy), (w - 1 - cx, h - 1 - cy)] {
+                let i = ((y * w + x) * 4 + 3) as usize;
+                rgba[i] = (rgba[i] as f64 * cobertura).round() as u8;
+            }
+        }
+    }
 }
 
 /// PNG para RGBA de 8 bits por canal, sem alfa pre-multiplicado.
@@ -300,6 +383,20 @@ mod tests {
         assert_eq!(&tela[0..4], &[200, 100, 50, 255]);
         assert_eq!(&tela[4..8], &[10, 20, 30, 255]);
         assert_eq!(&tela[8..11], &[133, 138, 143]);
+    }
+
+    #[test]
+    fn cantos_ficam_transparentes_e_o_meio_intacto() {
+        let (w, h) = (40u32, 30u32);
+        let mut img = vec![255u8; (w * h * 4) as usize];
+        round_corners(&mut img, w, h, 10.0);
+        let alfa = |x: u32, y: u32| img[((y * w + x) * 4 + 3) as usize];
+        for (x, y) in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)] {
+            assert_eq!(alfa(x, y), 0, "canto ({x}, {y}) recortado");
+        }
+        assert_eq!(alfa(w / 2, h / 2), 255, "o meio nao muda");
+        assert_eq!(alfa(w / 2, 0), 255, "a borda reta nao muda");
+        assert_eq!(alfa(0, h / 2), 255, "a borda reta nao muda");
     }
 
     #[test]

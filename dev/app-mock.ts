@@ -11,7 +11,13 @@ import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 const notas = new Map<number, string>([
   [1, "Pauta da reunião de segunda\n- [ ] enviar a ata\n- [x] marcar sala\n\nhttps://exemplo.com/doc"],
 ]);
-const loja = new Map<string, unknown>();
+const loja = new Map<string, unknown>([
+  // Tres abas, duas com icone, para ver aberto e recolhido.
+  ["settings", { openNotes: [1, 2, 3], activeNote: 1, tabIcons: { "1": "meeting", "2": "code" } }],
+]);
+
+// Com o painel do navegador escondido, `requestAnimationFrame` nao dispara.
+window.requestAnimationFrame = (cb) => window.setTimeout(() => cb(performance.now()), 16);
 const agora = Date.now();
 const rascunhos = [
   { id: 3, text: "perguntar sobre orçamento", at: agora - 60_000 },

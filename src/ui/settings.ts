@@ -183,16 +183,17 @@ export function createSettingsPanel(host: HTMLElement, handlers: SettingsHandler
         </section>
 
         <section class="gp-sheet__section">
-          <h2>${t("settings.update")}</h2>
-          <div data-update-box>${updateBox(update)}</div>
-        </section>
-
-        <section class="gp-sheet__section">
           <h2>${t("settings.idleFade")}</h2>
           <div class="gp-options">
             <button class="gp-option" data-idle="on" data-on="${idleFade}">${t("settings.on")}</button>
             <button class="gp-option" data-idle="off" data-on="${!idleFade}">${t("settings.off")}</button>
           </div>
+        </section>
+
+        <!-- Por ultimo: e a unica secao que nao muda a experiencia de escrever. -->
+        <section class="gp-sheet__section">
+          <h2>${t("settings.update")}</h2>
+          <div data-update-box>${updateBox(update)}</div>
         </section>
 
       </div>`;
