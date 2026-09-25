@@ -139,6 +139,43 @@ O site fica no mesmo repositório. **Não usar a pasta `/docs`**: ela já é a
 documentação técnica, e o Pages publicaria `ARCHITECTURE.md` como página. O
 site vai numa pasta própria, publicada por workflow.
 
+O site está em [`site/`](../site) e o workflow é
+[`pages.yml`](../.github/workflows/pages.yml): a cada push na `main` que mexa em
+`site/`, a pasta é enviada como está, sem build. Uma vez só, no repositório:
+**Settings → Pages → Source: GitHub Actions**. O endereço fica
+`https://be-beta.github.io/harp/`.
+
+Para ver localmente, qualquer servidor estático serve:
+
+```bash
+python -m http.server 4173 --directory site
+```
+
+O site não carrega nada de fora: as fontes estão em `site/fonts/` (copiadas dos
+pacotes `@fontsource`, com as licenças OFL ao lado), os ícones em
+`site/icons.js` (os Heroicons que o app usa, copiados de `node_modules`), e não
+há script de terceiros, cookie nem medição de visitas.
+
+**O site abre sempre no escuro** e não segue o tema do sistema **[D]**. É no
+escuro que uma janela translúcida se explica: no claro, a mesma janela sobre uma
+página branca quase não se distingue do fundo, e a primeira tela do site perde o
+argumento. Quem preferir o claro troca no botão do cabeçalho, e a escolha fica
+no `localStorage` do navegador — a única coisa que o site guarda.
+
+As fotografias em `site/images/` e os vídeos em `site/video/` são **provisórios**
+(Unsplash e Pexels). Trocar por material definitivo é só substituir os arquivos
+mantendo os nomes. Os vídeos estão em 854×480, sem áudio, com um quadro parado
+(`.jpg` de mesmo nome) que serve de `poster` e de miniatura: nenhum deles começa
+a baixar antes de a cena chegar perto da tela, e todos param quando ela sai.
+
+Os originais em alta resolução **não ficam no repositório** — só o que o site
+serve. Para gerar uma versão nova de um vídeo:
+
+```bash
+ffmpeg -ss 1 -t 9 -i original.mp4 -an -vf "scale=854:480:force_original_aspect_ratio=increase,crop=854:480,fps=24" -crf 32 -movflags +faststart site/video/nome.mp4
+ffmpeg -i site/video/nome.mp4 -frames:v 1 -vf scale=640:-1 site/video/nome.jpg
+```
+
 ## Atualização dentro do app **[D]**
 
 Fora de loja, ninguém atualiza por você: sem isto, cada correção dependeria de a

@@ -1,0 +1,39 @@
+# Publica o site (pasta site/) no GitHub Pages.
+#
+# O site é estático e não tem build: o workflow só envia a pasta. Ele fica
+# fora de /docs porque /docs é a documentação técnica, e o Pages publicaria
+# ARCHITECTURE.md como página (ver docs/DISTRIBUICAO.md).
+#
+# Uma vez só, no repositório: Settings → Pages → Source: GitHub Actions.
+
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
