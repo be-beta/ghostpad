@@ -18,6 +18,7 @@ export default defineConfig(() => ({
       input: {
         main: "index.html",
         jot: "jot.html",
+        vidro: "vidro.html",
       },
     },
   },

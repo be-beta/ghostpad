@@ -1,0 +1,176 @@
+/* Vidro.
+ *
+ * A janela inteira e transparente: o que esta atras continua a vista, vivo. O
+ * unico sinal de que o Vidro esta ligado e uma moldura fina na cor de destaque
+ * — sem escurecer a tela, que e justamente o que se quer anotar. */
+
+body.vidro {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+  cursor: crosshair;
+}
+
+/* Moldura: diz "voce esta no Vidro" sem cobrir nada. Some na captura porque
+   a janela inteira some antes dela. */
+body.vidro::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  border: 2px solid rgba(var(--gp-accent-rgb), 0.55);
+  pointer-events: none;
+}
+
+body.vidro[data-finishing="true"]::after {
+  display: none;
+}
+
+body.vidro[data-tool="text"] {
+  cursor: text;
+}
+
+body.vidro[data-hover="true"] {
+  cursor: move;
+}
+
+.vidro__canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  /* Transparente de verdade nao recebe clique no Windows; um fio de alfa
+     garante que o Vidro, e nao o app de baixo, receba o mouse. */
+  background: rgba(0, 0, 0, 0.004);
+}
+
+/* Campo de edicao de texto: do mesmo desenho da caixa que ele vai virar. */
+.vidro__editor {
+  position: fixed;
+  z-index: 5;
+  box-sizing: border-box;
+  margin: 0;
+  border: none;
+  outline: 2px solid rgba(var(--gp-accent-rgb), 0.6);
+  outline-offset: 2px;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
+}
+
+/* --- Barra ---------------------------------------------------------------- */
+
+.vidro__hud {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--gp-panel);
+  box-shadow: inset 0 0 0 1px var(--gp-border), 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--gp-text);
+  font-family: var(--gp-font);
+  font-size: 12px;
+  transform: translateX(-50%);
+  cursor: default;
+  user-select: none;
+}
+
+.vidro__grip {
+  width: 10px;
+  height: 22px;
+  margin: 0 2px;
+  border-radius: 3px;
+  background:
+    radial-gradient(circle, var(--gp-grip) 1px, transparent 1.5px) 0 0 / 5px 5px;
+  cursor: grab;
+}
+
+.vidro__tool,
+.vidro__close,
+.vidro__finish {
+  display: inline-grid;
+  place-items: center;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.vidro__tool,
+.vidro__close {
+  width: 30px;
+  padding: 0;
+}
+
+.vidro__tool:hover,
+.vidro__close:hover,
+.vidro__finish:hover {
+  background: var(--gp-surface);
+  color: var(--gp-text);
+}
+
+.vidro__tool[data-on="true"] {
+  background: rgba(var(--gp-accent-rgb), 0.18);
+  color: var(--gp-accent);
+}
+
+.vidro__tool svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vidro__glyph {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.vidro__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--gp-border);
+}
+
+.vidro__sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--gp-border);
+}
+
+/* Finalizar: indicado com discricao, com o atalho ao lado para ser aprendido. */
+.vidro__finish {
+  display: inline-flex;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.vidro__finish kbd {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--gp-surface);
+  color: var(--gp-text-faint);
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.vidro__close:hover {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--gp-danger);
+}

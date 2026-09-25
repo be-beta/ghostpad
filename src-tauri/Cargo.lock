@@ -1567,6 +1567,7 @@ name = "harp"
 version = "0.1.1"
 dependencies = [
  "arboard",
+ "png 0.18.1",
  "serde",
  "serde_json",
  "tauri",

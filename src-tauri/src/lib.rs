@@ -2,6 +2,7 @@ mod focus;
 mod jot;
 mod notes;
 mod shortcuts;
+mod vidro;
 mod watch;
 mod window_fx;
 mod window_state;
@@ -56,7 +57,7 @@ pub fn run() {
                         }
                         Some(shortcuts::Action::Summon) => window_fx::toggle_summon(window),
                         Some(shortcuts::Action::Jot) => jot::toggle(app),
-                        Some(shortcuts::Action::Vidro) => {}
+                        Some(shortcuts::Action::Vidro) => vidro::toggle(app),
                         None => {}
                     }
                 })
@@ -67,6 +68,7 @@ pub fn run() {
     builder
         .manage(notes::NotesLock::default())
         .manage(jot::Drafts::default())
+        .manage(vidro::Vidro::default())
         .manage(shortcuts::Registry::default())
         .manage(window_state::WindowState::default())
         .on_window_event(window_state::track)
@@ -84,6 +86,8 @@ pub fn run() {
             jot::jot_copy,
             jot::jot_delete,
             jot::jot_clear,
+            vidro::vidro_cancel,
+            vidro::vidro_finish,
             watch::detect_recorders,
             window_state::persist_window_state,
             shortcuts::set_global_shortcut,

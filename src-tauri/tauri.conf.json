@@ -46,6 +46,23 @@
         "visible": false,
         "focus": false,
         "shadow": true
+      },
+      {
+        "label": "vidro",
+        "url": "vidro.html",
+        "title": "Harp — Vidro",
+        "width": 800,
+        "height": 600,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": false,
+        "shadow": false
       }
     ],
     "security": {

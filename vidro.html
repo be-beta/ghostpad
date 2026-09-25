@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harp — Vidro</title>
+    <script type="module" src="/src/vidro/vidro.ts" defer></script>
+  </head>
+  <!-- Vidro: uma camada transparente sobre o monitor. O que se desenha fica no
+       canvas; a barra e a edicao de texto sao HTML e nunca entram na imagem. -->
+  <body class="vidro">
+    <canvas class="vidro__canvas" id="canvas"></canvas>
+    <textarea class="vidro__editor" id="editor" spellcheck="false" hidden></textarea>
+
+    <div class="vidro__hud" id="hud" role="toolbar">
+      <span class="vidro__grip" data-grip aria-hidden="true"></span>
+      <button class="vidro__tool" data-tool="text" data-i18n-title="vidro.tool.text">
+        <span class="vidro__glyph">T</span>
+      </button>
+      <button class="vidro__tool" data-tool="arrow" data-i18n-title="vidro.tool.arrow">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 12.5 12 4M6.5 4H12v5.5" /></svg>
+      </button>
+      <button class="vidro__tool" data-tool="rect" data-i18n-title="vidro.tool.rect">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="4" width="10" height="8" rx="1.5" /></svg>
+      </button>
+      <button class="vidro__tool" data-tool="circle" data-i18n-title="vidro.tool.circle">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="5" ry="4.5" /></svg>
+      </button>
+      <span class="vidro__sep"></span>
+      <button class="vidro__tool" id="color" data-i18n-title="vidro.tool.color">
+        <span class="vidro__swatch" id="swatch"></span>
+      </button>
+      <span class="vidro__sep"></span>
+      <button class="vidro__finish" id="finish" data-i18n-title="vidro.finish.title">
+        <span data-i18n="vidro.finish"></span><kbd>Ctrl+Shift+Enter</kbd>
+      </button>
+      <button class="vidro__close" id="close" data-i18n-title="vidro.cancel">✕</button>
+    </div>
+  </body>
+</html>

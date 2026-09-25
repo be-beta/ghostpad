@@ -1637,6 +1637,11 @@ function wireEvents(): void {
   // Os rascunhos moram no Rust; a janela so mostra. Chega aqui a cada mudanca,
   // inclusive as feitas pela janela de rascunho.
   void listen<Draft[]>("harp://drafts", (event) => renderDrafts(event.payload));
+
+  // A janela do Vidro ja sumiu quando a captura falha; quem avisa e esta.
+  void listen<string>("harp://vidro-failed", (event) =>
+    toast(t("toast.vidro.failed", { error: event.payload })),
+  );
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
   el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
   el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
