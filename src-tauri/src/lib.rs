@@ -1,3 +1,5 @@
+mod focus;
+mod jot;
 mod notes;
 mod shortcuts;
 mod watch;
@@ -53,6 +55,8 @@ pub fn run() {
                             let _ = window_fx::panic_recover(window);
                         }
                         Some(shortcuts::Action::Summon) => window_fx::toggle_summon(window),
+                        Some(shortcuts::Action::Jot) => jot::toggle(app),
+                        Some(shortcuts::Action::Vidro) => {}
                         None => {}
                     }
                 })
@@ -62,6 +66,7 @@ pub fn run() {
 
     builder
         .manage(notes::NotesLock::default())
+        .manage(jot::Drafts::default())
         .manage(shortcuts::Registry::default())
         .manage(window_state::WindowState::default())
         .on_window_event(window_state::track)
@@ -73,6 +78,12 @@ pub fn run() {
             notes::read_text_file,
             notes::write_text_file,
             notes::read_snapshot,
+            jot::jot_commit,
+            jot::jot_cancel,
+            jot::jot_list,
+            jot::jot_copy,
+            jot::jot_delete,
+            jot::jot_clear,
             watch::detect_recorders,
             window_state::persist_window_state,
             shortcuts::set_global_shortcut,
@@ -111,6 +122,8 @@ pub fn run() {
                 shortcuts::register_defaults(app.handle(), &registry);
                 report.panic_shortcut = registry.label(shortcuts::Action::Panic);
                 report.summon_shortcut = registry.label(shortcuts::Action::Summon);
+                report.jot_shortcut = registry.label(shortcuts::Action::Jot);
+                report.vidro_shortcut = registry.label(shortcuts::Action::Vidro);
             }
 
             eprintln!("[harp] efeitos: {report:?}");

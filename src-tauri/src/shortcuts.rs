@@ -22,7 +22,14 @@ pub enum Action {
     Panic,
     /// Chama o app para a frente, pronto para digitar.
     Summon,
+    /// Abre um rascunho sobre o que estiver na tela.
+    Jot,
+    /// Entra no Vidro: anotar sobre a tela e copiar a imagem.
+    Vidro,
 }
+
+/// Todas as acoes com atalho global, na ordem em que sao registradas.
+pub const ACTIONS: [Action; 4] = [Action::Panic, Action::Summon, Action::Jot, Action::Vidro];
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Binding {
@@ -35,6 +42,8 @@ pub struct Binding {
 pub struct Registry {
     panic: Mutex<Option<Binding>>,
     summon: Mutex<Option<Binding>>,
+    jot: Mutex<Option<Binding>>,
+    vidro: Mutex<Option<Binding>>,
 }
 
 impl Registry {
@@ -42,6 +51,8 @@ impl Registry {
         match action {
             Action::Panic => &self.panic,
             Action::Summon => &self.summon,
+            Action::Jot => &self.jot,
+            Action::Vidro => &self.vidro,
         }
     }
 
@@ -54,7 +65,7 @@ impl Registry {
 
     /// Qual acao corresponde ao atalho disparado.
     pub fn action_for(&self, shortcut: &Shortcut) -> Option<Action> {
-        for action in [Action::Panic, Action::Summon] {
+        for action in ACTIONS {
             let matches = self
                 .slot(action)
                 .lock()
@@ -68,6 +79,20 @@ impl Registry {
         None
     }
 }
+
+/// Atalho do Vidro, e as alternativas se ele estiver ocupado.
+///
+/// Win+Alt+V: o V de Vidro, vizinho do Win+V do historico do clipboard — o
+/// Vidro tambem termina no clipboard — sem colidir com ele. Win+Shift+V estava
+/// ocupado pelo proprio Windows na maquina de teste; Ctrl+Alt+V ficou de fora
+/// porque e "colar especial" no Office e, em teclados ABNT2, Ctrl+Alt e AltGr.
+/// Conferido com uma sonda de `RegisterHotKey` antes de escolher.
+///
+/// Trocar o atalho do Vidro e trocar esta lista, e nada mais.
+pub const VIDRO_SHORTCUTS: [(Modifiers, Code); 2] = [
+    (Modifiers::META.union(Modifiers::ALT), Code::KeyV),
+    (Modifiers::CONTROL.union(Modifiers::ALT).union(Modifiers::SHIFT), Code::KeyV),
+];
 
 /// Candidatos em ordem de preferencia. O primeiro livre vence.
 fn candidates(action: Action) -> Vec<(Modifiers, Code)> {
@@ -86,6 +111,14 @@ fn candidates(action: Action) -> Vec<(Modifiers, Code)> {
             (ctrl_shift, Code::Space),
             (ctrl_alt_shift, Code::Space),
         ],
+        // Win+J, como pedido. As alternativas mantem o J para a memoria nao
+        // precisar de outra letra.
+        Action::Jot => vec![
+            (Modifiers::META, Code::KeyJ),
+            (Modifiers::META | Modifiers::ALT, Code::KeyJ),
+            (ctrl_alt, Code::KeyJ),
+        ],
+        Action::Vidro => VIDRO_SHORTCUTS.to_vec(),
     }
 }
 
@@ -145,7 +178,7 @@ fn apply<R: Runtime>(
 
 /// Registra o primeiro candidato livre de cada acao, no start do app.
 pub fn register_defaults<R: Runtime>(app: &AppHandle<R>, registry: &Registry) {
-    for action in [Action::Panic, Action::Summon] {
+    for action in ACTIONS {
         for (mods, code) in candidates(action) {
             if apply(app, registry, action, mods, code).is_ok() {
                 break;

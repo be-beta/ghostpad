@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harp — Rascunho</title>
+    <script type="module" src="/src/jot/jot.ts" defer></script>
+  </head>
+  <!-- Rascunho: um campo e uma linha de ajuda. Nada de abas, barra ou
+       controles — quem abre com Win+J quer escrever e sair em dois segundos. -->
+  <body class="jot">
+    <div class="jot__card">
+      <textarea class="jot__field" id="jot" spellcheck="true" rows="3"></textarea>
+      <p class="jot__hint" id="jot-hint"></p>
+    </div>
+  </body>
+</html>

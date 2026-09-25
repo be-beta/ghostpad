@@ -15,6 +15,7 @@ import {
   closeNote,
   detectRecorders,
   getEffectsReport,
+  listDrafts,
   persistWindowState,
   placeTopCenter,
   readTextFile,
@@ -26,6 +27,7 @@ import {
   setGlobalShortcut,
   snapHalf,
   writeTextFile,
+  type Draft,
   type GlobalAction,
   type HalfSide,
   type KeyCombo,
@@ -76,6 +78,8 @@ import {
 } from "./ui/metrics";
 import { createHistoryPanel } from "./ui/history";
 import { createSettingsPanel } from "./ui/settings";
+import { createDraftsPanel } from "./ui/drafts";
+import glifoRascunho from "heroicons/16/solid/pencil-square.svg?raw";
 import { createIconPicker, iconLabel } from "./ui/icon-picker";
 import { iconSvg } from "./ui/tab-icons";
 import type { IconId } from "./ui/icon-catalog";
@@ -104,6 +108,9 @@ const el = {
   metrics: document.getElementById("metrics") as HTMLSpanElement,
   chipModules: document.getElementById("chip-modules") as HTMLButtonElement,
   modules: document.getElementById("modules") as HTMLDivElement,
+  drafts: document.getElementById("drafts") as HTMLDivElement,
+  chipDrafts: document.getElementById("chip-drafts") as HTMLButtonElement,
+  draftsCount: document.getElementById("drafts-count") as HTMLSpanElement,
   iconPicker: document.getElementById("icon-picker") as HTMLDivElement,
   metricOpacity: document.getElementById("metric-opacity") as HTMLSpanElement,
   shortcuts: document.getElementById("shortcuts") as HTMLDivElement,
@@ -154,6 +161,8 @@ let effects: EffectsReport = {
   captureExclusionAvailable: false,
   panicShortcut: null,
   summonShortcut: null,
+  jotShortcut: null,
+  vidroShortcut: null,
 };
 
 /**
@@ -163,11 +172,13 @@ let effects: EffectsReport = {
 async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Promise<void> {
   try {
     const label = await setGlobalShortcut(action, combo);
-    effects = {
-      ...effects,
-      panicShortcut: action === "panic" ? label : effects.panicShortcut,
-      summonShortcut: action === "summon" ? label : effects.summonShortcut,
-    };
+    const campo = {
+      panic: "panicShortcut",
+      summon: "summonShortcut",
+      jot: "jotShortcut",
+      vidro: "vidroShortcut",
+    } as const;
+    effects = { ...effects, [campo[action]]: label };
     settings.shortcuts = { ...settings.shortcuts, [action]: combo };
     await saveSettings(settings);
     toast(t("toast.shortcut.set", { label }));
@@ -177,6 +188,26 @@ async function rebindGlobalShortcut(action: GlobalAction, combo: KeyCombo): Prom
 }
 
 const shortcutsPanel = createShortcutsPanel(el.shortcuts, () => effects, rebindGlobalShortcut);
+
+const draftsPanel = createDraftsPanel(el.drafts, {
+  shortcut: () => effects.jotShortcut,
+  onCopied: () => toast(t("drafts.copied")),
+  onError: (message) => toast(message),
+  onClose: () => editor.focus(),
+});
+
+/**
+ * A contagem aparece na barra so quando existe rascunho.
+ *
+ * Sem rascunhos nao ha o que acessar, e um botao para uma lista vazia seria
+ * interface ocupando espaco a toa. `Ctrl+J` continua abrindo a lista, vazia,
+ * para quem quiser lembrar como se cria um.
+ */
+function renderDrafts(drafts: Draft[]): void {
+  el.chipDrafts.hidden = drafts.length === 0;
+  el.draftsCount.textContent = String(drafts.length);
+  draftsPanel.update(drafts);
+}
 
 const settingsPanel = createSettingsPanel(el.settings, {
   values: () => ({
@@ -1266,6 +1297,11 @@ function handleKeydown(event: KeyboardEvent): boolean {
     return consume(event);
   }
 
+  if (event.key === "Escape" && draftsPanel.isOpen()) {
+    draftsPanel.close();
+    return consume(event);
+  }
+
   if (event.key === "Escape" && shortcutsPanel.isOpen()) {
     shortcutsPanel.close();
     editor.focus();
@@ -1414,6 +1450,9 @@ function handleKeydown(event: KeyboardEvent): boolean {
   }
 
   switch (key) {
+    case "j":
+      draftsPanel.toggle();
+      return consume(event);
     case "p":
       void toggleAlwaysOnTop();
       return consume(event);
@@ -1593,6 +1632,11 @@ function wireEvents(): void {
   el.chipGhost.addEventListener("click", () => void toggleGhost());
   el.chipStealth.addEventListener("click", () => void toggleStealth());
   el.chipBackdrop.addEventListener("click", () => cycleBackdrop());
+  el.chipDrafts.addEventListener("click", () => draftsPanel.toggle());
+
+  // Os rascunhos moram no Rust; a janela so mostra. Chega aqui a cada mudanca,
+  // inclusive as feitas pela janela de rascunho.
+  void listen<Draft[]>("harp://drafts", (event) => renderDrafts(event.payload));
   el.chipHelp.addEventListener("click", () => shortcutsPanel.toggle());
   el.chipSettings.addEventListener("click", () => settingsPanel.toggle());
   el.fontSmaller.addEventListener("click", () => changeFontSize(settings.fontSize - 1));
@@ -1812,6 +1856,9 @@ async function boot(): Promise<void> {
   wireEvents();
   void checkRecorders();
   appVersion = await getVersion().catch(() => "");
+  // Ao recarregar a janela, os rascunhos continuam no processo.
+  document.getElementById("drafts-glyph")!.innerHTML = glifoRascunho;
+  renderDrafts(await listDrafts().catch(() => []));
   updates = watchForUpdates(renderUpdate);
   editor.focus();
 }

@@ -76,6 +76,10 @@
             <span class="gp-fontsize__value" id="font-size-value">15</span>
             <button class="gp-fontsize__btn" id="font-bigger" data-i18n-title="chip.fontSize.bigger">A+</button>
           </span>
+          <!-- So existe quando ha rascunhos: sem eles, nao ha o que acessar. -->
+          <button class="gp-chip gp-chip--drafts" id="chip-drafts" data-i18n-title="drafts.chip" hidden>
+            <span class="gp-chip__glyph" id="drafts-glyph"></span><span id="drafts-count">0</span>
+          </button>
           <button class="gp-chip gp-chip--icon" id="chip-modules" data-i18n-title="chip.modules.title">⋯</button>
           <!-- O ponto e todo o aviso de versao nova que existe fora das
                configuracoes: quem estiver escrevendo pode ignora-lo por dias. -->
@@ -110,6 +114,9 @@
 
     <!-- Seletor de icone da aba. Conteudo em src/ui/icon-picker.ts. -->
     <div class="gp-menu gp-picker" id="icon-picker" role="dialog" hidden></div>
+
+    <!-- Rascunhos recentes (Ctrl+J). Conteudo em src/ui/drafts.ts. -->
+    <div class="gp-sheet" id="drafts" hidden></div>
 
     <!-- Configuracoes (Ctrl+,). Conteudo em src/ui/settings.ts. -->
     <div class="gp-sheet" id="settings" hidden></div>

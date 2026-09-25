@@ -38,6 +38,10 @@ pub struct EffectsReport {
     pub panic_shortcut: Option<String>,
     /// Atalho de invocacao efetivamente registrado.
     pub summon_shortcut: Option<String>,
+    /// Atalho dos rascunhos efetivamente registrado.
+    pub jot_shortcut: Option<String>,
+    /// Atalho do Vidro efetivamente registrado.
+    pub vidro_shortcut: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
@@ -89,7 +93,7 @@ pub fn apply_startup_effects(window: &WebviewWindow) -> EffectsReport {
 }
 
 #[cfg(target_os = "windows")]
-fn hwnd_of(window: &WebviewWindow) -> Result<HWND, String> {
+pub(crate) fn hwnd_of(window: &WebviewWindow) -> Result<HWND, String> {
     window.hwnd().map_err(|e| format!("HWND indisponivel: {e}"))
 }
 

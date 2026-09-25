@@ -131,6 +131,12 @@ pub fn restore<R: Runtime>(window: &Window<R>) {
 
 /// Acompanha movimentos e redimensionamentos; grava ao destruir a janela.
 pub fn track<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
+    // So a janela principal tem lugar guardado. Rascunho e Vidro aparecem onde
+    // o mouse estiver; se entrassem aqui, a proxima abertura do Harp iria para
+    // o canto da tela onde o ultimo rascunho foi escrito.
+    if window.label() != "main" {
+        return;
+    }
     match event {
         WindowEvent::Moved(_) | WindowEvent::Resized(_) => {
             // Minimizada, o Windows reporta posicoes como (-32000, -32000).

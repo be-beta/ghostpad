@@ -12,6 +12,14 @@ const notas = new Map<number, string>([
   [1, "Pauta da reunião de segunda\n- [ ] enviar a ata\n- [x] marcar sala\n\nhttps://exemplo.com/doc"],
 ]);
 const loja = new Map<string, unknown>();
+const agora = Date.now();
+const rascunhos = [
+  { id: 3, text: "perguntar sobre orçamento", at: agora - 60_000 },
+  { id: 2, text: "https://exemplo.com/artigo-longo-com-um-endereco-grande", at: agora - 900_000 },
+  { id: 1, text: "Dieter Rams" + String.fromCharCode(10) + "menos, mas melhor", at: agora - 3_600_000 },
+];
+const emitir = async (evento: string, payload: unknown) =>
+  (await import("@tauri-apps/api/event")).emit(evento, payload);
 
 mockWindows("main");
 mockIPC(
@@ -28,6 +36,15 @@ mockIPC(
         return null;
       case "list_snapshots":
         return [];
+      case "jot_list":
+        return rascunhos;
+      case "jot_copy":
+      case "jot_delete":
+      case "jot_clear":
+        if (cmd === "jot_delete") rascunhos.splice(rascunhos.findIndex((r) => r.id === a.id), 1);
+        if (cmd === "jot_clear") rascunhos.length = 0;
+        if (cmd !== "jot_copy") void emitir("harp://drafts", rascunhos);
+        return null;
       case "detect_recorders":
         return [];
       case "get_effects_report":
@@ -35,6 +52,8 @@ mockIPC(
           captureExclusionAvailable: true,
           panicShortcut: "Ctrl+Alt+G",
           summonShortcut: "Ctrl+Alt+Space",
+          jotShortcut: "Win+J",
+          vidroShortcut: "Win+Alt+V",
         };
       case "plugin:store|load":
         return 1;

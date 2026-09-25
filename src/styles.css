@@ -983,6 +983,88 @@ body[data-narrow="true"] .gp-fontsize {
   text-align: center;
 }
 
+/* --- Rascunhos recentes (Ctrl+J) ------------------------------------------- */
+
+.gp-drafts {
+  display: grid;
+  gap: 1px;
+}
+
+.gp-drafts__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.gp-drafts__item:hover {
+  background: var(--gp-surface);
+}
+
+.gp-drafts__when {
+  color: var(--gp-text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-drafts__preview {
+  overflow: hidden;
+  color: var(--gp-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Copiar fica sempre visivel: e o motivo de abrir a lista. Excluir so aparece
+   sob o mouse, para nao ficar convidando o clique errado. */
+.gp-drafts__copy,
+.gp-drafts__delete,
+.gp-drafts__clear {
+  padding: 2px 6px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gp-text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.gp-drafts__copy:hover {
+  background: rgba(var(--gp-accent-rgb), 0.18);
+  color: var(--gp-accent);
+}
+
+.gp-drafts__delete {
+  visibility: hidden;
+}
+
+.gp-drafts__item:hover .gp-drafts__delete {
+  visibility: visible;
+}
+
+.gp-drafts__delete:hover,
+.gp-drafts__clear:hover {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--gp-danger);
+}
+
+.gp-chip--drafts {
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-chip__glyph {
+  display: inline-grid;
+  place-items: center;
+}
+
+.gp-chip__glyph svg {
+  width: 11px;
+  height: 11px;
+}
+
 /* --- Menu flutuante (modulos da barra) ------------------------------------ */
 
 .gp-menu {

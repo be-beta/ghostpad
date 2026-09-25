@@ -10,6 +10,17 @@ export default defineConfig(() => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
+
+  // Uma pagina por janela. `dev/` fica de fora de proposito: sao paginas de
+  // comparacao e teste, que nao tem por que ir para dentro do instalador.
+  build: {
+    rolldownOptions: {
+      input: {
+        main: "index.html",
+        jot: "jot.html",
+      },
+    },
+  },
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,

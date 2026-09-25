@@ -36,6 +36,16 @@ function sections(effects: EffectsReport): Section[] {
           action: "summon",
         },
         {
+          keys: effects.jotShortcut ?? "—",
+          label: effects.jotShortcut ? t("shortcuts.jot") : t("shortcuts.jot.off", { reason }),
+          action: "jot",
+        },
+        {
+          keys: effects.vidroShortcut ?? "—",
+          label: effects.vidroShortcut ? t("shortcuts.vidro") : t("shortcuts.vidro.off", { reason }),
+          action: "vidro",
+        },
+        {
           keys: effects.panicShortcut ?? "—",
           label: effects.panicShortcut ? t("shortcuts.panic") : t("shortcuts.panic.off", { reason }),
           action: "panic",
@@ -53,6 +63,7 @@ function sections(effects: EffectsReport): Section[] {
         { keys: "Ctrl+Shift+S", label: t("shortcuts.saveAs") },
         { keys: "Ctrl+O", label: t("shortcuts.open") },
         { keys: "Ctrl+Shift+V", label: t("shortcuts.history") },
+        { keys: "Ctrl+J", label: t("shortcuts.drafts") },
         { keys: "Ctrl+B / Ctrl+I", label: t("shortcuts.bold") },
         { keys: "Ctrl+F", label: t("shortcuts.find") },
         { keys: "Ctrl+Z / Ctrl+Y", label: t("shortcuts.undo") },

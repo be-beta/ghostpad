@@ -25,6 +25,10 @@ export interface EffectsReport {
   panicShortcut: string | null;
   /** Atalho de invocacao registrado de fato, ou null. */
   summonShortcut: string | null;
+  /** Atalho dos rascunhos efetivamente registrado. */
+  jotShortcut: string | null;
+  /** Atalho do Vidro efetivamente registrado. */
+  vidroShortcut: string | null;
 }
 
 export const appWindow = getCurrentWindow();
@@ -84,7 +88,7 @@ export const rememberSize = () => invoke<void>("remember_size");
 /** Passos em pixels logicos; o backend converte pela escala da tela. */
 export const resizeBy = (dw: number, dh: number) => invoke<void>("resize_by", { dw, dh });
 
-export type GlobalAction = "panic" | "summon";
+export type GlobalAction = "panic" | "summon" | "jot" | "vidro";
 
 export interface KeyCombo {
   ctrl: boolean;
@@ -107,3 +111,18 @@ export const panicRecover = () => invoke<void>("panic_recover");
 
 /** Consulta o que realmente pegou na maquina. Pode ser chamado a qualquer momento. */
 export const getEffectsReport = () => invoke<EffectsReport>("get_effects_report");
+
+// --- Rascunhos -------------------------------------------------------------
+
+/** Um rascunho guardado. So existe em memoria, no processo do Harp. */
+export interface Draft {
+  id: number;
+  text: string;
+  /** Milissegundos desde 1970. */
+  at: number;
+}
+
+export const listDrafts = () => invoke<Draft[]>("jot_list");
+export const copyDraft = (id: number) => invoke<void>("jot_copy", { id });
+export const deleteDraft = (id: number) => invoke<void>("jot_delete", { id });
+export const clearDrafts = () => invoke<void>("jot_clear");
