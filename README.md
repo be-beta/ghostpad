@@ -5,9 +5,8 @@ cima do que você está olhando, para que anotar não custe a tela.
 
 Windows, gratuito, tudo local.
 
-> **Estado:** primeira versão pública — `v0.1.0`, em beta.
-> Janela, editor, métricas, histórico, múltiplas notas, teleprompter e
-> atualização dentro do app.
+> **Estado:** `v0.2.0`, em beta. Janela, editor, abas com ícones, tarefas,
+> histórico, teleprompter, Rascunhos, Vidro e atualização dentro do app.
 > Documentação em [docs/](docs/README.md): arquitetura, identidade e distribuição.
 >
 > O projeto se chamou **GhostPad** até aqui. Quem usou a versão antiga não perde
